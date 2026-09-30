@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Doc } from "@/components/Doc";
 
 export const metadata = { title: "Conditions générales de vente" };
@@ -7,7 +8,7 @@ export default function Page() {
     <Doc title="Conditions générales de vente" draft>
       <h2>Vendeur</h2>
       <p>
-        Le vendeur est l&apos;éditeur du site, identifié dans les <a href="/mentions-legales" className="underline">mentions légales</a>.
+        Le vendeur est l&apos;éditeur du site, identifié dans les <Link href="/mentions-legales" className="underline">mentions légales</Link>.
       </p>
 
       <h2>Objet et prix</h2>
