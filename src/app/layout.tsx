@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s — ${SITE.name}` },
   description:
     "Analyse biométrique chiffrée : score, percentiles, courbure, symétrie. Paiement unique, aucun compte.",
-  metadataBase: new URL(`https://${SITE.domain}`),
+  metadataBase: new URL(process.env.SITE_URL ?? `https://${SITE.domain}`),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

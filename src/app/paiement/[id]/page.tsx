@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { Doc } from "@/components/Doc";
 import { formatEur } from "@/config/site";
+import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { getReportView } from "@/lib/view";
 import { PayForm } from "./PayForm";
 
-export const metadata = { title: "Paiement", robots: { index: false, follow: false } };
+export const metadata = { title: "Paiement", robots: { index: false, follow: false }, ...PRIVATE_SOCIAL };
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

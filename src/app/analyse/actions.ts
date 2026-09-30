@@ -1,8 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { RATE_LIMIT } from "@/config/site";
+import { attachFriend, CHALLENGE_COOKIE } from "@/lib/challenge";
 import { buildQuestionnaireReport, isOutOfReferenceRange, questionnaireSchema } from "@/lib/report";
 import { countRecentByIp, createReport, hashIp } from "@/lib/repo";
 
@@ -46,5 +47,7 @@ export async function submitQuestionnaire(_prev: FormState, fd: FormData): Promi
     results: buildQuestionnaireReport(parsed.data),
     ipHash,
   });
+  const challenge = (await cookies()).get(CHALLENGE_COOKIE)?.value;
+  if (challenge) await attachFriend(challenge, id); // défi d'un ami : le rapport devient celui de l'ami
   redirect(`/r/${id}`);
 }

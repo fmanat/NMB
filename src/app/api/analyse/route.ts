@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { UPLOAD } from "@/config/site";
 import { AGE_COOKIE, isAgeTokenValid } from "@/lib/age/token";
+import { attachFriend, CHALLENGE_COOKIE } from "@/lib/challenge";
 import { runAnalysis, type FlowInput } from "@/lib/analyseFlow";
 import { getCaptcha, getScreening, getVision } from "@/lib/providers";
 
@@ -27,6 +28,7 @@ export async function POST(req: Request) {
   const state = fd.get("state") === "rest" ? "rest" : "erect";
 
   const store = await cookies();
+  const challengeId = store.get(CHALLENGE_COOKIE)?.value;
   const input: FlowInput = {
     formula,
     state,
@@ -47,6 +49,7 @@ export async function POST(req: Request) {
       let open = true;
       try {
         for await (const event of runAnalysis(input, { vision: getVision(), screening: getScreening(), captcha: getCaptcha() })) {
+          if (event.type === "ready" && challengeId) await attachFriend(challengeId, event.reportId);
           if (!open) continue; // le client est parti : on laisse le traitement se terminer (commentaire rédigé)
           try {
             controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));

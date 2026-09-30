@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SITE, formatEur } from "@/config/site";
 import { Distribution } from "@/components/Distribution";
+import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { DIRECTION_FR } from "@/lib/report";
 import { referenceFor } from "@/lib/stats";
 import { getReportView } from "@/lib/view";
@@ -10,6 +11,7 @@ import { ReportActions } from "./ReportActions";
 export const metadata = {
   title: "Rapport",
   robots: { index: false, follow: false, nocache: true },
+  ...PRIVATE_SOCIAL,
 };
 
 const f1 = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
@@ -197,6 +199,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         indulgente, pas un percentile. Ceci n&apos;est pas un avis médical.{" "}
         <Link href="/methode" className="underline">Voir la méthode</Link>.
       </aside>
+
+      <div className="flex flex-wrap gap-3 print:hidden">
+        <Link href={`/r/${id}/partager`} className="btn-primary">Partager ma carte</Link>
+        <Link href={`/r/${id}/defi`} className="panel px-4 py-2 text-sm hover:border-accent">Défier un ami</Link>
+      </div>
 
       <ReportActions id={id} />
     </div>
