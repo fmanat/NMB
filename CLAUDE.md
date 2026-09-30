@@ -1,18 +1,18 @@
-﻿# CLAUDE.md
+# CLAUDE.md
 
-Cahier des charges complet : [docs/SPEC.md](docs/SPEC.md). Le lire avant tout travail.
+Cahier des charges complet : [docs/SPEC.md](docs/SPEC.md), source de référence unique. Le lire avant tout travail.
 
-## RÃ¨gles de travail
-- L'utilisateur n'est pas informaticien : chaque action qui le concerne (crÃ©er un compte, copier une clÃ©, lancer une commande) est expliquÃ©e pas Ã  pas, en franÃ§ais simple.
-- Une Ã©tape Ã  la fois (section 16 du cahier des charges). Ã€ la fin de chaque Ã©tape : commit git, puis rÃ©sumÃ© de ce qui fonctionne et de ce qui reste Ã  faire.
-- Toute question est posÃ©e sous forme de QCM, avec la recommandation indiquÃ©e.
-- Aucun secret dans le code : `.env.example` documentÃ©, `.env` exclu de git.
+## Règles de travail
+- L'utilisateur n'est pas informaticien : chaque action qui le concerne (créer un compte, copier une clé, lancer une commande) est expliquée pas à pas, en français simple.
+- Une étape à la fois (section 16 du cahier des charges). À la fin de chaque étape : commit git, envoi sur GitHub (dépôt privé fmanat/NMB), puis résumé de ce qui fonctionne et de ce qui reste à faire.
+- Toute question est posée sous forme de QCM, avec la recommandation indiquée.
+- Aucun secret dans le code : `.env.example` documenté, `.env` exclu de git.
 - Demander avant d'ouvrir un compte ou un service payant.
-- Tests automatisÃ©s obligatoires pour les calculs (section 5.3) et le dÃ©blocage du rapport (section 8).
+- Tests automatisés obligatoires pour les calculs (section 5.3) et le déblocage du rapport (section 8).
 - Moteur d'analyse : API xAI uniquement (section 5). Ne pas utiliser l'API Anthropic pour l'analyse.
-- Aucune image explicite dans le code ni dans le dÃ©pÃ´t ; tests avec images neutres et API simulÃ©e.
-- Ne pas Ã©crire de code avant validation du plan par l'utilisateur.
+- Aucune image explicite dans le code ni dans le dépôt ; tests avec images neutres et API simulée.
+- Photos personnelles de test : uniquement dans `photos-test/` (ignoré par git). Ne jamais les ouvrir ni les afficher : lire seulement le texte renvoyé par les scripts. Les supprimer après usage.
+- Les libellés du site restent vrais : ne jamais présenter le service autrement qu'il n'est (pas de « cloaking » auprès des prestataires), ne jamais prêter plus de pouvoir au filtrage d'empreintes (section 5) ni à la vérification d'âge que ce qu'ils font réellement.
+- Écriture de fichiers sous Windows : toujours en UTF-8 (utiliser les outils d'écriture, pas de relecture/réécriture PowerShell sans `-Encoding utf8`).
 
 @AGENTS.md
-
-
