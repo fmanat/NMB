@@ -96,3 +96,13 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 | Vérification en production : interface interactive, action serveur (questionnaire) et redirection, sans violation de CSP ni erreur de console. | Une CSP mal réglée casse le site sans bruit. |
 | `npm audit` : 0 vulnérabilité. | — |
 | Quand un prestataire de paiement ou d'âge chargera un script, un cadre ou une connexion, ajouter **son domaine seulement** dans la CSP (commentaire dans `next.config.ts`). | Sinon sa page ne s'affichera pas ; ne jamais élargir à `*`. |
+
+## Bloc 6 : préparation de la mise en ligne (rien n'a été déployé)
+
+| Décision | Raison |
+|---|---|
+| README réécrit en français simple : installation locale, tableau de tous les réglages `.env`, où changer prix/poids/marges (`src/config/site.ts`), tâches programmées, mise en ligne en 10 étapes, commandes utiles. | Le README d'origine était celui du modèle Next.js ; l'utilisateur n'est pas informaticien. |
+| Étape « écrire à l'hébergeur avant de payer » placée en premier dans la mise en ligne. | Aucune condition générale ne cite ce service ; seule une confirmation écrite protège d'une suspension. |
+| Recherche d'hébergeurs dans `docs/HEBERGEMENT.md` : Clever Cloud recommandé, OVHcloud en repli, Scaleway ambigu, Hetzner écarté (clause 8.2 sur le contenu pornographique ou obscène, appliquée strictement selon ses déclarations publiques). | Comparaison des textes publiés. Les points techniques ne sont vérifiés que pour Clever Cloud. Ce n'est pas un avis juridique. |
+| Aucun fichier de tâches programmées (`cron.json`) ajouté au dépôt. | Son format dépend de l'hébergeur, pas encore choisi. |
+| Point noté : les scripts `db:purge` et `stats:webhook` utilisent `--env-file=.env`, qui échoue si le fichier n'existe pas ; chez un hébergeur (variables d'environnement), retirer cette option au moment du déploiement. | Éviter une purge qui échoue en silence en production. |
