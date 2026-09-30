@@ -46,3 +46,35 @@ export const AGE_GATE = {
 export function formatEur(n: number): string {
   return n.toFixed(2).replace(".", ",") + " €";
 }
+
+// Plages plausibles acceptées pour les mesures déclarées (cm).
+export const LIMITS = {
+  length: { min: 2, max: 30 },
+  girth: { min: 3, max: 25 },
+} as const;
+
+// Angle retenu pour la courbure déclarée (formule A), en degrés.
+export const CURVATURE_ANGLE = { none: 0, light: 15, marked: 35 } as const;
+// Au-delà de cet angle (degrés), le commentaire suggère un avis médical.
+export const MEDICAL_ADVICE_ANGLE = 30;
+// Rectitude : 100 % à 0°, 0 % à partir de cet angle.
+export const STRAIGHTNESS_ZERO_ANGLE = 45;
+
+export const RATE_LIMIT = { maxPerWindow: 5, windowHours: 24 } as const;
+
+// Rapports non payés effacés après ce délai.
+export const UNPAID_TTL_HOURS = 24;
+
+// Objets du quotidien (longueur en cm).
+export const EVERYDAY_OBJECTS = [
+  { label: "Carte bancaire", cm: 8.56 },
+  { label: "Canette de 33 cl", cm: 11.5 },
+  { label: "Smartphone", cm: 15 },
+] as const;
+
+// Mesures de référence publiques (hauteur en mètres).
+export const LANDMARKS = [
+  { label: "Tour Eiffel", m: 330 },
+  { label: "Burj Khalifa", m: 828 },
+  { label: "Mont Blanc", m: 4805 },
+] as const;
