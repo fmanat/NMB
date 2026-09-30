@@ -21,3 +21,8 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Pas fait : tests sur mobile/autres navigateurs (Chromium seulement).
 
 ## Prochain bloc : Bloc 2, comparaison des prestataires (docs/PRESTATAIRES.md)
+
+## Bloc 4 (fait en avance, pendant que les recherches du Bloc 2 tournaient) : préparation Clever Cloud : FAIT
+- `clevercloud/cron.json` + 2 scripts (purge horaire, webhook quotidien 4 h 30), `docs/CLEVER-CLOUD.md` (pas à pas, variables), lecture de `POSTGRESQL_ADDON_URI`, `engines`, `tsx` en dépendance, `.gitattributes`, test `tests/deploy-config.test.ts`.
+- **Défaut corrigé** : le script de purge planifié `scripts/purge.mjs` n'effaçait pas les empreintes d'IP de `analysis_attempts` (seule la fonction interne le faisait) : les IP hachées des tentatives restaient donc indéfiniment. Corrigé et testé.
+- Non vérifié : noms exacts des variables Clever Cloud (listés dans CLEVER-CLOUD.md, « à confirmer au premier déploiement »). Rien n'est déployé.

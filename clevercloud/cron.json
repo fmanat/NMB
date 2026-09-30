@@ -1,0 +1,4 @@
+[
+  "0 * * * * $ROOT/clevercloud/cron-purge.sh",
+  "30 4 * * * $ROOT/clevercloud/cron-stats.sh"
+]

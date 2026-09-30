@@ -118,3 +118,13 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 | Adresse IP fictive différente à chaque test (en-tête `x-forwarded-for`). | La limite de 5 analyses par 24 h fausserait sinon les tests. |
 | Mot de passe d'administration de test : écrit dans la configuration de test uniquement, transmis sous forme d'empreinte ; aucun fichier `.env`, aucune donnée persistée. | Consigne : « créé puis supprimé ». |
 | Ajout d'une phrase sur le rapport payé : accessible au moins 3 ans et téléchargeable en PDF. | Trouvé en écrivant les tests : la promesse n'y figurait pas. |
+
+## Session de nuit, Bloc 4 : préparation Clever Cloud
+
+| Décision | Raison |
+|---|---|
+| Scripts de tâches dans `clevercloud/*.sh` (et non des commandes directes dans `cron.json`), appelés par `$ROOT/...`. | Clever Cloud déconseille d'appeler `bash` directement ; un script avec shebang est la forme documentée. Fins de ligne Unix forcées par `.gitattributes`. |
+| Lecture de `POSTGRESQL_ADDON_URI` quand `DATABASE_URL` est vide. | Évite de copier le mot de passe de la base à la main. Sans effet si `DATABASE_URL` est renseigné. |
+| `tsx` déplacé en dépendance de production. | La tâche quotidienne est un script TypeScript. |
+| `NODE_ENV` ne doit pas être défini sur l'hébergeur. | Next.js le règle lui-même ; le définir à la construction pourrait empêcher l'installation des outils de construction. |
+| Le script de purge planifié efface aussi les IP hachées de `analysis_attempts`. | Défaut découvert : incohérence avec la fonction `purgeExpired` et avec la politique de confidentialité (IP effacées après 24 h). |

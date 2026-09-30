@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import pg from "pg";
 
-const url = process.env.MIGRATE_DATABASE_URL ?? process.env.DATABASE_URL;
+const url = process.env.MIGRATE_DATABASE_URL || process.env.DATABASE_URL || process.env.POSTGRESQL_ADDON_URI;
 if (!url) {
   console.error("DATABASE_URL manquant (voir .env).");
   process.exit(1);
