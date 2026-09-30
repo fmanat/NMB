@@ -48,6 +48,9 @@ export function formatEur(n: number): string {
 }
 
 // Plages plausibles acceptées pour les mesures déclarées (cm).
+// Formule A : les valeurs au-delà de ce nombre d'écarts-types de la moyenne Veale sont refusées.
+export const MAX_SIGMA = 4;
+
 export const LIMITS = {
   length: { min: 2, max: 30 },
   girth: { min: 3, max: 25 },

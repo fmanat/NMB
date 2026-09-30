@@ -107,7 +107,7 @@ Image générée côté serveur, formats 1080 × 1920 et 1200 × 630. Contenu ch
 - Chacun peut retirer son rapport de la comparaison à tout moment.
 
 ## 11. Données et confidentialité
-- Photo : jamais stockée (section 5). Documenter dans le README la politique de conservation des données de l'API xAI : ________.
+- Photo : jamais stockée chez nous (section 5). Politique de conservation de l'API xAI (documentation officielle consultée le 30/09/2026) : par défaut, requêtes et réponses, images comprises, conservées 30 jours sur serveurs chiffrés pour audit d'abus, sans entraînement sur ces données ; l'option Zero Data Retention (ZDR) les supprime, activable par l'administrateur de l'équipe dans la console xAI, au niveau de toute l'équipe, avec des fonctions désactivées (API Responses avec état, Files, Collections, Batch). Conséquences : (1) ZDR activé obligatoirement avant la mise en ligne, sinon les libellés « Photo supprimée après analyse » et la politique de confidentialité seraient inexacts ; (2) utiliser l'endpoint sans état /v1/chat/completions ; (3) xAI est un prestataire hors UE : prévoir l'information RGPD sur le transfert hors UE et un accord de traitement des données (DPA).
 - Données stockées : identifiant du rapport, formule, résultats chiffrés, commentaire, statut de paiement, date. Aucune donnée d'identité, pas d'e-mail, pas de compte.
 - Adresse IP : uniquement hachée, pour la limitation de débit, effacée après 24 h.
 - Limite : 5 analyses par appareil et par 24 h ; captcha respectueux de la vie privée à l'envoi.

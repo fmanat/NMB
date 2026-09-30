@@ -4,6 +4,7 @@ import {
   EVERYDAY_OBJECTS,
   LANDMARKS,
   LIMITS,
+  MAX_SIGMA,
   MEDICAL_ADVICE_ANGLE,
 } from "@/config/site";
 import { globalScore, percentile, referenceFor, straightness, type BodyState } from "./stats";
@@ -16,6 +17,14 @@ export const questionnaireSchema = z.object({
   direction: z.enum(["none", "left", "right", "up", "down"]),
 });
 export type QuestionnaireInput = z.infer<typeof questionnaireSchema>;
+
+/** Vrai si une mesure déclarée dépasse MAX_SIGMA écarts-types de la moyenne de référence de son état. */
+export function isOutOfReferenceRange(input: Pick<QuestionnaireInput, "state" | "length" | "girth">): boolean {
+  return (["length", "girth"] as const).some((dim) => {
+    const ref = referenceFor(input.state, dim);
+    return Math.abs(input[dim] - ref.mean) / ref.sd > MAX_SIGMA;
+  });
+}
 
 export type Measure = { value: number; percentile: number; referenceMedian: number };
 

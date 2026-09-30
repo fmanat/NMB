@@ -146,14 +146,19 @@ describe("conservation et limites (section 11)", () => {
     expect(rows.length).toBe(1);
   });
 
-  it("statistiques globales : uniquement les rapports payés, valeurs réelles", async () => {
+  it("statistiques globales : uniquement les rapports payés issus d'une photo (B, C)", async () => {
     expect((await globalStats()).totalAnalyses).toBe(0);
-    const a = await newReport();
-    await newReport();
-    await pool().query("UPDATE reports SET paid = true, paid_at = now(), score = 80 WHERE id = $1", [a]);
+    const b = await newReport();
+    const c = await newReport();
+    const declared = await newReport(); // formule A payée : ne compte pas
+    const unpaid = await newReport(); // photo non payée : ne compte pas
+    await pool().query("UPDATE reports SET formula = 'B', paid = true, paid_at = now(), score = 80 WHERE id = $1", [b]);
+    await pool().query("UPDATE reports SET formula = 'C', paid = true, paid_at = now(), score = 90 WHERE id = $1", [c]);
+    await pool().query("UPDATE reports SET paid = true, paid_at = now(), score = 98 WHERE id = $1", [declared]);
+    await pool().query("UPDATE reports SET formula = 'B', score = 99 WHERE id = $1", [unpaid]);
     const s = await globalStats();
-    expect(s.totalAnalyses).toBe(1);
-    expect(s.averageScore).toBe(80);
-    expect(s.bestScoreThisWeek).toBe(80);
+    expect(s.totalAnalyses).toBe(2);
+    expect(s.averageScore).toBe(85);
+    expect(s.bestScoreThisWeek).toBe(90);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { globalScore, normalCdf, percentile, straightness } from "@/lib/stats";
-import { buildQuestionnaireReport, questionnaireSchema } from "@/lib/report";
+import { buildQuestionnaireReport, isOutOfReferenceRange, questionnaireSchema } from "@/lib/report";
 import { SCORE } from "@/config/site";
 
 describe("loi normale", () => {
@@ -70,6 +70,16 @@ describe("rapport formule A", () => {
     expect(hi.length.percentile).toBe(99.9);
     const lo = buildQuestionnaireReport({ state: "erect", length: 4, girth: 5, curvature: "none", direction: "none" });
     expect(lo.length.percentile).toBe(0.1);
+  });
+  it("refuse au-delà de 4 écarts-types de la moyenne de référence de l'état", () => {
+    // repos : longueur 9,16 (σ 1,57) -> limite haute 15,44 ; circonférence 9,31 (σ 0,90) -> limite haute 12,91
+    expect(isOutOfReferenceRange({ state: "rest", length: 15.4, girth: 9 })).toBe(false);
+    expect(isOutOfReferenceRange({ state: "rest", length: 15.5, girth: 9 })).toBe(true);
+    expect(isOutOfReferenceRange({ state: "rest", length: 9, girth: 12.95 })).toBe(true);
+    // la même longueur est plausible en érection (13,12 ± 6,64) mais pas au repos
+    expect(isOutOfReferenceRange({ state: "erect", length: 15.5, girth: 11.6 })).toBe(false);
+    // vers le bas aussi : repos, longueur 9,16 - 6,28 = 2,88
+    expect(isOutOfReferenceRange({ state: "rest", length: 2.8, girth: 9 })).toBe(true);
   });
   it("refuse les valeurs invraisemblables", () => {
     const ok = { state: "rest", length: 9, girth: 9, curvature: "none", direction: "none" };

@@ -93,13 +93,13 @@ export async function purgeExpired(): Promise<{ reports: number; ips: number }> 
 
 export type GlobalStatsRow = { totalAnalyses: number; averageScore: number; bestScoreThisWeek: number };
 
-/** Statistiques réelles : uniquement les rapports payés (délivrés). Rien n'est arrondi à la hausse. */
+/** Statistiques réelles : uniquement les rapports payés issus d'une photo (B et C). Un record déclaré n'est pas un record. */
 export async function globalStats(): Promise<GlobalStatsRow> {
   const { rows } = await pool().query(
     `SELECT count(*)::int AS total,
             COALESCE(avg(score), 0)::float AS average,
             COALESCE(max(score) FILTER (WHERE paid_at > now() - interval '7 days'), 0)::int AS best_week
-       FROM reports WHERE paid = true`,
+       FROM reports WHERE paid = true AND formula IN ('B', 'C')`,
   );
   return { totalAnalyses: rows[0].total, averageScore: rows[0].average, bestScoreThisWeek: rows[0].best_week };
 }

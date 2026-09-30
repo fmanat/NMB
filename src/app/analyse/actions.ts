@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { RATE_LIMIT } from "@/config/site";
-import { buildQuestionnaireReport, questionnaireSchema } from "@/lib/report";
+import { buildQuestionnaireReport, isOutOfReferenceRange, questionnaireSchema } from "@/lib/report";
 import { countRecentByIp, createReport, hashIp } from "@/lib/repo";
 
 export type FormState = { error?: string; values?: Record<string, string> };
@@ -24,6 +24,13 @@ export async function submitQuestionnaire(_prev: FormState, fd: FormData): Promi
   });
   if (!parsed.success) {
     return { error: "Vérifiez les valeurs saisies : longueur et circonférence en centimètres, dans des plages plausibles.", values };
+  }
+
+  if (isOutOfReferenceRange(parsed.data)) {
+    return {
+      error: "Une des valeurs saisies sort de la plage que ce protocole peut traiter. Vérifiez votre mesure (en centimètres, état correctement indiqué) et réessayez.",
+      values,
+    };
   }
 
   const h = await headers();
