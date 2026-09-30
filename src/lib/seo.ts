@@ -1,7 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Marked, type Token, type Tokens } from "marked";
-import { parse as parseYaml } from "yaml";
 
 /** Les huit pages du lancement (cahier des charges, section 12). Le nom du fichier est <slug>.md. */
 export const SEO_SLUGS = [
@@ -60,17 +59,65 @@ function nonEmpty(v: unknown, what: string, file: string): string {
   return v.trim();
 }
 
-function splitFrontMatter(raw: string, file: string): { meta: Record<string, unknown>; body: string } {
-  const m = raw.replace(/^﻿/, "").match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-  if (!m) throw new SeoError(`${file} : en-tête manquant (le fichier doit commencer par --- puis les champs, puis ---).`);
-  let meta: unknown;
-  try {
-    meta = parseYaml(m[1]);
-  } catch (e) {
-    throw new SeoError(`${file} : en-tête illisible (${(e as Error).message.split("\n")[0]}).`);
+const SCALAR_KEYS = ["slug", "title", "metaDescription", "targetKeyword"] as const;
+const LIST_KEYS = { faq: ["q", "a"], sources: ["title", "url"] } as const;
+
+/** Valeur d'une ligne « clé: valeur » : tout ce qui suit le premier « : », les deux-points du texte sont donc permis. */
+function scalar(v: string): string {
+  const t = v.trim();
+  return t.length >= 2 && ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) ? t.slice(1, -1) : t;
+}
+
+/**
+ * Lit l'en-tête au format du cahier des charges (clés simples, deux listes faq et sources). Volontairement plus
+ * tolérant que le YAML strict : un titre comme « France : que disent les études ? » n'a pas besoin de guillemets.
+ */
+function parseHeader(block: string, file: string): Record<string, unknown> {
+  const meta: Record<string, unknown> = {};
+  let list: { key: keyof typeof LIST_KEYS; items: Record<string, string>[] } | null = null;
+  const lines = block.split(/\r?\n/);
+  for (const [i, raw] of lines.entries()) {
+    const at = `${file}, ligne ${i + 2} du fichier`;
+    if (raw.trim() === "") continue;
+    const top = raw.match(/^([A-Za-z][A-Za-z0-9]*):(.*)$/);
+    if (top) {
+      const [, key, rest] = top;
+      if (key in meta) throw new SeoError(`${at} : champ « ${key} » présent deux fois.`);
+      if (key in LIST_KEYS) {
+        if (rest.trim() !== "") throw new SeoError(`${at} : « ${key}: » doit être suivi d'une liste sur les lignes suivantes.`);
+        list = { key: key as keyof typeof LIST_KEYS, items: [] };
+        meta[key] = list.items;
+      } else if ((SCALAR_KEYS as readonly string[]).includes(key)) {
+        list = null;
+        meta[key] = scalar(rest);
+      } else {
+        throw new SeoError(`${at} : champ inconnu « ${key} » (attendus : ${[...SCALAR_KEYS, ...Object.keys(LIST_KEYS)].join(", ")}).`);
+      }
+      continue;
+    }
+    const item = raw.match(/^\s+-\s+([a-z]+):(.*)$/);
+    const cont = raw.match(/^\s+([a-z]+):(.*)$/);
+    if (list && (item || cont)) {
+      const m = (item ?? cont)!;
+      const [, k, rest] = m;
+      if (!(LIST_KEYS[list.key] as readonly string[]).includes(k))
+        throw new SeoError(`${at} : clé « ${k} » inconnue dans « ${list.key} » (attendues : ${LIST_KEYS[list.key].join(", ")}).`);
+      if (item) list.items.push({});
+      const current = list.items[list.items.length - 1];
+      if (!current) throw new SeoError(`${at} : chaque élément de liste doit commencer par « - ».`);
+      if (k in current) throw new SeoError(`${at} : clé « ${k} » présente deux fois dans le même élément.`);
+      current[k] = scalar(rest);
+      continue;
+    }
+    throw new SeoError(`${at} : ligne non reconnue « ${raw.trim().slice(0, 60)} ».`);
   }
-  if (!meta || typeof meta !== "object" || Array.isArray(meta)) throw new SeoError(`${file} : en-tête invalide.`);
-  return { meta: meta as Record<string, unknown>, body: m[2] };
+  return meta;
+}
+
+function splitFrontMatter(raw: string, file: string): { meta: Record<string, unknown>; body: string } {
+  const m = raw.replace(/^\uFEFF/, "").match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!m) throw new SeoError(`${file} : en-tête manquant (le fichier doit commencer par --- puis les champs, puis ---).`);
+  return { meta: parseHeader(m[1], file), body: m[2] };
 }
 
 function* walk(tokens: Token[]): Generator<Token> {
@@ -192,6 +239,28 @@ export function loadSeoPages(dir: string = SEO_DIR): SeoPage[] {
   return files
     .map((f) => parseSeoFile(readFileSync(join(dir, f), "utf8"), f, existing, statSync(join(dir, f)).mtime))
     .sort((a, b) => SEO_SLUGS.indexOf(a.slug) - SEO_SLUGS.indexOf(b.slug));
+}
+
+/** Comme loadSeoPages, mais collecte les erreurs de chaque fichier au lieu de s'arrêter à la première (pour l'outil de contrôle). */
+export function loadSeoPagesReport(dir: string = SEO_DIR): { pages: SeoPage[]; errors: { file: string; message: string }[] } {
+  let files: string[];
+  try {
+    files = readdirSync(dir).filter((f) => f.endsWith(".md") && isSlug(f.slice(0, -3)));
+  } catch {
+    return { pages: [], errors: [] };
+  }
+  const existing = new Set(files.map((f) => f.slice(0, -3)));
+  const pages: SeoPage[] = [];
+  const errors: { file: string; message: string }[] = [];
+  for (const f of files) {
+    try {
+      pages.push(parseSeoFile(readFileSync(join(dir, f), "utf8"), f, existing, statSync(join(dir, f)).mtime));
+    } catch (e) {
+      errors.push({ file: f, message: e instanceof Error ? e.message : String(e) });
+    }
+  }
+  pages.sort((x, y) => SEO_SLUGS.indexOf(x.slug) - SEO_SLUGS.indexOf(y.slug));
+  return { pages, errors };
 }
 
 export function getSeoPage(slug: string, dir?: string): SeoPage | null {

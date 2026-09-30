@@ -55,3 +55,7 @@ Tant que `SEO_PUBLISH` (fichier `.env`) est vide :
 - en production, les pages sont introuvables.
 
 Après relecture, mettre `SEO_PUBLISH=on` et **reconstruire le site** (le réglage est lu à la construction).
+
+## Dossier `a-corriger/`
+
+Une page qui ne respecte pas le format (par exemple un titre de plus de 60 caractères) fait échouer la construction du site. Tant qu'une page n'est pas corrigée, elle est rangée dans `content/seo/a-corriger/`, que le site ignore. Une fois corrigée, elle se déplace dans `content/seo/` (et `npm run seo:check` doit passer sans erreur).

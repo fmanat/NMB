@@ -7,7 +7,7 @@
 // Ce que l'outil NE fait PAS : vérifier qu'un chiffre cité figure bien dans sa source. Cela demande de lire la source
 // et se fait page par page, à la relecture.
 
-import { SEO_LIMITS, SEO_SLUGS, SeoError, loadSeoPages, type SeoPage } from "@/lib/seo";
+import { SEO_LIMITS, SEO_SLUGS, loadSeoPagesReport } from "@/lib/seo";
 
 const checkUrls = process.argv.includes("--urls");
 let errors = 0;
@@ -21,16 +21,14 @@ const warn = (m: string) => {
   console.log(`  ⚠ ${m}`);
 };
 
-let pages: SeoPage[];
-try {
-  pages = loadSeoPages();
-} catch (e) {
-  console.log(`✗ ${e instanceof SeoError ? e.message : String(e)}`);
-  process.exit(1);
+const { pages, errors: loadErrors } = loadSeoPagesReport();
+for (const e of loadErrors) {
+  console.log(`✗ ${e.message}`);
+  errors++;
 }
 
-console.log(`Pages présentes : ${pages.length} / ${SEO_SLUGS.length}`);
-const missing = SEO_SLUGS.filter((s) => !pages.some((p) => p.slug === s));
+console.log(`Pages valides : ${pages.length} / ${SEO_SLUGS.length}${loadErrors.length ? ` (${loadErrors.length} fichier(s) refusé(s), voir ci-dessus)` : ""}`);
+const missing = SEO_SLUGS.filter((s) => !pages.some((p) => p.slug === s) && !loadErrors.some((e) => e.file === `${s}.md`));
 if (missing.length) console.log(`Pages à venir : ${missing.join(", ")}\n`);
 
 async function probe(url: string): Promise<string> {

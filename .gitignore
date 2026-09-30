@@ -50,3 +50,6 @@ next-env.d.ts
 *.webp
 *.heic
 
+
+# texte source des pages SEO fourni par le proprietaire (les pages sont dans content/seo)
+/docs/8 texts.txt
