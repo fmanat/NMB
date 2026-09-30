@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Doc } from "@/components/Doc";
 import { REFERENCES, SCORE } from "@/config/site";
 
@@ -41,7 +42,7 @@ export default function Page() {
         Bitomètre ne stocke jamais la photo : elle est traitée en mémoire pendant l&apos;analyse, et n&apos;est
         enregistrée ni dans notre base ni dans nos journaux. Elle est envoyée au prestataire d&apos;analyse (xAI, États-Unis),
         qui conserve les requêtes 30 jours pour détecter les abus. Voir la{" "}
-        <a href="/confidentialite" className="underline">politique de confidentialité</a>.
+        <Link href="/confidentialite" className="underline">politique de confidentialité</Link>.
       </p>
     </Doc>
   );
