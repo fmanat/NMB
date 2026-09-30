@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CARD_LONG_MM, CARD_SHORT_MM, cardHomography, curvatureDegrees, estimateMeasures, homography, project, sortCorners, type Pt } from "@/lib/measure";
+import { CARD_LONG_MM, CARD_SHORT_MM, cardHomography, curvatureDegrees, estimateMeasures, estimateMeasuresRuler, homography, project, sortCorners, type Pt } from "@/lib/measure";
 
 // Simule une prise de vue : transforme des points en mm (plan de la carte) vers des pixels, avec perspective.
 const W = 1600;
@@ -72,3 +72,51 @@ describe("homographie et mesures", () => {
     expect(() => cardHomography([])).toThrow();
   });
 });
+
+describe("mesure avec une règle graduée", () => {
+  // Vue de face, 10 px par mm : règle en pouces avec graduations 1 et 5 (4 pouces = 101,6 mm = 1016 px).
+  const W2 = 2000;
+  const H2 = 1500;
+  const n = (x: number, y: number) => ({ x: x / W2, y: y / H2 });
+  const subject = {
+    base: n(200, 600),
+    extremite: n(1200, 600), // 1000 px = 100 mm
+    ligne_mediane: Array.from({ length: 8 }, (_, i) => n(200 + (1000 * (i + 1)) / 9, 600)),
+    bords: ["base", "25", "50", "75", "sous_gland"].map((hauteur, i) => ({
+      hauteur,
+      gauche: n(200 + i * 200, 600 - 190),
+      droite: n(200 + i * 200, 600 + 190), // largeur 380 px = 38 mm
+    })),
+  };
+
+  it("retrouve longueur et largeur avec une règle en pouces", () => {
+    const e = estimateMeasuresRuler(
+      { ...subject, regle: { unite: "inch", graduation_a: { ...n(300, 1000), valeur: 1 }, graduation_b: { ...n(1316, 1000), valeur: 5 } } },
+      W2,
+      H2,
+    );
+    expect(e.lengthCm).toBeCloseTo(10, 1);
+    expect(e.maxWidthCm).toBeCloseTo(3.8, 1);
+    expect(e.girthFromMaxCm).toBeCloseTo(Math.PI * 3.8, 1);
+  });
+
+  it("donne le même résultat avec une règle en centimètres", () => {
+    const e = estimateMeasuresRuler(
+      { ...subject, regle: { unite: "cm", graduation_a: { ...n(300, 1000), valeur: 0 }, graduation_b: { ...n(1300, 1000), valeur: 10 } } },
+      W2,
+      H2,
+    );
+    expect(e.lengthCm).toBeCloseTo(10, 1);
+  });
+
+  it("refuse deux graduations identiques", () => {
+    expect(() =>
+      estimateMeasuresRuler(
+        { ...subject, regle: { unite: "cm", graduation_a: { ...n(300, 1000), valeur: 2 }, graduation_b: { ...n(900, 1000), valeur: 2 } } },
+        W2,
+        H2,
+      ),
+    ).toThrow();
+  });
+});
+

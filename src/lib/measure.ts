@@ -114,11 +114,11 @@ export function curvatureDegrees(line: Pt[]): number {
  * imgW et imgH sont les dimensions en pixels de l'image envoyée au modèle.
  * Hypothèses : sujet à peu près dans le plan de la carte ; section circulaire pour la circonférence.
  */
-export function estimateMeasures(r: ReperageNorm, imgW: number, imgH: number): Estimates {
-  const px = (p: Pt): Pt => ({ x: p.x * imgW, y: p.y * imgH });
-  const { h, cardSkew } = cardHomography(r.coins_carte.map(px));
-  const mm = (p: Pt) => project(h, px(p));
+type Subject = Pick<ReperageNorm, "base" | "extremite" | "ligne_mediane" | "bords">;
+type Common = Omit<Estimates, "cardSkew" | "cardPxPerMm">;
 
+/** Mesures du sujet à partir d'une fonction qui convertit un point normalisé en millimètres. */
+function measureSubject(r: Subject, mm: (p: Pt) => Pt): Common {
   const base = mm(r.base);
   const tip = mm(r.extremite);
   // Ligne médiane ordonnée de la base vers l'extrémité.
@@ -131,9 +131,6 @@ export function estimateMeasures(r: ReperageNorm, imgW: number, imgH: number): E
   const maxW = Math.max(...widths);
   const meanW = widths.reduce((s, w) => s + w, 0) / widths.length;
 
-  const cardPx = sortCorners(r.coins_carte.map(px));
-  const longEdgePx = Math.max(dist(cardPx[0], cardPx[1]), dist(cardPx[1], cardPx[2]));
-
   return {
     lengthCm: lengthMm / 10,
     maxWidthCm: maxW / 10,
@@ -141,7 +138,41 @@ export function estimateMeasures(r: ReperageNorm, imgW: number, imgH: number): E
     girthFromMaxCm: (Math.PI * maxW) / 10,
     girthFromMeanCm: (Math.PI * meanW) / 10,
     curvatureDeg: curvatureDegrees(path),
-    cardSkew,
-    cardPxPerMm: longEdgePx / CARD_LONG_MM,
   };
+}
+
+export function estimateMeasures(r: ReperageNorm, imgW: number, imgH: number): Estimates {
+  const px = (p: Pt): Pt => ({ x: p.x * imgW, y: p.y * imgH });
+  const { h, cardSkew } = cardHomography(r.coins_carte.map(px));
+  const common = measureSubject(r, (p) => project(h, px(p)));
+
+  const cardPx = sortCorners(r.coins_carte.map(px));
+  const longEdgePx = Math.max(dist(cardPx[0], cardPx[1]), dist(cardPx[1], cardPx[2]));
+
+  return { ...common, cardSkew, cardPxPerMm: longEdgePx / CARD_LONG_MM };
+}
+
+export const RULER_UNIT_MM = { mm: 1, cm: 10, inch: 25.4 } as const;
+
+export type ReperageRegle = Subject & {
+  regle: {
+    unite: keyof typeof RULER_UNIT_MM;
+    graduation_a: { x: number; y: number; valeur: number };
+    graduation_b: { x: number; y: number; valeur: number };
+  };
+};
+
+/**
+ * Variante avec une règle graduée comme référence : deux graduations lues par le modèle donnent l'échelle.
+ * Pas de correction de perspective (une seule droite de référence) : moins fiable que la carte.
+ */
+export function estimateMeasuresRuler(r: ReperageRegle, imgW: number, imgH: number): Estimates {
+  const px = (p: Pt): Pt => ({ x: p.x * imgW, y: p.y * imgH });
+  const { graduation_a: a, graduation_b: b, unite } = r.regle;
+  const realMm = Math.abs(a.valeur - b.valeur) * RULER_UNIT_MM[unite];
+  const pxDist = dist(px(a), px(b));
+  if (!(realMm > 0) || !(pxDist > 0)) throw new Error("Graduations de règle inutilisables");
+  const mmPerPx = realMm / pxDist;
+  const common = measureSubject(r, (p) => ({ x: px(p).x * mmPerPx, y: px(p).y * mmPerPx }));
+  return { ...common, cardSkew: NaN, cardPxPerMm: 1 / mmPerPx };
 }

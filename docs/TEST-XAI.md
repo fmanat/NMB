@@ -66,3 +66,29 @@ Modèle `grok-4.7`, endpoint `/v1/chat/completions`, sortie JSON stricte accept�
 Conclusions : le raisonnement du modèle est la cause principale de la lenteur ; réduire la taille de l'image n'aide pas ; la rédaction du commentaire peut se faire après l'affichage de l'aperçu. Coût réel : entre 1,4 et 2,2 centimes de dollar par analyse complète.
 
 Options du script : `--effort low`, `--merge`, `--size 1024`, `--model NOM`, `--length`, `--girth`, `--state`.
+
+## 6. Essai avec règle graduée (30/09/2026)
+
+Premier essai avec mesure : photo réelle de l'utilisateur à côté d'une règle (mode `--ruler` : le modèle lit deux graduations et en déduit l'échelle, sans correction de perspective). `grok-4.7`, raisonnement réduit, appels fusionnés. Une seule photo, donc aucune conclusion statistique.
+
+| Mesure | Estimée | Réelle déclarée | Écart | Marge ± 10 % |
+|---|---|---|---|---|
+| Longueur | 10,8 cm | 10,16 cm (4 pouces) | +0,6 cm (+6 %) | dans la marge |
+| Circonférence (largeur max × π) | 11,0 cm | 12 cm | −1,0 cm (−9 %) | dans la marge |
+| Circonférence (largeur moyenne × π) | 10,4 cm | 12 cm | −1,6 cm (−14 %) | hors marge |
+
+Confiance moyenne des points : 0,76. Durée de l'appel avec photo : 48 s (21 s lors d'un essai précédent sans carte reconnue, donc sans points à placer) ; rédaction 19 s. L'objectif de 30 s n'est pas tenu de façon fiable avec `grok-4.7`.
+
+À noter : l'utilisateur avait annoncé 15 cm de longueur en érection lors d'un essai précédent, contre 4 pouces ici ; la valeur de comparaison utilisée est celle de cet essai (4 pouces).
+
+**Modèles plus rapides, testés sur l'image neutre (objet d'environ 9,9 cm)** :
+
+| Modèle | Durée avec photo | Longueur estimée |
+|---|---|---|
+| `grok-4.7` raisonnement réduit | 21 à 25 s | 9,9 cm |
+| `grok-4.3` raisonnement réduit | 14 s | 19,5 cm (erreur de 97 %) |
+| `grok-4.3` défaut | 12 s | 10,8 cm (+9 %) |
+
+`grok-4.3` est plus rapide et moins cher (1,25 / 2,50 $ par million de jetons) mais, sur un échantillon minuscule, il se trompe beaucoup plus : à ne pas retenir sans test de précision sur un lot de photos.
+
+**Pour valider les marges affichées** : il faudra au moins 15 à 20 photos de référence variées (éclairage, angle, sujets différents) avec mesures réelles connues, dont des photos neutres (objet de taille connue à côté d'une carte) pour ne pas multiplier les envois de photos intimes. La carte bancaire reste la référence prévue (elle permet la correction de perspective) ; la règle est un repli.
