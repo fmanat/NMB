@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07090d;
+  --surface: #0e131b;
+  --surface-2: #151c27;
+  --border: #223043;
+  --foreground: #e6edf6;
+  --muted: #8a9bb0;
+  --accent: #19a7ff;
+  --accent-2: #ffb020;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --font-sans: var(--font-sans-geo);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgba(25, 167, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(25, 167, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans-geo), system-ui, sans-serif;
+}
+
+.num {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #03131f;
+  font-weight: 600;
+  padding: 0.85rem 1.6rem;
+  border-radius: 0.6rem;
+  box-shadow: 0 0 24px rgba(25, 167, 255, 0.35);
+  transition: filter 0.15s;
+}
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.prose-lab h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+.prose-lab p,
+.prose-lab li {
+  color: var(--muted);
+  line-height: 1.7;
+}
+.prose-lab ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.prose-lab code {
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--accent-2);
 }
