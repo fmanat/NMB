@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GuidanceDiagram } from "@/components/GuidanceDiagram";
 import { UPLOAD } from "@/config/site";
+import { solveChallenge } from "@/lib/captcha/altchaClient";
 
 const MAX_PX = UPLOAD.maxPx; // même taille que celle retenue par le serveur (voir docs/DECISIONS.md)
 const field = "num mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-lg outline-none focus:border-accent";
@@ -59,6 +60,17 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
       fd.set("photo", blob, "photo.jpg");
       fd.set("formula", formula);
       if (captchaMode === "simulation" && captchaOk) fd.set("captcha", "simulation-ok");
+      if (captchaMode === "altcha") {
+        // Captcha à preuve de travail : le navigateur résout un petit défi (quelques secondes au plus), sans tiers ni cookie.
+        setSteps([{ id: "captcha", label: "Vérification anti-robot (calcul dans votre navigateur)", done: false }]);
+        const challenge = await fetch("/api/captcha/challenge", { cache: "no-store" });
+        if (!challenge.ok) {
+          setMessage({ kind: "error", text: "La vérification anti-robot est indisponible. Réessayez dans un instant." });
+          return;
+        }
+        fd.set("captcha", await solveChallenge(await challenge.json()));
+        setSteps([]);
+      }
 
       const res = await fetch("/api/analyse", { method: "POST", body: fd });
       if (!res.body || !res.headers.get("content-type")?.includes("ndjson")) {

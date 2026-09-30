@@ -6,6 +6,7 @@ import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { DIRECTION_FR } from "@/lib/report";
 import { referenceFor } from "@/lib/stats";
 import { getReportView } from "@/lib/view";
+import { AwaitPayment } from "./AwaitPayment";
 import { ReportActions } from "./ReportActions";
 
 export const metadata = {
@@ -16,8 +17,9 @@ export const metadata = {
 
 const f1 = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ retour?: string }> }) {
   const { id } = await params;
+  const { retour } = await searchParams;
   const view = await getReportView(id);
   if (view.status === "not_found") notFound();
 
@@ -54,6 +56,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               </div>
             ))}
           </div>
+          {retour && <AwaitPayment />}
           <p className="text-sm text-muted">Les résultats sont verrouillés jusqu&apos;au paiement.</p>
           <Link href={`/paiement/${id}`} className="btn-primary">
             Débloquer pour {formatEur(view.priceEur)}

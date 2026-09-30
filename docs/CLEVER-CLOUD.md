@@ -32,7 +32,7 @@ Ce qui est déjà prêt dans le dépôt :
    | `XAI_API_KEY` | la clé xAI |
    | `XAI_EFFORT` | `low` |
    | `PAYMENT_PROVIDER`, `AGE_PROVIDER`, `SCREENING_PROVIDER`, `CAPTCHA_PROVIDER` | les vrais prestataires choisis (voir PRESTATAIRES.md) ; **jamais** `simulation` ni `off` |
-   | variables propres à chaque prestataire | voir `.env.example` |
+   | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` · `AGEVERIF_CLIENT_ID`, `AGEVERIF_CLIENT_SECRET` · `ALTCHA_HMAC_KEY` | variables des adaptateurs prêts (voir `.env.example`) ; **Stripe** : déclarer l'adresse `SITE_URL/api/payments/webhook` ; **AgeVerif** : déclarer l'adresse de retour `SITE_URL/api/age/callback` |
    | `SEO_PUBLISH` | vide tant que les guides n'ont pas été relus ; `on` ensuite (puis redéployer) |
    | `STATS_WEBHOOK_URL`, `STATS_WEBHOOK_SECRET` | facultatifs |
 

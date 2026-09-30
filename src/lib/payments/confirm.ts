@@ -4,7 +4,7 @@ import { getPaymentProvider } from "./index";
 
 export type ConfirmResult =
   | { ok: true; alreadyConfirmed: boolean }
-  | { ok: false; reason: "unknown_payment" | "amount_mismatch" | "failed_event" };
+  | { ok: false; reason: "unknown_payment" | "amount_mismatch" | "failed_event" | "ignored_event" };
 
 /**
  * Seul point d'entrée qui débloque un rapport. Il n'est appelé que par une notification
@@ -12,6 +12,7 @@ export type ConfirmResult =
  */
 export async function handleWebhook(rawBody: string, signature: string | null): Promise<ConfirmResult> {
   const event = getPaymentProvider().verifyWebhook(rawBody, signature); // lève une erreur si invalide
+  if (!event) return { ok: false, reason: "ignored_event" };
 
   const client = await pool().connect();
   try {

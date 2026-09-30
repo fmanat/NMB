@@ -1,6 +1,8 @@
 import { createSimulatedVision } from "../vision/simulation";
 import type { VisionProvider } from "../vision/types";
 import { xaiVision } from "../vision/xai";
+import { ageVerifProvider } from "./ageverif";
+import { altchaCaptcha } from "./altcha";
 import { disabledCaptcha, disabledScreening, simulatedAge, simulatedCaptcha, simulatedScreening } from "./simulated";
 import type { AgeVerificationProvider, CaptchaProvider, ImageScreeningProvider } from "./types";
 
@@ -17,6 +19,7 @@ export function getVision(): VisionProvider {
 export function getAgeProvider(): AgeVerificationProvider {
   const id = process.env.AGE_PROVIDER ?? "simulation";
   if (id === "simulation") return simulatedAge;
+  if (id === "ageverif") return ageVerifProvider;
   throw new Error(`Prestataire de vérification d'âge inconnu : ${id}`);
 }
 
@@ -30,6 +33,7 @@ export function getScreening(): ImageScreeningProvider {
 export function getCaptcha(): CaptchaProvider {
   const id = process.env.CAPTCHA_PROVIDER ?? "simulation";
   if (id === "simulation") return simulatedCaptcha;
+  if (id === "altcha") return altchaCaptcha;
   if (id === "off") return disabledCaptcha; // désactivé (développement seulement)
   throw new Error(`Prestataire de captcha inconnu : ${id}`);
 }

@@ -124,3 +124,29 @@ test.describe("Formules B et C (photo neutre, moteurs simulés)", () => {
     await ctx.close();
   });
 });
+
+test.describe("Captcha à preuve de travail (ALTCHA auto-hébergé)", () => {
+  test("le navigateur résout le défi, l'analyse passe ; sans jeton valide, l'API refuse", async ({ browser, ip }) => {
+    const ctx = await browser.newContext({ baseURL: E2E.altchaUrl, extraHTTPHeaders: { "x-forwarded-for": ip } });
+    const page = await ctx.newPage();
+    await sendPhoto(page, { formula: "B", image: await neutralImage(), simulatedCaptcha: false });
+    await expect(page.getByRole("heading", { name: "Votre rapport est prêt" })).toBeVisible({ timeout: 60_000 });
+
+    // Appel direct sans solution : refus du captcha, aucun rapport.
+    const res = await page.request.post("/api/analyse", {
+      multipart: {
+        formula: "B",
+        state: "erect",
+        photo: { name: "photo.jpg", mimeType: "image/jpeg", buffer: await neutralImage() },
+        consent_adult: "on",
+        consent_mine: "on",
+        consent_sensitive: "on",
+        captcha: "simulation-ok",
+      },
+    });
+    const text = await res.text();
+    expect(text).toContain('"code":"captcha"');
+    expect(text).not.toContain('"type":"ready"');
+    await ctx.close();
+  });
+});

@@ -47,16 +47,19 @@ Un secret = une longue chaîne de caractères aléatoires (au moins 32), différ
 | `SITE_URL` | Adresse publique du site (ex. `https://bitometre.com`). Sert aux liens, aux images de partage et à la sécurité (https forcé si l'adresse est en https). | Oui |
 | `IP_HASH_SECRET` | Secret pour brouiller les adresses IP (limite de 5 essais par 24 h). Les IP ne sont jamais gardées en clair. | Oui |
 | `AGE_TOKEN_SECRET` | Secret qui signe le jeton « majeur : oui » (valable 30 minutes). | Oui |
-| `PAYMENT_PROVIDER` | `simulation` en local. En production : le prestataire réel (à brancher, partie 5). | Oui |
+| `PAYMENT_PROVIDER` | `simulation` en local. En production : `stripe` (adaptateur prêt, désactivé tant que ses clés manquent). | Oui |
 | `PAYMENT_WEBHOOK_SECRET` | Secret qui signe les notifications de paiement. Seule une notification signée débloque un rapport. | Oui |
 | `VISION_PROVIDER` | `simulation` en local ; `xai` pour le vrai moteur d'analyse. | Oui |
 | `XAI_API_KEY` | Clé de l'API xAI. Reste sur le serveur, jamais envoyée au navigateur. | Si `xai` |
 | `XAI_MODEL` | Modèle xAI. Vide = `grok-4.7` (celui qui a été testé). | Non |
 | `XAI_EFFORT` | Effort de raisonnement : `low` (recommandé, le plus rapide). Ne pas laisser vide : 10 fois plus lent. | Non |
 | `XAI_PRICE_IN_PER_M`, `XAI_PRICE_OUT_PER_M` | Tarifs xAI (dollars par million de jetons), pour calculer le coût réel d'une analyse dans l'administration. À mettre à jour si xAI change ses prix. | Non |
-| `AGE_PROVIDER` | Vérification d'âge : `simulation` en local, prestataire réel en production. | Oui (B, C) |
+| `AGE_PROVIDER` | Vérification d'âge : `simulation` en local ; en production `ageverif` (adaptateur prêt). | Oui (B, C) |
 | `SCREENING_PROVIDER` | Filtrage des images par empreinte : `simulation`, prestataire réel, ou `off` (local uniquement). | Oui (B, C) |
-| `CAPTCHA_PROVIDER` | Anti-robots : `simulation`, prestataire réel, ou `off` (local uniquement). | Oui (B, C) |
+| `CAPTCHA_PROVIDER` | Anti-robots : `simulation`, `altcha` (preuve de travail auto-hébergée, prête), ou `off` (local uniquement). | Oui (B, C) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Clés du paiement Stripe (`sk_test_`/`sk_live_` et `whsec_`). Adresse de notification à déclarer chez Stripe : `SITE_URL` + `/api/payments/webhook`. | Si `stripe` |
+| `AGEVERIF_CLIENT_ID`, `AGEVERIF_CLIENT_SECRET`, `AGEVERIF_CHALLENGES` | Identifiants OAuth2 d'AgeVerif et liste facultative de méthodes. Adresse de retour à déclarer : `SITE_URL` + `/api/age/callback`. | Si `ageverif` |
+| `ALTCHA_HMAC_KEY`, `ALTCHA_MAX_NUMBER` | Clé secrète (32 caractères ou plus) et difficulté du captcha auto-hébergé (défaut 100000). | Si `altcha` |
 | `SEO_PUBLISH` | Vide = pages de contenu (guides) cachées et en `noindex`. Mettre `on` **après relecture des textes**, puis reconstruire le site. | Non |
 | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | Accès à `/admin`. Générez-les avec `npm run admin:hash -- "votre mot de passe de 12 caractères ou plus"` et copiez les deux lignes affichées. Le mot de passe lui-même n'est écrit nulle part. | Pour /admin |
 | `STATS_WEBHOOK_URL`, `STATS_WEBHOOK_SECRET` | Envoi quotidien de chiffres anonymes agrégés (Make, n8n…). Adresse en https. Vide = rien n'est envoyé. | Non |

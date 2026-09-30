@@ -7,7 +7,8 @@ export interface AgeVerificationProvider {
   /** Adresse où envoyer l'utilisateur pour qu'il prouve sa majorité. */
   startVerification(args: { returnUrl: string }): Promise<{ redirectUrl: string }>;
   /** Interprète le retour du prestataire. Ne renvoie que l'information « majeur » ou non. */
-  completeVerification(req: Request): Promise<{ adult: boolean }>;
+  /** `returnPath` : écran où renvoyer l'utilisateur (le prestataire le restitue dans un `state` signé), sinon l'écran par défaut. */
+  completeVerification(req: Request): Promise<{ adult: boolean; returnPath?: string }>;
 }
 
 /**

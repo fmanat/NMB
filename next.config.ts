@@ -20,7 +20,8 @@ const csp = [
   "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  // Les formulaires renvoient vers la page de paiement (Stripe) et de vérification d'âge (AgeVerif) : seulement ces deux origines en plus du site.
+  "form-action 'self' https://checkout.stripe.com https://api.ageverif.com",
   "frame-ancestors 'none'",
   ...(!isDev && httpsSite ? ["upgrade-insecure-requests"] : []),
 ].join("; ");

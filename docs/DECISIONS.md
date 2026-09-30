@@ -128,3 +128,18 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 | `tsx` déplacé en dépendance de production. | La tâche quotidienne est un script TypeScript. |
 | `NODE_ENV` ne doit pas être défini sur l'hébergeur. | Next.js le règle lui-même ; le définir à la construction pourrait empêcher l'installation des outils de construction. |
 | Le script de purge planifié efface aussi les IP hachées de `analysis_attempts`. | Défaut découvert : incohérence avec la fonction `purgeExpired` et avec la politique de confidentialité (IP effacées après 24 h). |
+
+## Session de nuit, Blocs 2 et 3 : prestataires et adaptateurs
+
+| Décision | Raison |
+|---|---|
+| Comparaison des prestataires dans `docs/PRESTATAIRES.md`, avec recommandations et questions écrites ; aucune inscription, aucun message. | Consigne. Les citations sont de seconde main (résumés d'un outil de lecture) : à relire sur les pages. |
+| Adaptateurs écrits pour les trois candidats dont la documentation est publique : **Stripe** (paiement), **AgeVerif** (âge), **ALTCHA** (captcha). Aucun pour le filtrage d'empreintes. | PhotoDNA n'a pas de documentation publique (accès après approbation) : écrire un adaptateur reviendrait à inventer une API. |
+| Conséquence à connaître : **tant qu'aucun adaptateur de filtrage n'existe, les formules B et C ne peuvent pas tourner en production** (les modes `simulation` et `off` y sont interdits). Le propriétaire doit trancher (question 3 de PRESTATAIRES.md). | Je n'ai pas ajouté de mode « aucun filtrage » autorisé en production : c'est une décision de conformité qui n'est pas la mienne. |
+| Stripe : appels HTTP directs, sans bibliothèque ; signature `Stripe-Signature` (schéma v1, HMAC-SHA256 de « horodatage.corps », tolérance 5 min, plusieurs v1 acceptés) ; seul un événement `checkout.session.completed` **payé** (ou `async_payment_succeeded`) débloque ; événement d'un autre type : acquitté sans effet (`verifyWebhook` peut renvoyer `null`). | Documentation Stripe. Un événement inutile ne doit pas provoquer de nouvelles tentatives d'envoi par Stripe. |
+| Retour de paiement : la page du rapport se recharge toute seule pendant 1 minute (`?retour=1`). | La notification signée peut arriver après le visiteur ; le rapport ne s'ouvre jamais sans elle. |
+| AgeVerif : flux OAuth2, échange du code de serveur à serveur, confirmation par `/resources`, majeur = `verified` vrai **et** `age_threshold` ≥ 18. `state` signé (HMAC, 15 min) qui mémorise l'écran de retour (uniquement `/analyse/photo?f=B|C`). L'interface d'âge renvoie maintenant `returnPath`. | Documentation AgeVerif. Corrige aussi un défaut : le retour envoyait toujours vers la formule B. |
+| Aucune donnée d'identité d'AgeVerif (identifiant, pays) n'est lue ni conservée. | Minimisation. |
+| ALTCHA : protocole **v1** (SHA-256), auto-hébergé, sans dépendance, solveur écrit dans le dépôt ; usage unique des défis (table `captcha_used`, sans IP) ; difficulté 100000 par défaut. | La v2 utilise une dérivation de clé dont je n'ai pas pu lire la spécification ; la v1 reste prise en charge par la bibliothèque. Compatibilité avec le composant officiel non testée : à essayer avant la mise en ligne si on veut l'utiliser. |
+| CSP : `form-action` élargi à `checkout.stripe.com` et `api.ageverif.com`. | Les formulaires redirigent vers ces deux pages. |
+| `.env.example` : BOM supprimé ; variables des adaptateurs documentées. | Une marque d'ordre des octets ne doit jamais se retrouver dans un `.env`. |

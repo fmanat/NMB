@@ -34,3 +34,13 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Découverte importante : aucune certification Arcom n'existe (auto-déclaration) ; ne jamais écrire « certifié Arcom » ni « anonyme ».
 
 ## Prochain bloc : Bloc 3, adaptateurs (Stripe, ALTCHA, AgeVerif ; PhotoDNA impossible sans accès)
+
+## Bloc 3 : adaptateurs : FAIT (sauf filtrage d'empreintes)
+- Stripe : `src/lib/payments/stripe.ts` (13 tests : création, signature, rejeu, tolérance, rotation, paiement différé, montant faux, session inconnue). Retour de paiement avec rechargement automatique (`AwaitPayment`).
+- AgeVerif : `src/lib/providers/ageverif.ts` (13 tests : état signé, échange de code, seuil 18, erreurs, panne réseau, route de retour).
+- ALTCHA : `src/lib/captcha/altcha.ts`, `altchaClient.ts`, route `/api/captcha/challenge`, migration 005 (10 tests + 1 test de bout en bout navigateur sur un troisième site de test).
+- `.env.example` et README documentés ; `docs/CLEVER-CLOUD.md` mis à jour.
+- **PAS FAIT : filtrage d'empreintes** (aucune API publique). Bloque B et C en production tant que non tranché.
+- Non vérifié : comportement réel de chaque API (aucune clé) ; compatibilité ALTCHA avec le composant officiel ; Apple Pay/Google Pay chez Stripe.
+
+## Prochain : relecture finale, `verify`, rapport de fin de nuit

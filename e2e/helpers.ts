@@ -78,7 +78,7 @@ export async function payReport(page: Page) {
 }
 
 /** Parcours photo : vérification d'âge simulée, cases, captcha simulé, envoi d'une image neutre. */
-export async function sendPhoto(page: Page, o: { formula: "B" | "C"; image: Buffer; consents?: boolean; declared?: { length: string; girth: string } }) {
+export async function sendPhoto(page: Page, o: { formula: "B" | "C"; image: Buffer; consents?: boolean; declared?: { length: string; girth: string }; simulatedCaptcha?: boolean }) {
   await page.goto(`/analyse/photo?f=${o.formula}`);
   await expect(page).toHaveURL(/\/verification-age/);
   await page.getByRole("button", { name: "Vérifier mon âge" }).click();
@@ -92,7 +92,7 @@ export async function sendPhoto(page: Page, o: { formula: "B" | "C"; image: Buff
   await page.getByLabel("J'ai 18 ans ou plus.").check();
   await page.getByLabel("Cette photo est de moi.").check();
   await page.getByLabel(/Je consens au traitement de cette donnée sensible/).check();
-  await page.getByLabel(/Je ne suis pas un robot/).check();
+  if (o.simulatedCaptcha !== false) await page.getByLabel(/Je ne suis pas un robot/).check();
   await page.getByRole("button", { name: "Lancer l'analyse" }).click();
 }
 

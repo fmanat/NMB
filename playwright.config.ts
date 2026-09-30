@@ -9,13 +9,14 @@ export const E2E = {
   dbUrl: "postgresql://nmb:nmb@localhost:5432/nmb_test?options=-c%20search_path%3De2e",
   okUrl: "http://localhost:3201",
   lowUrl: "http://localhost:3202",
+  altchaUrl: "http://localhost:3203",
   paymentSecret: "secret-e2e-paiement",
   adminPassword: "mot-de-passe-e2e-jetable",
 } as const;
 
 // Les copies du site tournent en mode développement (« next dev ») : le garde-fou qui interdit les moteurs simulés en production
 // est figé à la construction, donc un site construit ne pourrait jamais les utiliser. Chaque copie a son dossier de travail.
-const env = (scenario: string, dist: string) => ({
+const env = (scenario: string, dist: string, extra: Record<string, string> = {}) => ({
   NEXT_DIST_DIR: dist,
   DATABASE_URL: E2E.dbUrl,
   PAYMENT_PROVIDER: "simulation",
@@ -32,6 +33,7 @@ const env = (scenario: string, dist: string) => ({
   XAI_API_KEY: "",
   STATS_WEBHOOK_URL: "",
   SITE_URL: "http://localhost:3201",
+  ...extra,
 });
 
 export default defineConfig({
@@ -45,6 +47,14 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { browserName: "chromium" } }],
   webServer: [
     { command: "npx next dev -p 3201", url: E2E.okUrl, env: env("ok", ".next-e2e-ok"), reuseExistingServer: false, timeout: 180_000 },
+    // Captcha à preuve de travail réel (ALTCHA auto-hébergé), moteurs de vision simulés.
+    {
+      command: "npx next dev -p 3203",
+      url: E2E.altchaUrl,
+      env: env("ok", ".next-e2e-altcha", { CAPTCHA_PROVIDER: "altcha", ALTCHA_HMAC_KEY: "cle-e2e-altcha-de-32-caracteres-ou-plus", ALTCHA_MAX_NUMBER: "5000" }),
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
     { command: "npx next dev -p 3202", url: E2E.lowUrl, env: env("low_confidence", ".next-e2e-low"), reuseExistingServer: false, timeout: 180_000 },
   ],
 });
