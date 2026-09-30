@@ -78,13 +78,33 @@ export function cardHomography(cornersPx: Pt[]): { h: Homography; cardSkew: numb
   return { h: homography(c, dst), cardSkew: skew };
 }
 
+type NPt = { x: number; y: number; confiance?: number };
+
 export type ReperageNorm = {
-  coins_carte: { x: number; y: number }[];
-  base: { x: number; y: number };
-  extremite: { x: number; y: number };
-  ligne_mediane: { x: number; y: number }[];
-  bords: { hauteur: string; gauche: { x: number; y: number }; droite: { x: number; y: number } }[];
+  coins_carte: NPt[];
+  base: NPt;
+  extremite: NPt;
+  ligne_mediane: NPt[];
+  bords: { hauteur: string; gauche: NPt; droite: NPt }[];
 };
+
+/** Indice de confiance global (0 à 100) : moyenne des confiances de tous les points repérés. */
+export function confidenceIndex(r: ReperageNorm): number {
+  const pts: NPt[] = [...r.coins_carte, r.base, r.extremite, ...r.ligne_mediane, ...r.bords.flatMap((b) => [b.gauche, b.droite])];
+  const conf = pts.map((p) => p.confiance).filter((c): c is number => typeof c === "number");
+  if (conf.length === 0) return 0;
+  return (conf.reduce((s, c) => s + c, 0) / conf.length) * 100;
+}
+
+/**
+ * Marge d'erreur (en %) : jamais inférieure à floorPct, augmentée quand la confiance est faible
+ * ou quand la perspective de la carte est forte (cardSkew = 1 : vue de face).
+ */
+export function marginPct(confidence0to100: number, cardSkew: number, cfg: { floorPct: number; perConfidencePct: number; perspectivePct: number }): number {
+  const fromConfidence = (1 - Math.min(100, Math.max(0, confidence0to100)) / 100) * cfg.perConfidencePct;
+  const fromPerspective = Number.isFinite(cardSkew) ? Math.max(0, cardSkew - 1) * cfg.perspectivePct : 0;
+  return Math.round(Math.max(cfg.floorPct, fromConfidence + fromPerspective));
+}
 
 export type Estimates = {
   lengthCm: number;
@@ -93,6 +113,12 @@ export type Estimates = {
   girthFromMaxCm: number;
   girthFromMeanCm: number;
   curvatureDeg: number;
+  /** Positif : courbure vers la droite, négatif : vers la gauche, vue de la base vers l'extrémité sur la photo. */
+  curvatureSignedDeg: number;
+  /** Symétrie sur 100 : écart relatif entre demi-largeurs gauche et droite. */
+  symmetry: number;
+  /** Conicité : largeur sous le gland divisée par la largeur à la base. */
+  taper: number;
   cardSkew: number;
   cardPxPerMm: number;
 };
@@ -107,6 +133,47 @@ export function curvatureDegrees(line: Pt[]): number {
   const n = Math.hypot(prox.x, prox.y) * Math.hypot(dis.x, dis.y);
   if (n === 0) return 0;
   return (Math.acos(Math.min(1, Math.max(-1, dot / n))) * 180) / Math.PI;
+}
+
+/** Angle signé (degrés) de la courbure : produit vectoriel des segments proximal et distal. */
+export function curvatureSigned(line: Pt[]): number {
+  if (line.length < 3) return 0;
+  const mid = Math.floor(line.length / 2);
+  const prox = { x: line[mid].x - line[0].x, y: line[mid].y - line[0].y };
+  const dis = { x: line[line.length - 1].x - line[mid].x, y: line[line.length - 1].y - line[mid].y };
+  const cross = prox.x * dis.y - prox.y * dis.x; // axe y vers le bas : > 0 = virage à droite
+  return (cross >= 0 ? 1 : -1) * curvatureDegrees(line);
+}
+
+function distToSegment(p: Pt, a: Pt, b: Pt): number {
+  const abx = b.x - a.x;
+  const aby = b.y - a.y;
+  const len2 = abx * abx + aby * aby;
+  const t = len2 === 0 ? 0 : Math.min(1, Math.max(0, ((p.x - a.x) * abx + (p.y - a.y) * aby) / len2));
+  return Math.hypot(p.x - (a.x + t * abx), p.y - (a.y + t * aby));
+}
+
+function distToPolyline(p: Pt, path: Pt[]): number {
+  let best = Infinity;
+  for (let i = 1; i < path.length; i++) best = Math.min(best, distToSegment(p, path[i - 1], path[i]));
+  return best;
+}
+
+/**
+ * Symétrie sur 100 : pour chaque hauteur, demi-largeur gauche et droite mesurées depuis la ligne médiane ;
+ * 100 = identiques, 0 = écart moyen de 100 % de la demi-largeur moyenne.
+ */
+export function symmetryScore(path: Pt[], edges: { gauche: Pt; droite: Pt }[]): number {
+  const asym: number[] = [];
+  for (const e of edges) {
+    const hl = distToPolyline(e.gauche, path);
+    const hr = distToPolyline(e.droite, path);
+    const mean = (hl + hr) / 2;
+    if (mean > 0) asym.push(Math.abs(hl - hr) / mean);
+  }
+  if (asym.length === 0) return 0;
+  const avg = asym.reduce((s, a) => s + a, 0) / asym.length;
+  return Math.min(100, Math.max(0, 100 * (1 - avg)));
 }
 
 /**
@@ -130,6 +197,13 @@ function measureSubject(r: Subject, mm: (p: Pt) => Pt): Common {
   const widths = r.bords.map((b) => dist(mm(b.gauche), mm(b.droite)));
   const maxW = Math.max(...widths);
   const meanW = widths.reduce((s, w) => s + w, 0) / widths.length;
+  const widthAt = (name: string) => {
+    const i = r.bords.findIndex((b) => b.hauteur === name);
+    return i >= 0 ? widths[i] : undefined;
+  };
+  const wBase = widthAt("base") ?? widths[0];
+  const wGland = widthAt("sous_gland") ?? widths[widths.length - 1];
+  const symmetry = symmetryScore(path, r.bords.map((b) => ({ gauche: mm(b.gauche), droite: mm(b.droite) })));
 
   return {
     lengthCm: lengthMm / 10,
@@ -138,6 +212,9 @@ function measureSubject(r: Subject, mm: (p: Pt) => Pt): Common {
     girthFromMaxCm: (Math.PI * maxW) / 10,
     girthFromMeanCm: (Math.PI * meanW) / 10,
     curvatureDeg: curvatureDegrees(path),
+    curvatureSignedDeg: curvatureSigned(path),
+    symmetry,
+    taper: wBase > 0 ? wGland / wBase : 0,
   };
 }
 

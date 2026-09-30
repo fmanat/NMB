@@ -1,0 +1,26 @@
+/**
+ * Vérification d'âge par prestataire tiers, en double anonymat : le prestataire ne sait pas quel site est
+ * consulté, le site ne reçoit qu'un « majeur : oui », sans aucune donnée d'identité (cahier des charges, section 7).
+ */
+export interface AgeVerificationProvider {
+  id: string;
+  /** Adresse où envoyer l'utilisateur pour qu'il prouve sa majorité. */
+  startVerification(args: { returnUrl: string }): Promise<{ redirectUrl: string }>;
+  /** Interprète le retour du prestataire. Ne renvoie que l'information « majeur » ou non. */
+  completeVerification(req: Request): Promise<{ adult: boolean }>;
+}
+
+/**
+ * Comparaison d'empreintes avec des bases d'images déjà répertoriées (type PhotoDNA ou Safer).
+ * Elle ne reconnaît QUE des images connues : ni nouvelles images, ni âge. Elle ne remplace pas la vérification d'âge.
+ */
+export interface ImageScreeningProvider {
+  id: string;
+  screen(jpeg: Buffer): Promise<{ blocked: boolean }>;
+}
+
+/** Captcha respectueux de la vie privée, vérifié côté serveur. */
+export interface CaptchaProvider {
+  id: string;
+  verify(token: string | null, ip: string): Promise<boolean>;
+}

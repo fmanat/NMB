@@ -26,10 +26,25 @@ export function isOutOfReferenceRange(input: Pick<QuestionnaireInput, "state" | 
   });
 }
 
-export type Measure = { value: number; percentile: number; referenceMedian: number };
+export type Measure = {
+  value: number;
+  percentile: number;
+  referenceMedian: number;
+  /** Marge d'erreur en % (formules photo uniquement ; les valeurs déclarées n'ont pas de marge). */
+  marginPct?: number;
+};
+
+export type DeclaredComparison = {
+  declaredLength: number;
+  declaredGirth: number;
+  /** Écart estimé par rapport au déclaré, en % (positif : l'estimation est plus grande). */
+  lengthGapPct: number;
+  girthGapPct: number;
+  flagged: boolean;
+};
 
 export type ReportResults = {
-  formula: "A";
+  formula: "A" | "B" | "C";
   state: BodyState;
   score: number;
   length: Measure;
@@ -38,6 +53,12 @@ export type ReportResults = {
   everyday: { label: string; times: number }[];
   landmarks: { label: string; times: number }[];
   comment: string;
+  /** Formules photo : indice de confiance (0 à 100), symétrie (0 à 100), conicité. */
+  confidence?: number;
+  symmetry?: number;
+  taper?: number;
+  /** Formule C : comparaison déclaré / estimé. */
+  declared?: DeclaredComparison;
 };
 
 export const DIRECTION_FR = {

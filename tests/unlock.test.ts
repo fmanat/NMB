@@ -24,10 +24,10 @@ async function refOf(reportId: string): Promise<string> {
 }
 
 beforeEach(async () => {
-  await pool().query("TRUNCATE payments, reports CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
 });
 afterAll(async () => {
-  await pool().query("TRUNCATE payments, reports CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
   await pool().end();
 });
 

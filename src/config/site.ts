@@ -81,3 +81,36 @@ export const LANDMARKS = [
   { label: "Burj Khalifa", m: 828 },
   { label: "Mont Blanc", m: 4805 },
 ] as const;
+
+// ---------- Formules photo (B et C) ----------
+
+export const UPLOAD = {
+  maxBytes: 8 * 1024 * 1024, // taille maximale acceptée après réencodage navigateur
+  maxPx: 1600, // plus grand côté de l'image envoyée à l'analyse
+  maxInputPixels: 40_000_000, // garde-fou contre les images piégées (décompression)
+} as const;
+
+// Durée de validité du jeton « majeur : oui » (minutes).
+export const AGE_TOKEN_MINUTES = 30;
+
+// Marge d'erreur par mesure : max(plancher, (1 - confiance) × coefficient + pénalité de perspective).
+export const MARGIN = {
+  floorPct: 10,
+  perConfidencePct: 50,
+  perspectivePct: 20, // par unité d'écart du rapport des côtés opposés de la carte à 1
+} as const;
+
+// En dessous de cette confiance moyenne des points repérés (0 à 1), l'analyse est jugée illisible.
+export const MIN_CONFIDENCE = 0.5;
+
+// Formule C : au-delà de cet écart (en %) entre mesure déclarée et estimée, un avertissement est affiché.
+export const DECLARED_GAP_WARN_PCT = 20;
+
+// Plages plausibles pour des mesures ESTIMÉES (cm). En dehors : analyse jugée illisible.
+export const ESTIMATE_LIMITS = {
+  length: { min: 2, max: 30 },
+  girth: { min: 3, max: 25 },
+} as const;
+
+// Circonférence estimée = π × largeur maximale (essais : meilleur que la largeur moyenne).
+export const GIRTH_FROM: "max" | "mean" = "max";

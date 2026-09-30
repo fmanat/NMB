@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CARD_LONG_MM, CARD_SHORT_MM, cardHomography, curvatureDegrees, estimateMeasures, estimateMeasuresRuler, homography, project, sortCorners, type Pt } from "@/lib/measure";
+import { confidenceIndex, curvatureSigned, marginPct, symmetryScore, CARD_LONG_MM, CARD_SHORT_MM, cardHomography, curvatureDegrees, estimateMeasures, estimateMeasuresRuler, homography, project, sortCorners, type Pt } from "@/lib/measure";
 
 // Simule une prise de vue : transforme des points en mm (plan de la carte) vers des pixels, avec perspective.
 const W = 1600;
@@ -117,6 +117,56 @@ describe("mesure avec une règle graduée", () => {
         H2,
       ),
     ).toThrow();
+  });
+});
+
+describe("symétrie, conicité, confiance et marge", () => {
+  it("symétrie proche de 100 pour un sujet symétrique, plus basse sinon", () => {
+    const sym = estimateMeasures(scene(130, 40), W, H);
+    expect(sym.symmetry).toBeGreaterThan(98);
+    const line = Array.from({ length: 10 }, (_, i) => ({ x: i * 10, y: 0 }));
+    const asym = symmetryScore(line, [{ gauche: { x: 20, y: -15 }, droite: { x: 20, y: 25 } }]);
+    expect(asym).toBeCloseTo(50, 5);
+  });
+
+  it("conicité : largeur sous le gland / largeur à la base", () => {
+    const s = scene(130, 40);
+    // élargit la base : bord base deux fois plus large que les autres
+    const tapered = {
+      ...s,
+      bords: s.bords.map((b, i) => (i === 0 ? { ...b, gauche: { ...b.gauche, y: b.gauche.y - 0.03 }, droite: { ...b.droite, y: b.droite.y + 0.03 } } : b)),
+    };
+    expect(estimateMeasures(s, W, H).taper).toBeCloseTo(1, 1);
+    expect(estimateMeasures(tapered, W, H).taper).toBeLessThan(0.9);
+  });
+
+  it("courbure signée : droite et gauche de signes opposés", () => {
+    const arc = (sign: number) =>
+      Array.from({ length: 9 }, (_, i) => {
+        const a = (i / 8) * (Math.PI / 4);
+        return { x: Math.sin(a) * 100, y: sign * (1 - Math.cos(a)) * 100 };
+      });
+    expect(curvatureSigned(arc(1))).toBeGreaterThan(15);
+    expect(curvatureSigned(arc(-1))).toBeLessThan(-15);
+  });
+
+  it("indice de confiance : moyenne des confiances, en pourcentage", () => {
+    const s = scene(130, 40);
+    const withConf = (c: number) => {
+      const f = <T extends object>(p: T) => ({ ...p, confiance: c });
+      return { ...s, coins_carte: s.coins_carte.map(f), base: f(s.base), extremite: f(s.extremite), ligne_mediane: s.ligne_mediane.map(f), bords: s.bords.map((b) => ({ ...b, gauche: f(b.gauche), droite: f(b.droite) })) };
+    };
+    expect(confidenceIndex(withConf(0.8))).toBeCloseTo(80, 6);
+    expect(confidenceIndex(s)).toBe(0);
+  });
+
+  it("marge : jamais sous 10 %, augmente avec la faible confiance et la perspective", () => {
+    const cfg = { floorPct: 10, perConfidencePct: 50, perspectivePct: 20 };
+    expect(marginPct(100, 1, cfg)).toBe(10);
+    expect(marginPct(95, 1, cfg)).toBe(10);
+    expect(marginPct(60, 1, cfg)).toBe(20);
+    expect(marginPct(60, 1.25, cfg)).toBe(25);
+    expect(marginPct(0, 1, cfg)).toBe(50);
   });
 });
 

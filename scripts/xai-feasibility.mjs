@@ -104,7 +104,6 @@ async function reencode(buf) {
 
 // ---------- Appels xAI ----------
 
-const T0 = Date.now();
 const usage = { in: 0, out: 0 };
 let badKeySeen = false;
 

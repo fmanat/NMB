@@ -13,6 +13,7 @@ export default defineConfig({
       PAYMENT_PROVIDER: "simulation",
       PAYMENT_WEBHOOK_SECRET: "secret-de-test",
       IP_HASH_SECRET: "secret-de-test",
+      AGE_TOKEN_SECRET: "secret-de-test",
     },
   },
 });
