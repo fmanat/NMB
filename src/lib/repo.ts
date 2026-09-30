@@ -1,5 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
-import { FORMULAS, RATE_LIMIT, UNPAID_TTL_HOURS, type FormulaId } from "@/config/site";
+import { FORMULAS, RATE_LIMIT, TICKER, UNPAID_TTL_HOURS, type FormulaId } from "@/config/site";
 import { pool } from "./db";
 import type { QuestionnaireInput, ReportResults } from "./report";
 
@@ -143,4 +143,11 @@ export async function addAttemptTokens(id: number, tokensIn: number, tokensOut: 
 
 export async function updateComment(reportId: string, comment: string): Promise<void> {
   await pool().query("UPDATE reports SET results = jsonb_set(results, '{comment}', to_jsonb($2::text)) WHERE id = $1", [reportId, comment]);
+}
+
+
+/** Statistiques du bandeau : aucun chiffre n'est exposé tant que le seuil de la configuration n'est pas atteint. */
+export async function publicStats(): Promise<{ show: false } | ({ show: true } & GlobalStatsRow)> {
+  const s = await globalStats();
+  return s.totalAnalyses >= TICKER.minAnalysesToShow ? { show: true, ...s } : { show: false };
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FORMULAS, SITE, formatEur } from "@/config/site";
+import { isPublished, loadSeoPages } from "@/lib/seo";
 
 const LINKS = [
   ["/methode", "Précision et méthode"],
@@ -10,6 +11,8 @@ const LINKS = [
 ] as const;
 
 export function Footer() {
+  // Guides : visibles seulement une fois publiés (ou hors production, pour la relecture).
+  const guides = isPublished() || process.env.NODE_ENV !== "production" ? loadSeoPages() : [];
   return (
     <footer className="border-t border-border mt-16">
       <div className="mx-auto max-w-5xl px-4 py-8 text-sm text-muted space-y-4">
@@ -24,6 +27,15 @@ export function Footer() {
           ))}
           .
         </p>
+        {guides.length > 0 && (
+          <nav aria-label="Guides" className="flex flex-wrap gap-x-5 gap-y-2">
+            {guides.map((g) => (
+              <Link key={g.slug} href={`/${g.slug}`} className="hover:text-foreground">
+                {g.title}
+              </Link>
+            ))}
+          </nav>
+        )}
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
           {LINKS.map(([href, label]) => (
             <Link key={href} href={href} className="hover:text-foreground">

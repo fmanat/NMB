@@ -1,26 +1,33 @@
-import { connection } from "next/server";
-import { TICKER } from "@/config/site";
-import { globalStats, type GlobalStatsRow } from "@/lib/repo";
+"use client";
 
-async function getStats(): Promise<GlobalStatsRow | null> {
-  await connection(); // toujours calculé à la demande, jamais figé au build
-  try {
-    return await globalStats();
-  } catch {
-    return null; // base indisponible : le bandeau reste masqué
-  }
-}
+import { useEffect, useState } from "react";
 
-export async function Ticker() {
-  const stats = await getStats();
-  if (!stats || stats.totalAnalyses < TICKER.minAnalysesToShow) return null;
+type Stats = { show: true; totalAnalyses: number; averageScore: number; bestScoreThisWeek: number };
 
+/**
+ * Bandeau de statistiques réelles. Chargé par le navigateur après l'affichage pour que les pages restent statiques
+ * (chargement rapide). Masqué tant que le seuil de la configuration n'est pas atteint : l'API ne renvoie alors aucun chiffre.
+ */
+export function Ticker() {
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    const ctl = new AbortController();
+    fetch("/api/stats", { signal: ctl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { show: boolean } | null) => {
+        if (j?.show) setStats(j as Stats);
+      })
+      .catch(() => {});
+    return () => ctl.abort();
+  }, []);
+
+  if (!stats) return null;
   const items: [string, string][] = [
     ["Rapports délivrés", stats.totalAnalyses.toLocaleString("fr-FR")],
     ["Score moyen", stats.averageScore.toFixed(1).replace(".", ",")],
     ["Meilleur score de la semaine", String(stats.bestScoreThisWeek)],
   ];
-
   return (
     <div className="border-b border-border bg-surface text-xs">
       <div className="mx-auto max-w-5xl px-4 h-8 flex items-center justify-between gap-4 overflow-x-auto whitespace-nowrap">

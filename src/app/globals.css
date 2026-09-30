@@ -89,3 +89,42 @@ body {
   font-family: var(--font-geist-mono), monospace;
   color: var(--accent-2);
 }
+
+.prose-lab h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+.prose-lab a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.prose-lab ol {
+  padding-left: 1.25rem;
+}
+.prose-lab p + p,
+.prose-lab ul,
+.prose-lab ol {
+  margin-top: 0.75rem;
+}
+.prose-lab strong {
+  color: var(--foreground);
+}
+.prose-lab blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+}
+.prose-lab table {
+  width: 100%;
+  font-size: 0.9rem;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+}
+.prose-lab th,
+.prose-lab td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}

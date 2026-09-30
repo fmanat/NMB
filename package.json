@@ -11,14 +11,17 @@
     "db:purge": "node --env-file=.env scripts/purge.mjs",
     "test": "vitest run",
     "xai:test": "node --no-warnings --env-file=.env scripts/xai-feasibility.mjs",
-    "calibrate": "tsx --env-file=.env scripts/calibrate.mts"
+    "calibrate": "tsx --env-file=.env scripts/calibrate.mts",
+    "seo:check": "tsx scripts/seo-check.mts"
   },
   "dependencies": {
+    "marked": "^18.0.14",
     "next": "16.3.7",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sharp": "^0.35.5",
+    "yaml": "^2.9.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
