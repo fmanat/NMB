@@ -9,7 +9,7 @@ faq:
   - q: Quelle est la circonférence moyenne au repos ?
     a: Veale et al. rapportent une circonférence flaccide moyenne de 9,31 cm.
   - q: Comment mesurer le tour du pénis ?
-    a: Utilisez un mètre ruban souple autour du corps du pénis sans serrer excessivement, en notant précisément la mesure.
+    a: Utilisez un mètre ruban souple autour du corps du pénis, en notant précisément la mesure.
   - q: La circonférence est-elle aussi variable que la longueur ?
     a: Les études montrent également une dispersion des circonférences, mais la variabilité dépend notamment de l'état du pénis et de la méthode utilisée.
   - q: Peut-on comparer une mesure flaccide et une mesure en érection ?
@@ -50,8 +50,6 @@ Elle ne doit pas être interprétée comme une valeur spécifiquement française
 La méthode est relativement simple.
 
 Un mètre ruban souple est placé autour du corps du pénis.
-
-Il doit être suffisamment ajusté pour suivre la surface, mais sans comprimer les tissus.
 
 La position exacte doit être conservée si plusieurs mesures sont réalisées.
 

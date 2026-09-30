@@ -56,7 +56,7 @@ export default function Home() {
           ))}
         </div>
         <p className="mt-4 text-xs text-muted">
-          Paiement unique, accès à vie au rapport. Le détail du calcul est public :{" "}
+          Paiement unique, sans abonnement, accès à votre rapport par son lien privé. Le détail du calcul est public :{" "}
           <Link href="/methode" className="underline">
             Précision et méthode
           </Link>

@@ -52,7 +52,7 @@ export default function Page() {
       <h2>Traitement de la photo</h2>
       <p>
         Bitomètre ne stocke jamais la photo : elle est traitée en mémoire pendant l&apos;analyse, et n&apos;est
-        enregistrée ni dans notre base ni dans nos journaux. Elle est envoyée au prestataire d&apos;analyse (xAI, États-Unis),
+        enregistrée ni dans notre base ni dans nos journaux. Elle est envoyée au prestataire d&apos;analyse (SpaceXAI LLC, connue sous le nom xAI, États-Unis),
         qui conserve les requêtes 30 jours pour détecter les abus. Voir la{" "}
         <Link href="/confidentialite" className="underline">politique de confidentialité</Link>.
       </p>

@@ -15,7 +15,7 @@ faq:
   - q: Comment sont calculés les percentiles et le score ?
     a: Chaque mesure est comparée aux distributions de la revue systématique de Veale et al. (2015), selon l’état choisi (repos ou érection). Le score sur 100 est une note de présentation volontairement indulgente ; ce n’est pas un percentile. La formule est publiée sur la page Précision et méthode.
   - q: Ma photo est-elle stockée ?
-    a: Bitomètre ne la stocke jamais : elle est réduite et débarrassée de ses métadonnées dans votre navigateur, traitée en mémoire, puis abandonnée. Elle est toutefois envoyée au prestataire d’analyse, xAI (États-Unis), qui conserve les requêtes 30 jours pour détecter les abus, sans les utiliser pour l’entraînement selon sa documentation. Le site ne peut pas effacer ces copies avant ce délai.
+    a: Bitomètre ne la stocke jamais : elle est réduite et débarrassée de ses métadonnées dans votre navigateur, traitée en mémoire, puis abandonnée. Elle est toutefois envoyée au prestataire d’analyse, SpaceXAI LLC (connue sous le nom xAI, États-Unis), qui conserve les requêtes 30 jours pour détecter les abus, sans les utiliser pour l’entraînement selon sa documentation. Le site ne peut pas effacer ces copies avant ce délai.
   - q: Que conserve Bitomètre sur moi ?
     a: Aucun compte, aucun e-mail. Le site conserve votre rapport (formule, résultats, commentaire, statut de paiement, date). Votre adresse IP n’est conservée que sous forme hachée, pour limiter le nombre d’analyses, et effacée après 24 heures. Les rapports non payés sont effacés après 24 heures. Des statistiques anonymes (formule, date, montant, score) restent conservées sans lien avec votre rapport.
   - q: Pourquoi ma photo a-t-elle été refusée ?
@@ -60,7 +60,7 @@ Les percentiles sont calculés à partir des références publiées par Veale et
 
 ## Confidentialité : où va la photo
 
-Bitomètre ne stocke jamais votre photo : elle reste en mémoire le temps de l'analyse. Elle est cependant transmise à xAI, société américaine qui réalise l'analyse d'image. D'après la documentation d'xAI, les requêtes envoyées à son interface sont conservées 30 jours pour détecter les abus, puis supprimées, et ne servent pas à entraîner ses modèles. Bitomètre ne peut pas effacer ces copies avant ce délai, et vous y consentez explicitement avant l'envoi.
+Bitomètre ne stocke jamais votre photo : elle reste en mémoire le temps de l'analyse. Elle est cependant transmise à SpaceXAI LLC (connue sous le nom xAI), société américaine qui réalise l'analyse d'image. D'après la documentation du prestataire, les requêtes envoyées à son interface sont conservées 30 jours pour détecter les abus, puis supprimées, et ne servent pas à entraîner ses modèles. Bitomètre ne peut pas effacer ces copies avant ce délai, et vous y consentez explicitement avant l'envoi.
 
 Le site ne demande ni compte ni adresse e-mail. Le détail figure dans la [politique de confidentialité](/confidentialite).
 

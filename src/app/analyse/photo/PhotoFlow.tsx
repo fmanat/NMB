@@ -147,7 +147,7 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
           <input type="checkbox" name="consent_sensitive" required className="mt-1 accent-[var(--accent)]" />
           <span>
             Je consens au traitement de cette donnée sensible pour l&apos;analyse, et à son envoi à un prestataire situé aux États-Unis
-            (xAI) qui la conserve 30 jours pour détecter les abus, sans l&apos;utiliser pour l&apos;entraînement.
+            (SpaceXAI LLC, connue sous le nom xAI) qui la conserve 30 jours pour détecter les abus, sans l&apos;utiliser pour l&apos;entraînement.
           </span>
         </label>
         {captchaMode === "simulation" && (

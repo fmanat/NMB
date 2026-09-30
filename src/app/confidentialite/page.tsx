@@ -19,10 +19,11 @@ export default function Page() {
         explicite, donné avant l&apos;envoi.
       </p>
 
-      <h2>Prestataire d&apos;analyse (xAI, États-Unis)</h2>
+      <h2>Prestataire d&apos;analyse (SpaceXAI LLC (connue sous le nom xAI), États-Unis)</h2>
       <p>
-        L&apos;analyse de la photo est réalisée par l&apos;interface de programmation (API) de xAI, société établie aux
-        États-Unis. Pour détecter les abus, xAI conserve les requêtes envoyées à son API, images comprises, pendant 30
+        L&apos;analyse de la photo est réalisée par l&apos;interface de programmation (API) de SpaceXAI LLC (connue sous le nom
+        xAI, anciennement X.AI Corp.), société du Nevada dont le siège social est situé 800 W Cesar Chavez St., Austin, Texas
+        78701, États-Unis. Pour détecter les abus, xAI conserve les requêtes envoyées à son API, images comprises, pendant 30
         jours, puis les supprime automatiquement. Selon sa documentation, xAI ne les utilise pas pour entraîner ses
         modèles sans autorisation explicite. Notre site ne peut pas effacer ces copies avant ce délai.
       </p>
@@ -37,7 +38,7 @@ export default function Page() {
 
       <h2>Accord de traitement des données</h2>
       <p>
-        Accord de traitement des données (RGPD, art. 28) conclu avec xAI : ________ (à signer et référencer avant
+        Accord de traitement des données (RGPD, art. 28) conclu avec SpaceXAI LLC (xAI) : ________ (à signer et référencer avant
         publication). Liste des autres prestataires ayant accès à des données : hébergeur ________, prestataire de
         paiement ________, prestataire de vérification d&apos;âge ________.
       </p>
