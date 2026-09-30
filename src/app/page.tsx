@@ -36,7 +36,7 @@ export default function Home() {
             ))}
           </ul>
         </div>
-        <div className="mt-14 flex justify-center gap-8 opacity-90">
+        <div className="mt-14 flex justify-center gap-3 sm:gap-8 opacity-90">
           <Gauge label="Score" />
           <Gauge label="Symétrie" />
           <Gauge label="Confiance" />

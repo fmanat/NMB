@@ -5,7 +5,7 @@ export function Gauge({ label, value }: { label: string; value?: number }) {
   const pct = value === undefined ? 0 : Math.min(1, Math.max(0, value / 100));
   return (
     <div className="flex flex-col items-center gap-2">
-      <svg viewBox="0 0 120 120" className="size-28" role="img" aria-label={label}>
+      <svg viewBox="0 0 120 120" className="size-20 sm:size-28" role="img" aria-label={label}>
         <circle cx="60" cy="60" r={r} fill="none" stroke="var(--border)" strokeWidth="8" />
         <circle
           cx="60"

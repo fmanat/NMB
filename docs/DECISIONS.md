@@ -72,3 +72,27 @@ Vérification de bout en bout avec le vrai moteur (image neutre dessinée, via l
 | Captcha et filtrage d'empreintes : interfaces simulées (défaut) et mode `off` (`CAPTCHA_PROVIDER=off`, `SCREENING_PROVIDER=off`). Tous interdits en production. | « Désactivables » demandé ; un vrai prestataire reste obligatoire en ligne. |
 | Tests ajoutés : fournisseur xAI réel avec `fetch` simulé (requêtes, réglages, refus, erreurs, parallélisme, rien dans les journaux) ; photo jamais écrite sur disque (dossier temporaire isolé, racine du projet), ni en base (aucune colonne binaire, aucun contenu d'image), ni dans les journaux ; suppression de la photo en mémoire. | Exigence du cahier des charges (section 5) et de la session. |
 | Formule de la durée affichée : « de 15 à 45 secondes ». | Mesures : 16 à 22 s d'attente avant l'aperçu, marge pour les pics. |
+
+## Bloc 5 : qualité
+
+**Rendu mobile.** Méthode : 17 pages (accueil, choix du protocole, questionnaire, envoi de photo B et C, méthode, FAQ, une page de guide, confidentialité, CGV, mentions légales, contact, rapport, partage, défi, vérification d'âge, connexion à l'administration) chargées dans des cadres de 320, 375, 390 et 768 px ; contrôle automatique du débordement horizontal. Seul défaut trouvé : la rangée des trois jauges de l'accueil débordait à 320 px (+33 px) et 375 px (+5 px). Corrigé (jauges plus petites et espacement réduit sur petit écran) ; 0 débordement ensuite aux quatre largeurs. Non couvert : chevauchements de texte (aucun outil automatique fiable) et vérification sur de vrais téléphones.
+
+**Lighthouse** (version de production, émulation mobile par défaut, Chrome local) :
+
+| Page | Performance | Accessibilité | Bonnes pratiques | SEO |
+|---|---|---|---|---|
+| Accueil | 98 | 100 | 100 | 100 |
+| Rapport (débloqué) | 95 | 100 | 100 | 63 |
+
+Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privée). Pistes restantes, non traitées car d'effet faible et liées au framework : CSS bloquant le rendu (80 à 120 ms), 29 Kio de JavaScript inutilisé, 14 Kio de JavaScript « ancien ». LCP 2,3 s (accueil) et 2,9 s (rapport) avec la simulation de réseau lent de Lighthouse.
+
+**En-têtes de sécurité** (`next.config.ts`), tous servis en production et vérifiés :
+- `Content-Security-Policy` : défaut `'self'`, scripts `'self' 'unsafe-inline'`, cadres interdits, objets interdits, formulaires et `base` limités au site, `frame-ancestors 'none'`, mise à niveau http → https seulement si `SITE_URL` est en https ;
+- `Strict-Transport-Security` (2 ans, sous-domaines, sans `preload` : engagement difficile à défaire, à décider par le propriétaire), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` (les adresses privées des rapports ne fuient pas vers d'autres sites), `Permissions-Policy` (caméra, micro, géolocalisation, USB coupés ; paiement limité au site), `Cross-Origin-Opener-Policy: same-origin`, en-tête « X-Powered-By » supprimé.
+
+| Décision | Raison |
+|---|---|
+| CSP **sans nonces**, donc `'unsafe-inline'` pour les scripts. | Le guide de Next.js l'indique : un nonce impose le rendu dynamique de toutes les pages et ferait perdre les pages statiques (accueil, guides), donc la vitesse mobile exigée par le cahier des charges. La CSP bloque malgré tout les scripts, cadres et formulaires d'autres sites. L'option hash (SRI) est expérimentale. À revoir si un audit l'exige. |
+| Vérification en production : interface interactive, action serveur (questionnaire) et redirection, sans violation de CSP ni erreur de console. | Une CSP mal réglée casse le site sans bruit. |
+| `npm audit` : 0 vulnérabilité. | — |
+| Quand un prestataire de paiement ou d'âge chargera un script, un cadre ou une connexion, ajouter **son domaine seulement** dans la CSP (commentaire dans `next.config.ts`). | Sinon sa page ne s'affichera pas ; ne jamais élargir à `*`. |
