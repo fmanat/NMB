@@ -32,6 +32,18 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="panel p-6 text-center space-y-4">
           <p className="num text-xs text-accent tracking-widest">ANALYSE TERMINÉE</p>
           <h1 className="text-2xl font-semibold">Votre rapport est prêt</h1>
+          {view.preview && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="panel p-3">
+                <p className="text-xs text-muted">Indice de confiance</p>
+                <p className="num text-3xl text-accent">{view.preview.confidence}<span className="text-sm text-muted"> / 100</span></p>
+              </div>
+              <div className="panel p-3">
+                <p className="text-xs text-muted">Symétrie</p>
+                <p className="num text-3xl text-accent">{Math.round(view.preview.symmetry)}<span className="text-sm text-muted"> / 100</span></p>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-3 select-none" aria-hidden="true">
             {["Score", "Longueur", "Percentiles"].map((l) => (
               <div key={l} className="panel p-3">
@@ -86,14 +98,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <tr className="border-t border-border">
               <td className="p-3 font-sans">Longueur</td>
               <td className="p-3">{f1(r.length.value)} cm</td>
-              <td className="p-3 font-sans text-muted">déclarée</td>
+              <td className="p-3 font-sans text-muted">{r.length.marginPct ? `± ${r.length.marginPct} %` : "déclarée"}</td>
               <td className="p-3 text-accent-2">{f1(r.length.percentile)}</td>
               <td className="p-3">{f1(r.length.referenceMedian)} cm</td>
             </tr>
             <tr className="border-t border-border">
               <td className="p-3 font-sans">Circonférence</td>
               <td className="p-3">{f1(r.girth.value)} cm</td>
-              <td className="p-3 font-sans text-muted">déclarée</td>
+              <td className="p-3 font-sans text-muted">{r.girth.marginPct ? `± ${r.girth.marginPct} %` : "déclarée"}</td>
               <td className="p-3 text-accent-2">{f1(r.girth.percentile)}</td>
               <td className="p-3">{f1(r.girth.referenceMedian)} cm</td>
             </tr>
@@ -101,13 +113,47 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <td className="p-3 font-sans">Courbure</td>
               <td className="p-3 font-sans" colSpan={4}>
                 {{ none: "Aucune", light: "Légère", marked: "Marquée" }[r.curvature.category]}
-                {r.curvature.direction !== "none" && ` ${DIRECTION_FR[r.curvature.direction]}`} (valeur déclarée, angle
-                retenu {r.curvature.angleDeg}°)
+                {r.curvature.direction !== "none" && ` ${DIRECTION_FR[r.curvature.direction]}`}
+                {r.formula === "A" ? ` (valeur déclarée, angle retenu ${r.curvature.angleDeg}°)` : ` (estimée, angle ${r.curvature.angleDeg}°)`}
               </td>
             </tr>
+            {r.symmetry !== undefined && (
+              <>
+                <tr className="border-t border-border">
+                  <td className="p-3 font-sans">Symétrie</td>
+                  <td className="p-3">{Math.round(r.symmetry)} / 100</td>
+                  <td className="p-3 font-sans text-muted" colSpan={3}>écart entre demi-largeurs gauche et droite</td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="p-3 font-sans">Conicité</td>
+                  <td className="p-3">{r.taper !== undefined ? String(r.taper).replace(".", ",") : "—"}</td>
+                  <td className="p-3 font-sans text-muted" colSpan={3}>largeur sous le gland / largeur à la base</td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="p-3 font-sans">Indice de confiance</td>
+                  <td className="p-3">{r.confidence} / 100</td>
+                  <td className="p-3 font-sans text-muted" colSpan={3}>qualité du repérage des points</td>
+                </tr>
+              </>
+            )}
           </tbody>
         </table>
       </section>
+
+      {r.declared && (
+        <section className="panel p-4 text-sm space-y-1">
+          <h2 className="font-semibold">Comparaison déclaré / estimé</h2>
+          <p className="num">
+            Longueur : déclarée {f1(r.declared.declaredLength)} cm · estimée {f1(r.length.value)} cm · écart {r.declared.lengthGapPct > 0 ? "+" : ""}
+            {f1(r.declared.lengthGapPct)} %
+          </p>
+          <p className="num">
+            Circonférence : déclarée {f1(r.declared.declaredGirth)} cm · estimée {f1(r.girth.value)} cm · écart {r.declared.girthGapPct > 0 ? "+" : ""}
+            {f1(r.declared.girthGapPct)} %
+          </p>
+          {r.declared.flagged && <p className="text-accent-2">Écart important : vérifiez votre méthode de mesure.</p>}
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Distribution label="Longueur" value={r.length.value} mean={lenRef.mean} sd={lenRef.sd} />
@@ -143,7 +189,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       <aside className="panel p-4 text-sm text-muted">
         <h2 className="font-semibold text-foreground mb-1">Précision et limites</h2>
-        Résultats calculés à partir de valeurs déclarées, non vérifiées. Les percentiles reposent sur une loi normale et
+        {r.formula === "A"
+          ? "Résultats calculés à partir de valeurs déclarées, non vérifiées."
+          : "Mesures estimées à partir d'une photographie : elles dépendent de la qualité de l'image, de la perspective et de l'hypothèse d'une section circulaire. La marge d'erreur indiquée n'est jamais inférieure à ± 10 %."}{" "}
+        Les percentiles reposent sur une loi normale et
         les références de Veale et al. (BJU International, 2015). Le score sur 100 est une note de présentation
         indulgente, pas un percentile. Ceci n&apos;est pas un avis médical.{" "}
         <Link href="/methode" className="underline">Voir la méthode</Link>.

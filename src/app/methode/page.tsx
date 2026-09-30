@@ -37,6 +37,18 @@ export default function Page() {
         Cette formule est volontairement indulgente : un profil médian obtient environ 72/100. Le score ne doit donc pas
         être lu comme un classement. Pour situer une mesure dans la population, reportez-vous aux percentiles.
       </p>
+      <h2>Mesures estimées à partir d&apos;une photo</h2>
+      <p>
+        Le modèle d&apos;analyse ne mesure rien : il repère des points (coins de la carte de référence, base et extrémité, ligne
+        médiane, bords). Tous les calculs sont faits par notre code : échelle et correction de perspective à partir de la carte
+        au format bancaire (85,60 × 53,98 mm), longueur le long de la ligne médiane, largeurs, circonférence estimée = π × largeur
+        maximale, courbure (angle entre les segments proximal et distal), symétrie (écart entre demi-largeurs gauche et droite,
+        100 = identiques) et conicité (largeur sous le gland / largeur à la base).
+      </p>
+      <p>
+        La marge d&apos;erreur de chaque mesure dépend de la confiance du repérage et de la perspective de la carte ; elle n&apos;est
+        jamais inférieure à ± 10 %. Elle n&apos;a pas encore été validée sur un grand nombre de photos de référence.
+      </p>
       <h2>Traitement de la photo</h2>
       <p>
         Bitomètre ne stocke jamais la photo : elle est traitée en mémoire pendant l&apos;analyse, et n&apos;est
