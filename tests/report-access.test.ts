@@ -10,7 +10,7 @@ describe("durée d'accès au rapport", () => {
   });
 
   it("est reportée dans les CGV, le paiement et l'accueil à partir de la configuration", () => {
-    for (const f of ["src/app/cgv/page.tsx", "src/app/paiement/[id]/PayForm.tsx", "src/app/page.tsx"]) {
+    for (const f of ["src/app/cgv/page.tsx", "src/app/paiement/[id]/PayForm.tsx", "src/app/page.tsx", "src/app/r/[id]/page.tsx"]) {
       expect(read(f)).toContain("REPORT_ACCESS.minYears");
     }
   });

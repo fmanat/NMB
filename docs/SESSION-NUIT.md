@@ -13,3 +13,11 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Constat : les rapports payés ne sont jamais purgés (seuls les non payés le sont) : la promesse est tenue par le code.
 
 ## Prochain bloc : Bloc 1, tests de bout en bout
+
+## Bloc 1 : tests de bout en bout : FAIT
+- 17 tests Playwright (`e2e/*.spec.ts`), `npm run e2e`, intégrés à `npm run verify` (verify vert : 214 tests unitaires + 17 e2e).
+- Couvert : A complète ; B et C avec image neutre (réencodage vérifié : JPEG, ≤ 1 600 px, métadonnées effacées ; aucune trace en base) ; refus (18 ans, plafond, valeurs absurdes, consentement manquant, pas de jeton d'âge, confiance basse, message sans « âge ») ; carte de partage (images 1200×630 et 1080×1920, suppression, suppression en cascade) ; défi (invitation, ami, comparaison sans cm, retrait) ; administration (refus, accès, déconnexion, cookie forgé, blocage après 5 échecs) ; sécurité (HTML verrouillé sans résultat, image OG neutre, ids aléatoires, notification signée rejouée sans double effet, retour sur le site sans déblocage).
+- Décisions : voir DECISIONS.md (next dev pour e2e, schéma e2e, NEXT_DIST_DIR).
+- Pas fait : tests sur mobile/autres navigateurs (Chromium seulement).
+
+## Prochain bloc : Bloc 2, comparaison des prestataires (docs/PRESTATAIRES.md)

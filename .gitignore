@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-e2e-*/
 /out/
 
 # production
@@ -53,3 +54,7 @@ next-env.d.ts
 
 # texte source des pages SEO fourni par le proprietaire (les pages sont dans content/seo)
 /docs/8 texts.txt
+
+# tests de bout en bout
+/test-results/
+/playwright-report/

@@ -15,9 +15,10 @@
     "seo:check": "tsx scripts/seo-check.mts",
     "stats:webhook": "tsx --env-file=.env scripts/stats-webhook.mts",
     "admin:hash": "tsx scripts/admin-hash.mts",
-    "verify": "npm run lint && tsc --noEmit && vitest run && tsx scripts/seo-check.mts && next build",
+    "verify": "npm run lint && tsc --noEmit && vitest run && tsx scripts/seo-check.mts && npm run e2e",
     "geometry:report": "tsx scripts/geometry-report.mts",
-    "latency:bench": "tsx scripts/latency-bench.mts"
+    "latency:bench": "tsx scripts/latency-bench.mts",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "marked": "^18.0.14",
@@ -29,6 +30,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.19.0",
     "@types/pg": "^8.23.1",

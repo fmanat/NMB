@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SITE, formatEur } from "@/config/site";
+import { REPORT_ACCESS, SITE, formatEur } from "@/config/site";
 import { Distribution } from "@/components/Distribution";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { DIRECTION_FR } from "@/lib/report";
@@ -206,6 +206,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </div>
 
       <ReportActions id={id} />
+      <p className="text-xs text-muted print:hidden">
+        Ce rapport reste accessible par son lien pendant au moins {REPORT_ACCESS.minYears} ans et téléchargeable en PDF à tout moment.
+      </p>
     </div>
   );
 }

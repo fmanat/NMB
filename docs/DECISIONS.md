@@ -106,3 +106,15 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 | Recherche d'hébergeurs dans `docs/HEBERGEMENT.md` : Clever Cloud recommandé, OVHcloud en repli, Scaleway ambigu, Hetzner écarté (clause 8.2 sur le contenu pornographique ou obscène, appliquée strictement selon ses déclarations publiques). | Comparaison des textes publiés. Les points techniques ne sont vérifiés que pour Clever Cloud. Ce n'est pas un avis juridique. |
 | Aucun fichier de tâches programmées (`cron.json`) ajouté au dépôt. | Son format dépend de l'hébergeur, pas encore choisi. |
 | Point noté : les scripts `db:purge` et `stats:webhook` utilisent `--env-file=.env`, qui échoue si le fichier n'existe pas ; chez un hébergeur (variables d'environnement), retirer cette option au moment du déploiement. | Éviter une purge qui échoue en silence en production. |
+
+## Session de nuit, Bloc 1 : tests de bout en bout (Playwright)
+
+| Décision | Raison |
+|---|---|
+| 17 tests dans `e2e/` : formule A, formules B et C (image neutre générée à la volée, jamais enregistrée), refus, carte de partage, défi, administration, sécurité. `npm run e2e`, inclus dans `npm run verify`. | Consigne de la session. |
+| Les copies du site de test tournent avec `next dev` (et non `next start`), sur les ports 3201 (vision « ok ») et 3202 (« confiance basse »). | Le garde-fou qui interdit les moteurs simulés en production est figé à la construction (NODE_ENV=production) : un site construit ne peut donc jamais les utiliser, y compris en test. Je n'ai pas affaibli ce garde-fou. |
+| `distDir` de Next.js lu dans `NEXT_DIST_DIR` (défaut `.next`). | Deux `next dev` ne peuvent pas partager un dossier de travail. Sans effet en production. |
+| Base des tests de bout en bout : schéma `e2e` de la base `nmb_test`. | Le rôle `nmb` n'a pas le droit de créer une base. Les tests unitaires (schéma `public`) et la base de développement restent intacts ; un test unitaire filtre désormais le schéma `public`. |
+| Adresse IP fictive différente à chaque test (en-tête `x-forwarded-for`). | La limite de 5 analyses par 24 h fausserait sinon les tests. |
+| Mot de passe d'administration de test : écrit dans la configuration de test uniquement, transmis sous forme d'empreinte ; aucun fichier `.env`, aucune donnée persistée. | Consigne : « créé puis supprimé ». |
+| Ajout d'une phrase sur le rapport payé : accessible au moins 3 ans et téléchargeable en PDF. | Trouvé en écrivant les tests : la promesse n'y figurait pas. |

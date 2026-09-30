@@ -106,7 +106,8 @@ Les statistiques durables (journal anonyme, paiements) sont conservées même ap
 |---|---|
 | `npm run dev` | Site en mode développement. |
 | `npm run verify` | Code, types, tests, contrôle des pages de contenu, construction : à lancer avant chaque commit. |
-| `npm test` | Tests seuls. |
+| `npm test` | Tests unitaires seuls. |
+| `npm run e2e` | Tests du navigateur (parcours complets avec prestataires simulés, sans aucun appel xAI). Premier usage : `npx playwright install chromium`. |
 | `npm run db:migrate` | Crée ou met à jour les tables. |
 | `npm run db:purge` | Purge (voir partie 4). |
 | `npm run seo:check` | Contrôle les pages de contenu (`-- --urls` : contrôle aussi le site en ligne). |

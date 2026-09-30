@@ -26,6 +26,8 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Tests de bout en bout : chaque copie du site de test a son propre dossier de travail (voir playwright.config.ts).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false, // ne pas annoncer la technologie du serveur
   async headers() {
     return [
