@@ -6,7 +6,7 @@ import { SITE } from "@/config/site";
 export default function robots(): MetadataRoute.Robots {
   const base = (process.env.SITE_URL ?? `https://${SITE.domain}`).replace(/\/$/, "");
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: ["/r/", "/paiement/", "/defi/", "/api/", "/analyse/", "/verification-age/"] }],
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/r/", "/paiement/", "/defi/", "/api/", "/analyse/", "/verification-age/", "/admin/"] }],
     sitemap: `${base}/sitemap.xml`,
   };
 }

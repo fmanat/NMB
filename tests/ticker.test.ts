@@ -3,20 +3,20 @@ import { TICKER } from "@/config/site";
 import { pool } from "@/lib/db";
 import { publicStats } from "@/lib/repo";
 
-// Insère n rapports de formule B payés, score 80, directement en SQL.
+// Insère n lignes du journal (rapports payés, score 80) directement en SQL.
 async function insertPaid(n: number, formula = "B") {
   await pool().query(
-    `INSERT INTO reports (id, formula, input, results, score, paid, paid_at)
-     SELECT md5(g::text) || md5((g + 100000)::text), $2, '{}'::jsonb, '{}'::jsonb, 80, true, now() FROM generate_series(1, $1) g`,
+    `INSERT INTO report_log (key, formula, score, created_at, paid_at)
+     SELECT md5(g::text) || md5((g + 100000)::text), $2, 80, now(), now() FROM generate_series(1, $1) g`,
     [n, formula],
   );
 }
 
 beforeEach(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
 });
 afterAll(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
   await pool().end();
 });
 

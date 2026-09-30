@@ -12,7 +12,9 @@
     "test": "vitest run",
     "xai:test": "node --no-warnings --env-file=.env scripts/xai-feasibility.mjs",
     "calibrate": "tsx --env-file=.env scripts/calibrate.mts",
-    "seo:check": "tsx scripts/seo-check.mts"
+    "seo:check": "tsx scripts/seo-check.mts",
+    "stats:webhook": "tsx --env-file=.env scripts/stats-webhook.mts",
+    "admin:hash": "tsx scripts/admin-hash.mts"
   },
   "dependencies": {
     "marked": "^18.0.14",

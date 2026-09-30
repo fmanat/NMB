@@ -16,10 +16,10 @@ async function report(results: ReportResults = resultsA, paid = true) {
 }
 
 beforeEach(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
 });
 afterAll(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
   await pool().end();
 });
 

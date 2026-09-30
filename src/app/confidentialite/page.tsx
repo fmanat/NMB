@@ -42,6 +42,17 @@ export default function Page() {
         paiement ________, prestataire de vérification d&apos;âge ________.
       </p>
 
+      <h2>Statistiques anonymes et paiements</h2>
+      <p>
+        Pour mesurer l&apos;activité du service, Bitomètre conserve un journal anonyme : pour chaque rapport créé, la formule,
+        la date, le score et la date de paiement éventuelle. Ce journal ne contient ni l&apos;adresse de votre rapport, ni
+        adresse IP, ni aucune donnée d&apos;identité ; il n&apos;est pas effacé quand vous supprimez votre rapport, et il ne
+        permet pas de le retrouver. Les paiements (montant, date, référence du prestataire de paiement) sont conservés pendant la
+        durée exigée par les obligations comptables, sans lien avec le contenu de votre rapport. Des agrégats quotidiens anonymes
+        (nombre d&apos;analyses, score moyen, répartition) peuvent être transmis à un outil de publication ; aucun groupe de moins
+        de 5 rapports n&apos;y est détaillé.
+      </p>
+
       <h2>Adresse IP</h2>
       <p>Hachée, utilisée uniquement pour limiter le nombre d&apos;analyses, effacée après 24 heures.</p>
 

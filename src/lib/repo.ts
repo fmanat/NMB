@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { FORMULAS, RATE_LIMIT, TICKER, UNPAID_TTL_HOURS, type FormulaId } from "@/config/site";
 import { pool } from "./db";
 import type { QuestionnaireInput, ReportResults } from "./report";
@@ -14,6 +14,11 @@ export type ReportRow = {
   waiver_accepted_at: Date | null;
   created_at: Date;
 };
+
+/** Clé du journal anonyme : empreinte SHA-256 de l'identifiant privé (l'identifiant lui-même n'y est pas conservé). */
+export function reportKey(id: string): string {
+  return createHash("sha256").update(id).digest("hex");
+}
 
 /** Identifiant aléatoire de 43 caractères (256 bits), impossible à deviner. */
 export function newReportId(): string {
@@ -41,10 +46,30 @@ export async function createReport(args: {
   ipHash: string | null;
 }): Promise<string> {
   const id = newReportId();
-  await pool().query(
-    "INSERT INTO reports (id, formula, input, results, score, ip_hash) VALUES ($1, $2, $3, $4, $5, $6)",
-    [id, args.formula, args.input, args.results, args.results.score, args.ipHash],
-  );
+  const client = await pool().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("INSERT INTO reports (id, formula, input, results, score, ip_hash) VALUES ($1, $2, $3, $4, $5, $6)", [
+      id,
+      args.formula,
+      args.input,
+      args.results,
+      args.results.score,
+      args.ipHash,
+    ]);
+    // Journal anonyme durable : survit à la suppression du rapport et à la purge des rapports non payés.
+    await client.query("INSERT INTO report_log (key, formula, score, created_at) VALUES ($1, $2, $3, now())", [
+      reportKey(id),
+      args.formula,
+      args.results.score,
+    ]);
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
   return id;
 }
 
@@ -64,13 +89,14 @@ export async function setWaiverAccepted(id: string): Promise<void> {
 
 export async function recordPayment(args: {
   reportId: string;
+  formula: FormulaId;
   provider: string;
   providerRef: string;
   amountCents: number;
 }): Promise<void> {
   await pool().query(
-    "INSERT INTO payments (report_id, provider, provider_ref, amount_cents) VALUES ($1, $2, $3, $4)",
-    [args.reportId, args.provider, args.providerRef, args.amountCents],
+    "INSERT INTO payments (report_id, formula, provider, provider_ref, amount_cents) VALUES ($1, $2, $3, $4, $5)",
+    [args.reportId, args.formula, args.provider, args.providerRef, args.amountCents],
   );
 }
 
@@ -97,13 +123,16 @@ export async function purgeExpired(): Promise<{ reports: number; ips: number }> 
 
 export type GlobalStatsRow = { totalAnalyses: number; averageScore: number; bestScoreThisWeek: number };
 
-/** Statistiques réelles : uniquement les rapports payés issus d'une photo (B et C). Un record déclaré n'est pas un record. */
+/**
+ * Statistiques réelles : uniquement les rapports payés issus d'une photo (B et C). Un record déclaré n'est pas un record.
+ * Calculées depuis le journal anonyme : elles ne baissent pas quand un utilisateur supprime son rapport.
+ */
 export async function globalStats(): Promise<GlobalStatsRow> {
   const { rows } = await pool().query(
     `SELECT count(*)::int AS total,
             COALESCE(avg(score), 0)::float AS average,
             COALESCE(max(score) FILTER (WHERE paid_at > now() - interval '7 days'), 0)::int AS best_week
-       FROM reports WHERE paid = true AND formula IN ('B', 'C')`,
+       FROM report_log WHERE paid_at IS NOT NULL AND formula IN ('B', 'C')`,
   );
   return { totalAnalyses: rows[0].total, averageScore: rows[0].average, bestScoreThisWeek: rows[0].best_week };
 }

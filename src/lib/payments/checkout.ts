@@ -17,6 +17,6 @@ export async function startCheckout(reportId: string, waiverAccepted: boolean): 
   const provider = getPaymentProvider();
   const amountCents = priceCents(report.formula);
   const checkout = await provider.createCheckout({ reportId, amountCents, currency: "EUR" });
-  await recordPayment({ reportId, provider: provider.id, providerRef: checkout.providerRef, amountCents });
+  await recordPayment({ reportId, formula: report.formula, provider: provider.id, providerRef: checkout.providerRef, amountCents });
   return checkout.redirectUrl;
 }

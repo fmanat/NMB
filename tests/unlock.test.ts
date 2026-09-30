@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { pool } from "@/lib/db";
 import { buildQuestionnaireReport } from "@/lib/report";
-import { createReport, getReport, hashIp, countRecentByIp, purgeExpired, globalStats, priceCents } from "@/lib/repo";
+import { createReport, getReport, hashIp, countRecentByIp, purgeExpired, globalStats, priceCents, reportKey } from "@/lib/repo";
 import { getReportView } from "@/lib/view";
 import { startCheckout, CheckoutError } from "@/lib/payments/checkout";
 import { handleWebhook } from "@/lib/payments/confirm";
@@ -24,10 +24,10 @@ async function refOf(reportId: string): Promise<string> {
 }
 
 beforeEach(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
 });
 afterAll(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts CASCADE");
+  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
   await pool().end();
 });
 
@@ -152,10 +152,12 @@ describe("conservation et limites (section 11)", () => {
     const c = await newReport();
     const declared = await newReport(); // formule A payée : ne compte pas
     const unpaid = await newReport(); // photo non payée : ne compte pas
-    await pool().query("UPDATE reports SET formula = 'B', paid = true, paid_at = now(), score = 80 WHERE id = $1", [b]);
-    await pool().query("UPDATE reports SET formula = 'C', paid = true, paid_at = now(), score = 90 WHERE id = $1", [c]);
-    await pool().query("UPDATE reports SET paid = true, paid_at = now(), score = 98 WHERE id = $1", [declared]);
-    await pool().query("UPDATE reports SET formula = 'B', score = 99 WHERE id = $1", [unpaid]);
+    const log = (id: string, formula: string, score: number, paid: boolean) =>
+      pool().query("UPDATE report_log SET formula = $2, score = $3, paid_at = $4 WHERE key = $1", [reportKey(id), formula, score, paid ? new Date() : null]);
+    await log(b, "B", 80, true);
+    await log(c, "C", 90, true);
+    await log(declared, "A", 98, true);
+    await log(unpaid, "B", 99, false);
     const s = await globalStats();
     expect(s.totalAnalyses).toBe(2);
     expect(s.averageScore).toBe(85);

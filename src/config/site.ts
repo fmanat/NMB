@@ -114,3 +114,26 @@ export const ESTIMATE_LIMITS = {
 
 // Circonférence estimée = π × largeur maximale (essais : meilleur que la largeur moyenne).
 export const GIRTH_FROM: "max" | "mean" = "max";
+
+// ---------- Administration (étape 6) ----------
+
+// Finances. Les prix affichés sont TTC. Revenu net = prix TTC − TVA − commission du prestataire de paiement.
+export const FINANCE = {
+  vatRate: 0.2, // TVA française par défaut
+  paymentFeeRate: 0.12, // commission du prestataire de paiement : valeur PROVISOIRE, à remplacer par le tarif réel du prestataire choisi
+  paymentFeeFixedCents: 0, // frais fixes par transaction, en centimes (certains prestataires en facturent)
+} as const;
+
+export const ADMIN = {
+  sessionHours: 8,
+  maxFailures: 5, // tentatives de connexion échouées tolérées...
+  windowMinutes: 15, // ... par période de cette durée
+} as const;
+
+// Webhook quotidien : un groupe de moins de N rapports n'est jamais détaillé (aucune donnée individuelle).
+export const WEBHOOK = { minGroup: 5, timeoutMs: 15_000 } as const;
+
+// Tarif du modèle d'analyse (dollars par million de jetons), modifiable dans .env. Défaut : grok-4.7.
+export function aiPricing(): { inPerM: number; outPerM: number } {
+  return { inPerM: Number(process.env.XAI_PRICE_IN_PER_M ?? 2), outPerM: Number(process.env.XAI_PRICE_OUT_PER_M ?? 6) };
+}

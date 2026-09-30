@@ -1,4 +1,5 @@
 import { pool } from "../db";
+import { reportKey } from "../repo";
 import { getPaymentProvider } from "./index";
 
 export type ConfirmResult =
@@ -41,7 +42,10 @@ export async function handleWebhook(rawBody: string, signature: string | null): 
       return { ok: false, reason: "amount_mismatch" };
     }
     await client.query("UPDATE payments SET status = 'succeeded', confirmed_at = now() WHERE id = $1", [payment.id]);
-    await client.query("UPDATE reports SET paid = true, paid_at = now() WHERE id = $1", [payment.report_id]);
+    if (payment.report_id) {
+      await client.query("UPDATE reports SET paid = true, paid_at = now() WHERE id = $1", [payment.report_id]);
+      await client.query("UPDATE report_log SET paid_at = now() WHERE key = $1 AND paid_at IS NULL", [reportKey(payment.report_id)]);
+    }
     await client.query("COMMIT");
     return { ok: true, alreadyConfirmed: false };
   } catch (e) {

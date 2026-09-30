@@ -30,7 +30,8 @@ export async function createChallenge(reportId: string): Promise<string> {
   const existing = await pool().query("SELECT id FROM challenges WHERE creator_report_id = $1", [reportId]);
   if (existing.rows[0]) return existing.rows[0].id;
   const id = randomBytes(16).toString("base64url"); // 22 caractères
-  await pool().query("INSERT INTO challenges (id, creator_report_id) VALUES ($1, $2) ON CONFLICT (creator_report_id) DO NOTHING", [id, reportId]);
+  const created = await pool().query("INSERT INTO challenges (id, creator_report_id) VALUES ($1, $2) ON CONFLICT (creator_report_id) DO NOTHING", [id, reportId]);
+  if ((created.rowCount ?? 0) > 0) await pool().query("INSERT INTO stat_events (kind) VALUES ('challenge_created')");
   const { rows } = await pool().query("SELECT id FROM challenges WHERE creator_report_id = $1", [reportId]);
   return rows[0].id;
 }
@@ -59,7 +60,9 @@ export async function attachFriend(challengeId: string, friendReportId: string):
           AND EXISTS (SELECT 1 FROM reports WHERE id = $2)`,
       [challengeId, friendReportId],
     );
-    return (res.rowCount ?? 0) > 0;
+    const taken = (res.rowCount ?? 0) > 0;
+    if (taken) await pool().query("INSERT INTO stat_events (kind) VALUES ('challenge_taken')");
+    return taken;
   } catch {
     return false; // violation d'unicité : ce rapport est déjà ami d'un autre défi
   }
