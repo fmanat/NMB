@@ -1,54 +1,120 @@
 # Calibration : mesurer la précision réelle de l'analyse
 
-But : savoir de combien l'analyse se trompe, pour fixer la marge d'erreur affichée sur des données et non au jugé. Tant que cette calibration n'est pas faite, la marge (± 10 % minimum) est une hypothèse, et la page « Précision et méthode » le dit.
+## Pourquoi
 
-## Ce qu'il faut
+Le calcul géométrique a été validé **en simulation** (voir le tableau en bas) : sur des milliers de prises de vue virtuelles, l'erreur reste sous 6,1 % quand les points sont repérés parfaitement. Ce que la simulation **ne sait pas** : avec quelle précision le modèle d'intelligence artificielle place les points sur une vraie photo (flou, reflets, ombres, objectif déformant). Seule une calibration sur de vraies photos répond. Tant qu'elle n'est pas faite, la marge affichée (± 10 % minimum) reste une hypothèse, et la page « Précision et méthode » le dit.
 
-Un lot d'au moins **15 à 20 photos** dont vous connaissez les mesures réelles. Plus il y en a, plus la conclusion est solide. Variez l'éclairage, l'angle et la distance.
+Ordre à suivre : **d'abord des objets cylindriques de dimensions connues**, sans aucune donnée personnelle ; **ensuite un seul test anatomique, le vôtre**.
 
-Pour ne pas multiplier les envois de photos intimes vers xAI (qui les conserve 30 jours), une partie du lot peut être des **objets de taille connue** (un tube, une bouteille, un rouleau) posés à côté d'une carte bancaire, photographiés de la même façon. Indiquez alors la longueur et la circonférence de l'objet.
+## Matériel
 
-## Préparer le lot
+- Une **carte au format bancaire** (n'importe laquelle), posée côté verso.
+- **3 à 5 objets cylindriques rigides** à extrémités nettes : rouleau de papier essuie-tout, rouleau de ruban adhésif, tube en carton ou en PVC, bouteille à fond plat (mesurez seulement la partie cylindrique, sans col ni bouchon), pot cylindrique. Variez les diamètres (de 3 à 5 cm) et les longueurs (de 8 à 18 cm).
+- Une **règle rigide** et un **mètre ruban souple** (ou une ficelle et la règle).
+- Votre **téléphone**, avec l'**objectif principal** : sans zoom, sans mode portrait, sans grand-angle (le calcul suppose la focale de l'objectif principal).
+- Une surface plane (table) et une bonne lumière.
 
-1. Copiez les photos dans le dossier `photos-test/` (ignoré par git : elles ne peuvent pas être publiées par erreur).
-2. Créez dans ce même dossier un fichier `calibration.json` qui liste chaque photo et ses mesures réelles, en centimètres :
+## Étape 1 : mesurer la vérité
+
+Pour chaque objet, notez en centimètres, avec une décimale :
+- la **longueur** : de bout en bout de la partie cylindrique, à la règle rigide ;
+- la **circonférence** : faites le tour avec le mètre ruban (ou une ficelle que vous mesurez ensuite à la règle), sans serrer.
+
+Mesurez deux fois et gardez la moyenne. Écrivez les valeurs dans le tableau de la section « Tableau à remplir ».
+
+## Étape 2 : prendre les photos
+
+Règles identiques à celles du site (en dehors, la photo sera refusée) :
+- la carte **entière**, ses **4 coins** visibles, posée à plat **sur la même surface** que l'objet, à côté de lui ;
+- la carte doit occuper **au moins 15 % de la largeur de l'image** (un côté de la carte sur environ un sixième de la photo) ;
+- l'appareil incliné de **50° au maximum** par rapport à la verticale (0° = directement au-dessus) ;
+- pas de zoom, image nette, pas de reflet sur la carte.
+
+Pour **chaque objet**, prenez 6 photos :
+
+| Inclinaison | Lumière du jour | Lumière artificielle |
+|---|---|---|
+| Vue de dessus (0°) | 1 photo | 1 photo |
+| Environ 25° | 1 photo | 1 photo |
+| Environ 45° | 1 photo | 1 photo |
+
+Changez aussi la position de la carte autour de l'objet et la direction de l'objet d'une photo à l'autre. Avec 4 objets, cela fait 24 photos. **Minimum utile : 15 photos.**
+
+## Étape 3 : préparer le fichier
+
+Copiez toutes les photos dans le dossier `photos-test/` (ignoré par git). Créez dans ce même dossier le fichier `calibration.json`, avec une ligne par photo et les valeurs réelles de l'étape 1 :
 
 ```json
 [
-  { "file": "photo1.jpg", "length": 13.0, "girth": 12.0, "state": "erect" },
-  { "file": "tube1.jpg",  "length": 15.0, "girth": 10.0, "state": "erect" }
+  { "file": "rouleau1_haut_jour.jpg", "length": 13.0, "girth": 11.2, "state": "erect" },
+  { "file": "rouleau1_45_lampe.jpg",  "length": 13.0, "girth": 11.2, "state": "erect" }
 ]
 ```
 
-Règles : `length` est la longueur, `girth` la circonférence, `state` vaut `erect` (érection) ou `rest` (repos). Mesurez vous-même, à la règle souple, et notez les valeurs sans arrondir à la hausse.
+(`state` vaut toujours `erect` pour un objet : ce champ ne sert qu'aux comparaisons avec les références statistiques, pas à la calibration.)
 
-## Lancer
+## Étape 4 : lancer
 
-D'abord un essai gratuit avec le moteur simulé, pour vérifier que l'outil lit bien vos fichiers :
+D'abord un essai gratuit, pour vérifier que l'outil lit bien vos fichiers :
 
 ```bash
 npm run calibrate -- --simulate
 ```
 
-Puis le vrai essai avec xAI (payant : environ 1 à 2 centimes par photo, moins de 0,50 $ pour 20 photos) :
+Puis le vrai essai avec le moteur d'analyse (payant : environ 1 à 2 centimes de dollar par photo, donc moins de 0,50 $ pour 24 photos) :
 
 ```bash
 npm run calibrate
 ```
 
-L'outil n'affiche jamais les noms de fichiers ni les photos : uniquement des chiffres. Il utilise exactement le même code que le site.
+L'outil affiche, pour chaque photo, la mesure réelle, la mesure estimée, l'écart, l'inclinaison, la taille de la carte et la marge affichée. Il n'affiche jamais les noms de fichiers ni les images.
 
-## Lire les résultats
+## Étape 5 : lire et décider
 
-Pour chaque photo : mesure réelle, mesure estimée, écart en %, confiance, marge affichée. Puis une synthèse par mesure :
+La synthèse donne, pour la longueur et la circonférence : le biais, l'écart typique (80e et 90e percentiles) et la **part des mesures dans la marge affichée**.
 
-- **biais moyen** : positif = l'analyse surestime, négatif = elle sous-estime ;
-- **écart absolu 80e / 90e percentile** : 8 photos sur 10 (ou 9 sur 10) ont un écart inférieur à cette valeur ;
-- **dans ± 10 % / dans la marge affichée** : part des photos où l'estimation reste dans la marge annoncée. Si elle est très inférieure à 90 %, la marge affichée est trop optimiste ;
-- **marge suggérée** : le 90e percentile de l'écart, jamais sous 10 %. Elle n'est proposée qu'à partir de 15 mesures.
+| Résultat | Décision |
+|---|---|
+| **90 % ou plus** dans la marge affichée | La marge est juste. Passez à l'étape 6. |
+| Entre 75 % et 90 % | La marge est trop optimiste. Dans `src/config/site.ts`, augmentez `MARGIN.markerNoisePx` (2 → 3 → 4) puis relancez jusqu'à atteindre 90 %. |
+| Moins de 75 % | Un problème de fond : regardez si les refus ou les écarts se concentrent sur un cas (forte inclinaison, petite carte, un éclairage, un objet). Notez-le et ne passez pas à l'étape 6. |
+| Beaucoup de refus | Vérifiez que vos photos respectent l'étape 2 ; sinon les seuils (`PHOTO_LIMITS`) sont peut-être trop stricts pour de vraies photos. |
 
-La comparaison « largeur moyenne » permet de vérifier que le choix de la largeur maximale pour la circonférence reste le bon (réglage `GIRTH_FROM` dans `src/config/site.ts`).
+Un **biais** marqué (toujours trop grand ou toujours trop petit) indique un problème d'échelle : notez-le, il se corrige dans le calcul, pas dans la marge.
 
-## Ensuite
+## Étape 6 : un seul test anatomique, le vôtre
 
-Si la marge suggérée diffère de la marge actuelle, on ajuste les paramètres `MARGIN` dans `src/config/site.ts` et on met à jour la page « Précision et méthode ». **Supprimez les photos de `photos-test/` dès la calibration terminée.**
+À faire seulement si l'étape 5 est concluante.
+
+1. Mesurez-vous deux fois, à la règle et au mètre ruban, avec la **même méthode** que pour les objets ; notez la valeur sans arrondir à la hausse. Votre propre mesure a une incertitude d'environ ± 3 à 5 mm.
+2. Prenez **une seule photo**, carte à côté dans le même plan, inclinaison faible, sans visage ni élément identifiant.
+3. Ajoutez-la à `calibration.json`, placez-la seule dans `photos-test/` (retirez les autres) et lancez `npm run calibrate`.
+4. Rappel : le prestataire d'analyse conserve les requêtes 30 jours (voir la politique de confidentialité).
+5. **Supprimez la photo** de `photos-test/` immédiatement après.
+
+## Tableau à remplir
+
+| # | Objet | Inclinaison | Lumière | Longueur réelle (cm) | Longueur estimée (cm) | Écart (%) | Circonf. réelle (cm) | Circonf. estimée (cm) | Écart (%) | Dans la marge ? |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | | | | | | | | | | |
+| 2 | | | | | | | | | | |
+| 3 | | | | | | | | | | |
+| 4 | | | | | | | | | | |
+| 5 | | | | | | | | | | |
+| 6 | | | | | | | | | | |
+| … | | | | | | | | | | |
+| Test anatomique | (vous) | | | | | | | | | |
+
+Écart (%) = (estimé − réel) ÷ réel × 100.
+
+## Résultats de la simulation (point de départ)
+
+Commande : `npm run geometry:report`. Scènes simulées : caméra sténopé, carte et cylindre posés sur une table, inclinaison de 0° à 50°, rotations de la carte et de l'objet, cartes de 150 à 600 px de large, focale réelle de 80 % à 120 % de la focale supposée, cylindres de 10 à 16 cm de long et de 3 à 4,5 cm de diamètre.
+
+| Calcul | Repérage | Erreur circonférence (90e / max) | Dans la marge |
+|---|---|---|---|
+| Ancien (tout projeté dans le plan de la carte) | parfait | 67 % / 207 % | (non concerné) |
+| **Actuel (pose de l'appareil)** | parfait | **3,7 % / 6,1 %** | **100 %** |
+| **Actuel** | bruité (2 px par point), carte ≥ 250 px | 9,5 % / 27 % | 94 % |
+
+Limites connues de la simulation, que seule la calibration lèvera : imprécision réelle du modèle d'IA, flou et reflets, distorsion de l'objectif, objet non parfaitement cylindrique, sujet tenu en l'air (le calcul suppose un sujet posé sur la même surface que la carte), carte pliée ou décollée du plan.

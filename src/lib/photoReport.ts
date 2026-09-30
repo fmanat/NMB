@@ -6,7 +6,8 @@ import {
   MARGIN,
   MEDICAL_ADVICE_ANGLE,
 } from "@/config/site";
-import { confidenceIndex, marginPct, type Estimates, type ReperageNorm } from "./measure";
+import { confidenceIndex, marginPct, type ReperageNorm } from "./measure";
+import type { PoseEstimates } from "./pose";
 import { clampPercentile, type DeclaredComparison, type Measure, type ReportResults } from "./report";
 import { globalScore, percentile, referenceFor, straightness, type BodyState } from "./stats";
 
@@ -46,7 +47,7 @@ export function templateComment(r: Pick<ReportResults, "state" | "score" | "leng
 
 /** Assemble les résultats d'un rapport de formule B ou C à partir des mesures estimées. */
 export function buildPhotoReport(args: {
-  est: Estimates;
+  est: PoseEstimates;
   reperage: ReperageNorm;
   state: BodyState;
   formula: "B" | "C";
@@ -54,7 +55,7 @@ export function buildPhotoReport(args: {
 }): ReportResults {
   const { est, reperage, state, formula, declared } = args;
   const confidence = confidenceIndex(reperage);
-  const margin = marginPct(confidence, est.cardSkew, MARGIN);
+  const margin = marginPct(confidence, { cardLongEdgePx: est.cardLongEdgePx, tiltDeg: est.tiltDeg }, MARGIN);
 
   const lengthValue = round1(est.lengthCm);
   const girthValue = round1(GIRTH_FROM === "max" ? est.girthFromMaxCm : est.girthFromMeanCm);

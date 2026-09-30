@@ -14,10 +14,11 @@
 
 import { readFileSync } from "node:fs";
 import { relative, resolve, isAbsolute } from "node:path";
-import { GIRTH_FROM, MARGIN } from "@/config/site";
+import { GIRTH_FROM, MARGIN, PHOTO_LIMITS } from "@/config/site";
 import { errorPct, MIN_SAMPLES_FOR_MARGIN, summarize, suggestedMargin, type CalibrationPoint } from "@/lib/calibration";
 import { prepareImage } from "@/lib/image";
-import { confidenceIndex, estimateMeasures, marginPct } from "@/lib/measure";
+import { confidenceIndex, marginPct } from "@/lib/measure";
+import { estimateMeasuresPose } from "@/lib/pose";
 import { createSimulatedVision } from "@/lib/vision/simulation";
 import { validateReperage } from "@/lib/vision/validate";
 import { xaiVision } from "@/lib/vision/xai";
@@ -82,9 +83,17 @@ for (const [i, e] of entries.entries()) {
       console.log(`${tag} repérage incomplet`);
       continue;
     }
-    const est = estimateMeasures(rep, width, height);
+    const est = estimateMeasuresPose(rep, width, height);
+    // Mêmes refus que le site : au-delà, la marge affichée ne serait pas honnête.
+    const cardPct = (est.cardLongEdgePx / Math.max(width, height)) * 100;
+    if (est.tiltDeg > PHOTO_LIMITS.maxTiltDeg || cardPct < PHOTO_LIMITS.minCardFraction * 100) {
+      const motif = est.tiltDeg > PHOTO_LIMITS.maxTiltDeg ? "inclinaison_trop_forte" : "carte_trop_petite";
+      refused[motif] = (refused[motif] ?? 0) + 1;
+      console.log(`${tag} refusée (${motif} : inclinaison ${est.tiltDeg.toFixed(0)}°, carte ${cardPct.toFixed(0)} % de l'image)`);
+      continue;
+    }
     const conf = confidenceIndex(rep);
-    const margin = marginPct(conf, est.cardSkew, MARGIN);
+    const margin = marginPct(conf, { cardLongEdgePx: est.cardLongEdgePx, tiltDeg: est.tiltDeg }, MARGIN);
     const girthEst = GIRTH_FROM === "max" ? est.girthFromMaxCm : est.girthFromMeanCm;
     lengthPts.push({ real: e.length, est: est.lengthCm, marginPct: margin });
     girthPts.push({ real: e.girth, est: girthEst, marginPct: margin });
@@ -93,7 +102,7 @@ for (const [i, e] of entries.entries()) {
     const p = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(0)} %`.padStart(6);
     console.log(
       `${tag} ${e.state ?? "?"} | longueur réel ${f(e.length)} est. ${f(est.lengthCm)} (${p(errorPct(est.lengthCm, e.length))}) | ` +
-        `circonf. réel ${f(e.girth)} est. ${f(girthEst)} (${p(errorPct(girthEst, e.girth))}) | confiance ${conf.toFixed(0)} | marge ± ${margin} % | ${(r.usage.ms / 1000).toFixed(0)} s`,
+        `circonf. réel ${f(e.girth)} est. ${f(girthEst)} (${p(errorPct(girthEst, e.girth))}) | inclinaison ${est.tiltDeg.toFixed(0)}° · carte ${cardPct.toFixed(0)} % | confiance ${conf.toFixed(0)} | marge ± ${margin} % | ${(r.usage.ms / 1000).toFixed(0)} s`,
     );
   } catch (err) {
     console.log(`${tag} erreur : ${(err as Error).message.slice(0, 120)}`);

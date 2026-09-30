@@ -96,14 +96,17 @@ export function confidenceIndex(r: ReperageNorm): number {
   return (conf.reduce((s, c) => s + c, 0) / conf.length) * 100;
 }
 
+export type MarginConfig = { floorPct: number; perConfidencePct: number; markerNoisePx: number; sizeCoefficient: number; tiltPctAt45: number };
+
 /**
- * Marge d'erreur (en %) : jamais inférieure à floorPct, augmentée quand la confiance est faible
- * ou quand la perspective de la carte est forte (cardSkew = 1 : vue de face).
+ * Marge d'erreur (en %), jamais inférieure à floorPct : racine de la somme des carrés de trois termes indépendants
+ * (confiance du repérage, taille de la carte dans l'image, inclinaison de l'appareil). Voir MARGIN dans la configuration.
  */
-export function marginPct(confidence0to100: number, cardSkew: number, cfg: { floorPct: number; perConfidencePct: number; perspectivePct: number }): number {
+export function marginPct(confidence0to100: number, geo: { cardLongEdgePx: number; tiltDeg: number }, cfg: MarginConfig): number {
   const fromConfidence = (1 - Math.min(100, Math.max(0, confidence0to100)) / 100) * cfg.perConfidencePct;
-  const fromPerspective = Number.isFinite(cardSkew) ? Math.max(0, cardSkew - 1) * cfg.perspectivePct : 0;
-  return Math.round(Math.max(cfg.floorPct, fromConfidence + fromPerspective));
+  const fromSize = (cfg.sizeCoefficient * cfg.markerNoisePx) / Math.max(1, geo.cardLongEdgePx);
+  const fromTilt = cfg.tiltPctAt45 * Math.min(1.5, Math.abs(geo.tiltDeg) / 45);
+  return Math.round(Math.max(cfg.floorPct, Math.sqrt(fromConfidence ** 2 + fromSize ** 2 + fromTilt ** 2)));
 }
 
 export type Estimates = {

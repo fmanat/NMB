@@ -1,5 +1,6 @@
-import { ESTIMATE_LIMITS, GIRTH_FROM, LIMITS, MEDICAL_ADVICE_ANGLE, MIN_CONFIDENCE, RATE_LIMIT, type FormulaId } from "@/config/site";
-import { confidenceIndex, estimateMeasures } from "./measure";
+import { ESTIMATE_LIMITS, GIRTH_FROM, LIMITS, MEDICAL_ADVICE_ANGLE, MIN_CONFIDENCE, PHOTO_LIMITS, RATE_LIMIT, type FormulaId } from "@/config/site";
+import { confidenceIndex } from "./measure";
+import { estimateMeasuresPose } from "./pose";
 import { ImageError, prepareImage } from "./image";
 import { buildPhotoReport } from "./photoReport";
 import type { CaptchaProvider, ImageScreeningProvider } from "./providers/types";
@@ -152,9 +153,20 @@ export async function* runAnalysis(input: FlowInput, deps: FlowDeps): AsyncGener
   let est;
   try {
     // Le calcul utilise les dimensions réelles de l'image réencodée.
-    est = estimateMeasures(reperage, width, height);
+    est = estimateMeasuresPose(reperage, width, height);
   } catch {
     await refuse("calcul_impossible");
+    yield { type: "refused", message: NEUTRAL_REFUSAL };
+    return;
+  }
+  // Cas trop imprécis pour afficher une marge honnête : refusés (seuils mesurés par simulation, voir PHOTO_LIMITS).
+  if (est.tiltDeg > PHOTO_LIMITS.maxTiltDeg) {
+    await refuse("inclinaison_trop_forte");
+    yield { type: "refused", message: NEUTRAL_REFUSAL };
+    return;
+  }
+  if (est.cardLongEdgePx < PHOTO_LIMITS.minCardFraction * Math.max(width, height)) {
+    await refuse("carte_trop_petite");
     yield { type: "refused", message: NEUTRAL_REFUSAL };
     return;
   }

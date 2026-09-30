@@ -63,7 +63,7 @@ Le modèle ne mesure rien. Il renvoie en JSON les coordonnées normalisées (0 �
 - les deux bords à 5 hauteurs (base, 25 %, 50 %, 75 %, sous le gland).
 
 ### 5.3 Calculs (dans le code, jamais par le modèle)
-- Échelle en px/mm à partir de la carte, avec correction de perspective (homographie sur les 4 coins).
+- Échelle et pose de l'appareil à partir de la carte (focale typique supposée, voir section 22) ; les dimensions sont calculées dans l'espace, pas dans le plan de la carte.
 - Longueur : longueur de la ligne médiane.
 - Largeurs maximale et moyenne. Circonférence estimée = π × largeur (hypothèse de section circulaire, présentée comme estimation).
 - Courbure : angle entre les segments proximal et distal de la ligne médiane, en degrés, avec direction.
@@ -188,3 +188,10 @@ README en français simple : chaque variable d'environnement expliquée, mise en
 
 - Éditeur : société de droit anglais (Ltd) avec établissement en France. Mentions légales : raison sociale, numéro Companies House, siège, établissement en France (adresse, SIREN), directeur de la publication, numéro d'enregistrement ICO, hébergeur (champs `________` à compléter). CGV régies par le droit anglais, avec préservation des dispositions impératives de la loi du pays de résidence habituelle du consommateur. Renonciation au droit de rétractation fondée sur le règlement 37 des CCR 2013 et l'article L221-28, 13° du Code de la consommation (texte de l'article à faire relire par un juriste).
 - Prestataire d'analyse : **SpaceXAI LLC** (Nevada ; siège 800 W Cesar Chavez St., Austin, TX 78701, États-Unis), connue sous le nom xAI, anciennement X.AI Corp. ; ses conditions « Enterprise » régissent l'usage de l'API. Les textes destinés aux utilisateurs (consentement avant envoi, confidentialité) nomment cette raison sociale. Un accord de traitement des données (DPA) est proposé par le prestataire : à signer avant la mise en ligne.
+
+## 22. Géométrie des mesures photo (session du 01/10/2026)
+
+- Calcul : pose de l'appareil déduite des 4 coins de la carte avec une focale supposée de `CAMERA.focalFactor` (0,9) × le grand côté de l'image et un point principal au centre ; ligne médiane placée sur un plan horizontal à une hauteur égale au rayon du sujet ; rayon déduit de l'écart angulaire entre les deux rayons tangents aux bords (r = distance × sin(angle / 2)) ; circonférence = π × largeur maximale. Hypothèses : sujet posé sur la même surface que la carte, section circulaire, objectif principal sans zoom.
+- Refus : inclinaison de l'appareil supérieure à 50°, ou grand côté de la carte inférieur à 15 % du grand côté de l'image (message neutre, motifs `inclinaison_trop_forte` et `carte_trop_petite`).
+- Marge : max(10 %, √(confiance² + taille de la carte² + inclinaison²)), voir `MARGIN` dans `src/config/site.ts`. Le bruit de repérage supposé (2 px par point) est à régler par la calibration sur de vraies photos (docs/CALIBRATION.md).
+- Validation sur prises de vue simulées (`npm run geometry:report`, tests `tests/geometry.test.ts`) : repérage parfait, erreur maximale 6,1 % et 100 % des cas dans la marge jusqu'à 50° d'inclinaison et pour une focale réelle de ±20 % de la focale supposée ; repérage bruité (2 px), 94 % des cas dans la marge. Non validé sur des photos réelles.

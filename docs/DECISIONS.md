@@ -15,3 +15,19 @@ Règle suivie : pour toute décision non couverte par SPEC.md, l'option la plus 
 | « Accès à vie » retiré du formulaire de paiement et de l'accueil ; remplacé par « sans abonnement » / « accès à votre rapport par son lien privé ». | Promesse de durée illimitée risquée pour un petit service ; SPEC.md (section 3) la conserve comme intention commerciale, à arbitrer par le propriétaire. |
 | Pages juridiques : structure fournie, tous les champs inconnus en `________`, bandeau « à relire ». | Aucune donnée inventée. Pas de médiateur ni de juridiction nommés faute d'information. |
 | CGV : droit anglais avec préservation des dispositions impératives de la loi du pays de résidence habituelle du consommateur. | Formulation demandée ; conforme au principe du règlement Rome I (art. 6, § 2) pour les consommateurs de l'UE, à valider juridiquement (le Royaume-Uni applique sa version conservée de ce règlement). |
+
+## Bloc 2 : géométrie et calibration sans photo
+
+**Constat.** Le calcul d'origine (homographie de la carte appliquée à tous les points) se trompait beaucoup sur des scènes simulées réalistes : longueur surestimée d'environ 6 % même en vue de dessus (l'objet posé est plus près de l'appareil que la carte), et circonférence surestimée de 6 % à 0° jusqu'à 72 % à 45° (médiane), avec une erreur maximale de 207 % et 0 % des cas dans la marge au-delà de 15°.
+
+| Décision | Raison |
+|---|---|
+| Nouveau calcul avec pose de l'appareil (`src/lib/pose.ts`) : pose déduite de la carte avec une focale supposée de 0,9 × le grand côté de l'image (objectif principal d'un smartphone) ; points de la ligne médiane placés à la hauteur du rayon au-dessus de la carte ; rayon déduit de l'écart angulaire des deux bords tangents. | Avec repérage parfait : erreur maximale 6,1 % (contre 207 %), 100 % des cas dans la marge. Très peu sensible à la focale réelle : ±20 % donne 6 % au maximum ; ultra grand-angle (×0,5) 16,5 %. |
+| Hypothèse retenue : sujet posé sur la même surface que la carte, section circulaire. | Consigne de prise de vue du site. Un sujet tenu en l'air n'est pas couvert ; à vérifier à la calibration. |
+| **Refus si inclinaison > 50°** (`PHOTO_LIMITS.maxTiltDeg`). | Stable jusqu'à 50° ; à 55° et plus, des erreurs de 17 à 21 % apparaissent (confusion long/court côté de la carte). |
+| **Refus si la carte occupe moins de 15 % du grand côté de l'image** (`PHOTO_LIMITS.minCardFraction`). | Avec 2 px de bruit par point : erreur au 90e percentile de 18 % pour une carte de 150 px, 9 % à 250 px, 6 % à 400 px, 3,5 % à 600 px. Sous 240 px (sur 1 600), la marge affichée serait trop grande pour être utile. |
+| Marge = max(10 %, racine de la somme des carrés de trois termes : confiance, taille de la carte, inclinaison). Bruit supposé de repérage : 2 px par point. | La taille de la carte domine l'erreur due au bruit (erreur ≈ 2 700 / largeur de la carte en px, en %). Résultat en simulation bruitée : 94 % des cas dans la marge, 98 à 100 % pour une carte de 400 px ou plus. **Le bruit réel du modèle est inconnu : à régler par la calibration (`MARGIN.markerNoisePx`).** |
+| Le simulateur de prise de vue est placé dans `src/` (`src/lib/vision/camera-sim.ts`) et sert aussi au fournisseur de vision simulé. | Les scènes simulées du site en développement sont désormais cohérentes avec le calcul ; interdit en production comme les autres fournisseurs simulés. |
+| Ancien calcul conservé dans le code (`estimateMeasures`) uniquement pour le mode règle du script d'essai xAI et pour les tests qui documentent pourquoi il a été abandonné. | Le mode règle n'a pas de carte, donc pas de pose. |
+
+Commandes : `npm run geometry:report` (tableaux complets), `npm run verify` (tout : lint, types, tests, SEO, build).

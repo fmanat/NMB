@@ -160,13 +160,24 @@ describe("symétrie, conicité, confiance et marge", () => {
     expect(confidenceIndex(s)).toBe(0);
   });
 
-  it("marge : jamais sous 10 %, augmente avec la faible confiance et la perspective", () => {
-    const cfg = { floorPct: 10, perConfidencePct: 50, perspectivePct: 20 };
-    expect(marginPct(100, 1, cfg)).toBe(10);
-    expect(marginPct(95, 1, cfg)).toBe(10);
-    expect(marginPct(60, 1, cfg)).toBe(20);
-    expect(marginPct(60, 1.25, cfg)).toBe(25);
-    expect(marginPct(0, 1, cfg)).toBe(50);
+  it("marge : jamais sous 10 %, augmente avec la faible confiance, la petite carte et l'inclinaison", () => {
+    const cfg = { floorPct: 10, perConfidencePct: 50, markerNoisePx: 2, sizeCoefficient: 1350, tiltPctAt45: 3 };
+    const big = { cardLongEdgePx: 800, tiltDeg: 0 }; // terme de taille : 1350 × 2 / 800 = 3,4 %
+    expect(marginPct(100, big, cfg)).toBe(10);
+    expect(marginPct(95, big, cfg)).toBe(10);
+    // confiance 60 : terme 20 % ; combiné en quadrature avec 3,4 % de taille
+    expect(marginPct(60, big, cfg)).toBe(Math.round(Math.sqrt(20 ** 2 + (2700 / 800) ** 2)));
+    expect(marginPct(0, big, cfg)).toBeGreaterThanOrEqual(50);
+    // carte plus petite : marge plus grande, toutes choses égales par ailleurs
+    const a = marginPct(90, { cardLongEdgePx: 400, tiltDeg: 0 }, cfg);
+    const b = marginPct(90, { cardLongEdgePx: 240, tiltDeg: 0 }, cfg);
+    const c = marginPct(90, { cardLongEdgePx: 150, tiltDeg: 0 }, cfg);
+    expect(a).toBeLessThan(b);
+    expect(b).toBeLessThan(c);
+    expect(c).toBeGreaterThanOrEqual(18);
+    // inclinaison : marge plus grande, plafonnée
+    expect(marginPct(90, { cardLongEdgePx: 240, tiltDeg: 45 }, cfg)).toBeGreaterThanOrEqual(b);
+    expect(marginPct(90, { cardLongEdgePx: 240, tiltDeg: 120 }, cfg)).toBe(marginPct(90, { cardLongEdgePx: 240, tiltDeg: 67.5 }, cfg));
   });
 });
 

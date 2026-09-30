@@ -205,6 +205,8 @@ describe("refus : message neutre, aucun paiement, motif journalisé", () => {
     ["garbage", "reperage_incomplet"],
     ["low_confidence", "confiance_faible"],
     ["implausible", "mesure_invraisemblable"],
+    ["tilt_too_strong", "inclinaison_trop_forte"],
+    ["card_too_small", "carte_trop_petite"],
   ];
   for (const [scenario, motif] of refusals) {
     it(`${scenario} → refus neutre, motif « ${motif} », aucun rapport`, async () => {

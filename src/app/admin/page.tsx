@@ -25,6 +25,8 @@ const MOTIFS: Record<string, string> = {
   reperage_incomplet: "Repérage incomplet",
   confiance_faible: "Confiance trop faible",
   mesure_invraisemblable: "Mesure invraisemblable",
+  inclinaison_trop_forte: "Photo trop inclinée",
+  carte_trop_petite: "Carte trop petite dans l'image",
   calcul_impossible: "Calcul impossible",
   empreinte_connue: "Image déjà répertoriée (empreinte)",
   image_invalide: "Fichier image invalide",

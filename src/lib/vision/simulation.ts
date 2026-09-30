@@ -1,36 +1,19 @@
 import sharp from "sharp";
+import { CAMERA } from "@/config/site";
 import { assertNotProduction } from "../providers/guard";
+import { DEFAULT_SHOT, simulateShot } from "./camera-sim";
 import type { CommentInput, Motif, VisionProvider, VisionResult } from "./types";
 
-export type Scenario = "ok" | "refuse_face" | "doute_majorite" | "no_card" | "low_confidence" | "implausible" | "garbage";
-
-const VW = 1200;
-const VH = 800;
-const PX_PER_MM = 342 / 85.6; // carte de 342 px de large dans la scène virtuelle
-
-const n = (x: number, y: number, c: number) => ({ x: x / VW, y: y / VH, confiance: c });
-
-/** Scène virtuelle : une carte de référence et un objet cylindrique, vue de face. Coordonnées normalisées. */
-function scene(lengthMm: number, widthMm: number, confidence: number) {
-  const cardW = 85.6 * PX_PER_MM;
-  const cardH = 53.98 * PX_PER_MM;
-  const cx = 140;
-  const cy = 500;
-  const x0 = 500;
-  const y0 = 350;
-  const L = lengthMm * PX_PER_MM;
-  const W = widthMm * PX_PER_MM;
-  return {
-    coins_carte: [n(cx, cy, confidence), n(cx + cardW, cy, confidence), n(cx + cardW, cy + cardH, confidence), n(cx, cy + cardH, confidence)],
-    base: n(x0, y0, confidence),
-    extremite: n(x0 + L, y0, confidence),
-    ligne_mediane: Array.from({ length: 9 }, (_, i) => n(x0 + (L * (i + 1)) / 10, y0, confidence)),
-    bords: (["base", "25", "50", "75", "sous_gland"] as const).map((hauteur, i) => {
-      const x = x0 + L * [0, 0.25, 0.5, 0.75, 0.95][i];
-      return { hauteur, gauche: n(x, y0 - W / 2, confidence), droite: n(x, y0 + W / 2, confidence) };
-    }),
-  };
-}
+export type Scenario =
+  | "ok"
+  | "refuse_face"
+  | "doute_majorite"
+  | "no_card"
+  | "low_confidence"
+  | "implausible"
+  | "garbage"
+  | "tilt_too_strong"
+  | "card_too_small";
 
 const REFUSALS: Partial<Record<Scenario, Motif>> = {
   refuse_face: "visage_visible",
@@ -40,6 +23,8 @@ const REFUSALS: Partial<Record<Scenario, Motif>> = {
 
 /**
  * Fournisseur de vision simulé : aucun appel réseau, aucun coût, résultats déterministes.
+ * Les points repérés viennent d'un vrai modèle de prise de vue (caméra sténopé, carte et cylindre posés sur une table),
+ * cohérent avec le calcul de mesure ; la focale simulée est celle que le calcul suppose (CAMERA.focalFactor).
  * Scénario choisi par SIM_VISION_SCENARIO ou par le paramètre (tests).
  */
 export function createSimulatedVision(scenario?: Scenario, opts: { lengthMm?: number; widthMm?: number } = {}): VisionProvider {
@@ -48,15 +33,34 @@ export function createSimulatedVision(scenario?: Scenario, opts: { lengthMm?: nu
 
     async analyse(jpeg): Promise<VisionResult> {
       assertNotProduction("vision");
-      await sharp(jpeg).metadata(); // vérifie que l'image est lisible, comme le ferait le vrai modèle
+      const meta = await sharp(jpeg).metadata(); // vérifie que l'image est lisible, comme le ferait le vrai modèle
+      const width = meta.width ?? 1200;
+      const height = meta.height ?? 800;
+      const longSide = Math.max(width, height);
       const s = scenario ?? ((process.env.SIM_VISION_SCENARIO as Scenario) || "ok");
       const usage = { tokensIn: 0, tokensOut: 0, ms: 5 };
       const refusal = REFUSALS[s];
       if (refusal) return { recevable: false, motif: refusal, reperage: null, usage };
       if (s === "garbage") return { recevable: true, motif: "ok", reperage: { coins_carte: [] }, usage };
-      if (s === "low_confidence") return { recevable: true, motif: "ok", reperage: scene(130, 40, 0.3), usage };
-      if (s === "implausible") return { recevable: true, motif: "ok", reperage: scene(15, 4, 0.9), usage };
-      return { recevable: true, motif: "ok", reperage: scene(opts.lengthMm ?? 130, opts.widthMm ?? 40, 0.9), usage };
+
+      const shot = (over: Parameters<typeof simulateShot>[0] = {}) =>
+        simulateShot({
+          ...DEFAULT_SHOT,
+          width,
+          height,
+          focalPx: CAMERA.focalFactor * longSide,
+          cardWidthPx: 0.3 * longSide,
+          azimuthDeg: -90, // l'axe X de la scène suit la largeur de l'image
+          lengthMm: opts.lengthMm ?? 130,
+          diameterMm: opts.widthMm ?? 40,
+          ...over,
+        }).reperage;
+
+      if (s === "low_confidence") return { recevable: true, motif: "ok", reperage: shot({ confidence: 0.3 }), usage };
+      if (s === "implausible") return { recevable: true, motif: "ok", reperage: shot({ lengthMm: 15, diameterMm: 4 }), usage };
+      if (s === "tilt_too_strong") return { recevable: true, motif: "ok", reperage: shot({ tiltDeg: 62 }), usage };
+      if (s === "card_too_small") return { recevable: true, motif: "ok", reperage: shot({ cardWidthPx: 0.06 * longSide }), usage };
+      return { recevable: true, motif: "ok", reperage: shot(), usage };
     },
 
     async writeComment(i: CommentInput) {

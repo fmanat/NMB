@@ -93,12 +93,25 @@ export const UPLOAD = {
 // Durée de validité du jeton « majeur : oui » (minutes).
 export const AGE_TOKEN_MINUTES = 30;
 
-// Marge d'erreur par mesure : max(plancher, (1 - confiance) × coefficient + pénalité de perspective).
+// Marge d'erreur par mesure (en %) : max(plancher, racine de la somme des carrés de trois termes) :
+//  - confiance : (1 - confiance moyenne du repérage) × perConfidencePct ;
+//  - taille de la carte : sizeCoefficient × markerNoisePx / largeur de la carte en pixels. L'erreur due à l'imprécision de
+//    repérage est inversement proportionnelle à la taille de la carte dans l'image (relevé par simulation :
+//    `npm run geometry:report`) ; markerNoisePx est l'imprécision SUPPOSÉE de chaque point repéré (à régler après la
+//    calibration sur de vraies photos) ;
+//  - inclinaison : tiltPctAt45 pour une photo prise à 45°, proportionnel.
 export const MARGIN = {
   floorPct: 10,
   perConfidencePct: 50,
-  perspectivePct: 20, // par unité d'écart du rapport des côtés opposés de la carte à 1
+  markerNoisePx: 2,
+  sizeCoefficient: 1350,
+  tiltPctAt45: 3,
 } as const;
+
+// Cas refusés faute de précision suffisante (mesurés par simulation) :
+//  - inclinaison de l'appareil supérieure à maxTiltDeg (au-delà de 55°, l'erreur peut dépasser 17 %) ;
+//  - carte de référence trop petite : grand côté de la carte inférieur à minCardFraction × grand côté de l'image.
+export const PHOTO_LIMITS = { maxTiltDeg: 50, minCardFraction: 0.15 } as const;
 
 // En dessous de cette confiance moyenne des points repérés (0 à 1), l'analyse est jugée illisible.
 export const MIN_CONFIDENCE = 0.5;
@@ -137,3 +150,10 @@ export const WEBHOOK = { minGroup: 5, timeoutMs: 15_000 } as const;
 export function aiPricing(): { inPerM: number; outPerM: number } {
   return { inPerM: Number(process.env.XAI_PRICE_IN_PER_M ?? 2), outPerM: Number(process.env.XAI_PRICE_OUT_PER_M ?? 6) };
 }
+
+// ---------- Caméra supposée pour l'estimation avec pose (src/lib/pose.ts) ----------
+
+// Focale supposée = focalFactor × grand côté de l'image, point principal au centre. 0,9 correspond à l'objectif principal
+// d'un smartphone courant (champ d'environ 68° en diagonale). Les métadonnées de la photo étant supprimées, la focale réelle
+// est inconnue : l'erreur qui en résulte est mesurée par `npm run geometry:report` et incluse dans la marge.
+export const CAMERA = { focalFactor: 0.9 } as const;

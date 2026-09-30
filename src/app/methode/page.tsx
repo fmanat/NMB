@@ -40,14 +40,16 @@ export default function Page() {
       <h2>Mesures estimées à partir d&apos;une photo</h2>
       <p>
         Le modèle d&apos;analyse ne mesure rien : il repère des points (coins de la carte de référence, base et extrémité, ligne
-        médiane, bords). Tous les calculs sont faits par notre code : échelle et correction de perspective à partir de la carte
-        au format bancaire (85,60 × 53,98 mm), longueur le long de la ligne médiane, largeurs, circonférence estimée = π × largeur
+        médiane, bords). Tous les calculs sont faits par notre code : position et inclinaison de l&apos;appareil déduites de la carte
+        au format bancaire (85,60 × 53,98 mm), sous l&apos;hypothèse d&apos;un sujet posé sur la même surface que la carte, longueur le long de la ligne médiane, largeurs, circonférence estimée = π × largeur
         maximale, courbure (angle entre les segments proximal et distal), symétrie (écart entre demi-largeurs gauche et droite,
         100 = identiques) et conicité (largeur sous le gland / largeur à la base).
       </p>
       <p>
-        La marge d&apos;erreur de chaque mesure dépend de la confiance du repérage et de la perspective de la carte ; elle n&apos;est
-        jamais inférieure à ± 10 %. Elle n&apos;a pas encore été validée sur un grand nombre de photos de référence.
+        La marge d&apos;erreur de chaque mesure dépend de la confiance du repérage, de la taille de la carte dans l&apos;image et de
+        l&apos;inclinaison de l&apos;appareil ; elle n&apos;est jamais inférieure à ± 10 %. Une photo trop inclinée (plus de 50°) ou où
+        la carte est trop petite est refusée, car la précision serait insuffisante. La précision du calcul a été vérifiée sur des
+        prises de vue simulées ; elle n&apos;a pas encore été validée sur un grand nombre de photos réelles de référence.
       </p>
       <h2>Traitement de la photo</h2>
       <p>
