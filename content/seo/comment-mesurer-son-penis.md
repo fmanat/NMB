@@ -7,24 +7,22 @@ faq:
   - q: Où placer la règle pour mesurer la longueur ?
     a: Pour une mesure standardisée, les recommandations et études utilisent notamment une mesure dorsale de la base vers l’extrémité du gland. La mesure os-base vers gland peut être privilégiée lorsqu’on souhaite réduire l’effet de la graisse sus-pubienne.
   - q: Faut-il appuyer la règle ?
-    a: Lorsque la méthode utilisée est la mesure bone-to-tip, la règle est appliquée jusqu’à l’os pubien en comprimant la graisse sus-pubienne.
+    a: Pour la mesure os-pubis-gland (bone-to-tip), le point de départ est l’os pubien. Les recommandations européennes soulignent que la mesure de la taille du pénis n’est pas standardisée : il faut donc préciser le point de départ utilisé et le conserver d’une mesure à l’autre.
   - q: Comment mesurer la circonférence ?
-    a: Une bande souple ou un mètre ruban peut entourer le corps du pénis, généralement au milieu de la verge, sans serrer excessivement.
+    a: Une bande souple ou un mètre ruban peut entourer le corps du pénis. Les recommandations européennes indiquent d’enregistrer la circonférence au niveau distal (coronal) et au milieu de la verge.
   - q: Est-il utile de mesurer le pénis flaccide ?
-    a: Oui pour certaines analyses, mais la longueur flaccide varie davantage avec les conditions de mesure. Elle ne permet pas à elle seule de déduire précisément la longueur en érection.
+    a: Oui pour certaines analyses, mais la longueur flaccide ne permet pas à elle seule de prédire précisément la longueur en érection : dans l’étude de Wessells et al. (80 hommes), ni l’âge ni la taille du pénis flaccide ne la prédisaient de façon fiable.
   - q: La longueur étirée est-elle utile ?
     a: Oui. Plusieurs études ont montré une relation entre longueur étirée et longueur en érection, mais elle ne permet pas de prédire parfaitement une mesure individuelle.
 sources:
   - title: EAU Guidelines — Penile Size Abnormalities and Dysmorphophobia
     url: https://uroweb.org/guidelines/sexual-and-reproductive-health/chapter/penile-size-abnormalities-and-dysmorphophobia
-  - title: Veale et al. — Am I normal?
+  - title: Veale et al. — Am I normal? A systematic review and construction of nomograms for flaccid and erect penis length and circumference in up to 15,521 men
     url: https://pubmed.ncbi.nlm.nih.gov/25487360/
-  - title: Wessells et al. — Penile length in the flaccid and erect states
+  - title: Wessells et al. — Penile length in the flaccid and erect states: guidelines for penile augmentation
     url: https://pubmed.ncbi.nlm.nih.gov/8709382/
   - title: Accurate method for determining functional penile length in Turkish young men
     url: https://pubmed.ncbi.nlm.nih.gov/12068220/
-  - title: AFU — recommandations sur les courbures congénitales
-    url: https://pubmed.ncbi.nlm.nih.gov/35676191/
 ---
 La qualité d'une comparaison statistique dépend d'abord de la qualité de la mesure.
 
@@ -57,7 +55,9 @@ Une mesure allant simplement de la peau à l'extrémité du gland peut donc êtr
 
 La mesure bone-to-tip consiste à appliquer l'instrument jusqu'à l'os pubien.
 
-Les recommandations européennes indiquent que cette mesure présente une meilleure corrélation avec la longueur en érection, notamment chez les hommes en surpoids ou obèses.
+Selon les recommandations européennes, la mesure os-pubis-gland semble mieux corrélée à la longueur en érection, en particulier chez les hommes en surpoids ou obèses.
+
+Ces mêmes recommandations indiquent que la longueur étirée mesurée depuis la jonction peau-pénis (STT), bien qu'utilisée comme substitut, sous-estime nettement la longueur en érection, d'environ 20 %.
 
 Pour une comparaison statistique, le plus important est toutefois d'utiliser **toujours la même méthode** que celle employée par la référence statistique.
 
@@ -79,7 +79,7 @@ La différence ne correspondrait pas nécessairement à une différence anatomiq
 
 La circonférence se mesure avec un instrument souple.
 
-Le mètre ruban doit entourer le pénis sans être suffisamment serré pour comprimer les tissus.
+Le mètre ruban entoure le corps du pénis.
 
 La littérature utilise notamment des mesures au niveau du milieu du corps pénien.
 
@@ -89,11 +89,9 @@ Pour une analyse statistique, il est donc important de préciser quelle circonf�
 
 ## Et lorsqu'il est flaccide ?
 
-La mesure flaccide est possible mais elle est particulièrement sensible aux conditions extérieures.
+La mesure flaccide est possible, mais elle ne permet pas de prédire précisément la longueur en érection.
 
-Température, stress, niveau de rétraction et conditions de mesure peuvent modifier l'état flaccide.
-
-C'est l'une des raisons pour lesquelles les études peuvent présenter une variabilité importante pour les mesures flaccides.
+Dans l'étude de Wessells et al., portant sur 80 hommes, ni l'âge ni la taille du pénis flaccide ne prédisaient de façon fiable la longueur en érection.
 
 La revue de Veale et al. rapporte une moyenne de **9,16 cm** pour la longueur flaccide pendante et **9,31 cm** pour la circonférence flaccide.
 
@@ -125,10 +123,9 @@ Pour comprendre les valeurs de référence, consultez aussi [la taille moyenne d
 
 Pour obtenir une mesure reproductible :
 
-- utilisez une règle rigide pour la longueur ;
+- utilisez un instrument gradué pour la longueur (mètre ruban ou pied à coulisse, selon les recommandations européennes) ;
 - choisissez clairement votre point de départ ;
 - utilisez la même méthode à chaque mesure ;
 - mesurez la circonférence avec un instrument souple ;
-- ne serrez pas le mètre ruban ;
 - distinguez flaccide, étiré et en érection ;
 - ne comparez jamais directement des mesures obtenues avec des protocoles différents.

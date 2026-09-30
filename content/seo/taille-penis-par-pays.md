@@ -15,18 +15,22 @@ faq:
   - q: Quelle référence internationale utiliser ?
     a: La revue systématique de Veale et al. publiée en 2015 reste une référence majeure pour les distributions de longueur et de circonférence.
 sources:
-  - title: Veale et al. — BJU International
+  - title: Veale et al. — Am I normal? A systematic review and construction of nomograms for flaccid and erect penis length and circumference in up to 15,521 men
     url: https://pubmed.ncbi.nlm.nih.gov/25487360/
-  - title: Worldwide Temporal Trends in Penile Length — Systematic Review and Meta-Analysis
+  - title: Belladelli et al. — Worldwide Temporal Trends in Penile Length: A Systematic Review and Meta-Analysis
     url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10523114/
-  - title: A Systematic Review and Meta-Analysis of Penis Length and Circumference According to WHO Regions
+  - title: A Systematic Review and Meta-Analysis of Penis Length and Circumference According to WHO Regions: Who has the Biggest One?
     url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11923605/
-  - title: Bondil et al. — étude française de 905 hommes
+  - title: Bondil et al. — Clinical study of the longitudinal deformation of the flaccid penis and of its variations with aging
     url: https://pubmed.ncbi.nlm.nih.gov/1459150/
+  - title: Wessells et al. — Penile length in the flaccid and erect states: guidelines for penile augmentation
+    url: https://pubmed.ncbi.nlm.nih.gov/8709382/
+  - title: Accurate method for determining functional penile length in Turkish young men
+    url: https://pubmed.ncbi.nlm.nih.gov/12068220/
 ---
 Les tableaux qui prétendent révéler la **taille du pénis par pays** sont très populaires sur Internet. Pourtant, leur interprétation demande beaucoup plus de prudence qu'un simple classement.
 
-Le problème n'est pas qu'il soit impossible de mesurer la taille du pénis dans différents pays. Des études médicales ont effectivement été réalisées en France, en Italie, au Royaume-Uni, aux États-Unis, en Turquie, au Brésil et dans de nombreux autres pays.
+Le problème n'est pas qu'il soit impossible de mesurer la taille du pénis dans différents pays. Des études médicales ont effectivement été réalisées dans plusieurs pays, par exemple en France (Bondil et al., 1992, sur 905 hommes), en Turquie (étude de 2002 sur 200 hommes) ou aux États-Unis (Wessells et al., 1996, sur 80 hommes).
 
 Le problème est de savoir si ces études sont suffisamment comparables pour établir un classement fiable.
 
@@ -48,7 +52,7 @@ Comparer directement deux études réalisées avec des protocoles différents pe
 
 La revue de Veale et al. publiée en 2015 a regroupé les données disponibles provenant de mesures réalisées par des professionnels de santé.
 
-Elle rapportait notamment une longueur moyenne en érection de **13,12 cm** et une circonférence moyenne en érection de **11,66 cm**.
+Elle rapportait notamment une longueur moyenne en érection de **13,12 cm** et une circonférence moyenne en érection de **11,66 cm**. Ces deux moyennes en érection reposent respectivement sur 692 et 381 hommes.
 
 Une méta-analyse plus récente consacrée aux tendances mondiales a également sélectionné les études dans lesquelles les mesures étaient réalisées par des investigateurs et excluait les études reposant sur l'auto-mesure.
 

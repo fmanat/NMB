@@ -15,14 +15,14 @@ faq:
   - q: Qu'est-ce qu'un shower ?
     a: Le terme désigne couramment un pénis dont la variation de longueur entre l'état flaccide et l'érection est moins importante.
 sources:
-  - title: Veale et al. — Am I normal?
+  - title: Veale et al. — Am I normal? A systematic review and construction of nomograms for flaccid and erect penis length and circumference in up to 15,521 men
     url: https://pubmed.ncbi.nlm.nih.gov/25487360/
-  - title: Yafi et al. — Grower or shower? Predictors of change in penile length
+  - title: Yafi et al. — Grower or shower? Predictors of change in penile length from the flaccid to erect state
     url: https://pubmed.ncbi.nlm.nih.gov/30068977/
-  - title: Wessells et al. — Penile length in the flaccid and erect states
+  - title: Wessells et al. — Penile length in the flaccid and erect states: guidelines for penile augmentation
     url: https://pubmed.ncbi.nlm.nih.gov/8709382/
-  - title: Chen et al. — Predicting penile size during erection
-    url: https://pubmed.ncbi.nlm.nih.gov/11416836/
+  - title: Accurate method for determining functional penile length in Turkish young men
+    url: https://pubmed.ncbi.nlm.nih.gov/12068220/
 ---
 La taille du pénis peut changer fortement entre le repos et l'érection. C'est un phénomène physiologique normal.
 
@@ -46,15 +46,7 @@ La différence entre 9,16 cm au repos et 13,12 cm en érection illustre simpleme
 
 Ces valeurs sont des moyennes internationales et non des normes individuelles.
 
-## Pourquoi la taille au repos varie-t-elle autant ?
-
-La taille flaccide est particulièrement sensible aux conditions de mesure.
-
-La température, l'environnement, le niveau de tension et le degré de rétraction peuvent influencer la longueur observée.
-
-C'est notamment pour cette raison que les études scientifiques distinguent soigneusement les différentes situations.
-
-Une mesure prise après exposition au froid ne doit donc pas être interprétée comme une caractéristique anatomique fixe.
+Ces moyennes ne reposent pas sur les mêmes effectifs : 10 704 hommes pour la longueur flaccide pendante, 14 160 pour la longueur étirée, mais 692 seulement pour la longueur en érection.
 
 ## La taille au repos permet-elle de prédire la taille en érection ?
 
@@ -62,7 +54,7 @@ Seulement de manière imparfaite.
 
 Une étude de 80 hommes publiée en 1996 a comparé les mesures flaccides, étirées et érectiles et a observé que la longueur étirée était plus étroitement corrélée à la longueur en érection que la longueur flaccide.
 
-Une autre étude portant sur 200 hommes a également trouvé une corrélation plus importante entre longueur étirée et longueur érectile.
+Une autre étude, réalisée en Turquie sur 200 hommes et publiée en 2002, a également trouvé une corrélation plus importante entre longueur étirée et longueur érectile.
 
 Cela signifie que la longueur au repos seule ne permet pas de prédire précisément la longueur finale en érection chez un individu.
 

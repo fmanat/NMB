@@ -75,6 +75,12 @@ describe("chargeur de pages : corps Markdown", () => {
     expect(r.pending.sort()).toEqual(["courbure-penis-normale", "taille-repos-erection"]);
   });
 
+  it("autorise les pages publiques du site (méthode, confidentialité, CGV, contact, mentions légales)", () => {
+    const r = renderBody("[a](/methode) [b](confidentialite) [c](/cgv#x) [d](contact) [e](mentions-legales)", "f.md", ex);
+    for (const h of ["/methode", "/confidentialite", "/cgv#x", "/contact", "/mentions-legales"]) expect(r.html).toContain(`href="${h}"`);
+    expect(r.pending).toEqual([]);
+  });
+
   it("refuse un lien interne inconnu ou un schéma dangereux", () => {
     expect(() => renderBody("[x](page-inconnue)", "f.md", ex)).toThrow(/lien interne inconnu/);
     expect(() => renderBody("[x](/r/abc)", "f.md", ex)).toThrow(/lien interne inconnu/);

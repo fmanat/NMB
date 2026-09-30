@@ -15,15 +15,13 @@ faq:
   - q: Les études récentes modifient-elles les résultats de Veale ?
     a: Certaines méta-analyses récentes obtiennent des valeurs légèrement différentes, ce qui reflète notamment la composition différente des études incluses.
 sources:
-  - title: Veale et al. — Am I normal?
+  - title: Veale et al. — Am I normal? A systematic review and construction of nomograms for flaccid and erect penis length and circumference in up to 15,521 men
     url: https://pubmed.ncbi.nlm.nih.gov/25487360/
-  - title: Veale et al. — BJU International
-    url: https://bjui-journals.onlinelibrary.wiley.com/doi/full/10.1111/bju.13010
-  - title: Worldwide Temporal Trends in Penile Length — Systematic Review and Meta-Analysis
+  - title: Belladelli et al. — Worldwide Temporal Trends in Penile Length: A Systematic Review and Meta-Analysis
     url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10523114/
-  - title: A Systematic Review and Meta-Analysis of Penis Length and Circumference According to WHO Regions
+  - title: A Systematic Review and Meta-Analysis of Penis Length and Circumference According to WHO Regions: Who has the Biggest One?
     url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11923605/
-  - title: Bondil et al. — étude française de 905 hommes
+  - title: Bondil et al. — Clinical study of the longitudinal deformation of the flaccid penis and of its variations with aging
     url: https://pubmed.ncbi.nlm.nih.gov/1459150/
 ---
 Les chiffres sur la taille du pénis circulent abondamment sur Internet, mais toutes les études ne se valent pas.
@@ -49,6 +47,8 @@ Elle rapporte notamment :
 - 13,12 cm de longueur en érection ;
 - 9,31 cm de circonférence flaccide ;
 - 11,66 cm de circonférence en érection.
+
+Les effectifs diffèrent selon la mesure : 10 704 hommes pour la longueur flaccide pendante, 14 160 pour la longueur étirée, 9 407 pour la circonférence flaccide, mais 692 seulement pour la longueur en érection et 381 pour la circonférence en érection. Les auteurs relèvent que relativement peu de mesures en érection ont été réalisées en contexte clinique.
 
 L'intérêt majeur de cette publication est qu'elle ne donne pas seulement une moyenne : elle construit également des distributions permettant d'étudier les percentiles.
 

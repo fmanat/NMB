@@ -9,17 +9,17 @@ faq:
   - q: À partir de quel angle une courbure devient-elle anormale ?
     a: Il n’existe pas un angle unique permettant de définir à lui seul une maladie. Les recommandations considèrent notamment la gêne fonctionnelle, la déformation et son évolution.
   - q: Une courbure de 30 degrés est-elle grave ?
-    a: 30 degrés est un seuil utilisé dans certaines recommandations pour certaines décisions thérapeutiques, mais il ne signifie pas qu’une courbure inférieure est forcément normale ou qu’une courbure supérieure est forcément problématique.
+    a: 30 degrés est le seuil au-delà duquel les recommandations européennes d’urologie pédiatrique considèrent généralement une courbure congénitale comme cliniquement significative. Cela ne signifie pas qu’une courbure inférieure est forcément normale ni qu’une courbure supérieure est forcément problématique.
   - q: Quand consulter un médecin ?
     a: Une consultation est pertinente en cas de douleur, d’apparition récente, d’aggravation, de plaque palpable, de difficulté sexuelle ou de gêne importante.
   - q: Comment mesurer une courbure ?
     a: L’évaluation médicale peut utiliser des photographies en érection ou une érection provoquée médicalement selon le contexte.
 sources:
-  - title: EAU Guidelines — Penile Curvature
+  - title: EAU Guidelines on Sexual and Reproductive Health — Penile Curvature
     url: https://uroweb.org/guidelines/sexual-and-reproductive-health/chapter/penile-curvature
-  - title: Madec et al. — Congenital penile curvature: French Association of Urology guidelines
+  - title: Madec et al. — Congenital penile curvature: Guidelines from the Andrology and Sexual Medicine Committee of the French Association of Urology (CAMS-AFU)
     url: https://pubmed.ncbi.nlm.nih.gov/35676191/
-  - title: EAU Guidelines — Congenital Penile Curvature
+  - title: EAU Guidelines on Paediatric Urology — Congenital Penile Curvature
     url: https://uroweb.org/guidelines/paediatric-urology/chapter/congenital-penile-curvature
 ---
 Une **courbure du pénis** n'est pas nécessairement anormale.
@@ -48,7 +48,7 @@ Les recommandations européennes ne définissent pas la normalité uniquement à
 
 L'évaluation tient notamment compte de la déformation, de son origine, de son évolution, de la douleur et de ses conséquences sexuelles.
 
-Pour les courbures congénitales, les recommandations européennes indiquent toutefois qu'une courbure supérieure à **30° est généralement considérée comme cliniquement significative**, tout en précisant que certains hommes présentant une courbure plus importante peuvent ne rencontrer aucun problème.
+Pour les courbures congénitales, les recommandations européennes d'urologie pédiatrique indiquent toutefois qu'une courbure supérieure à **30° est généralement considérée comme cliniquement significative**, tout en précisant que de nombreux patients présentant une courbure plus importante peuvent ne rencontrer aucun problème.
 
 Le seuil de 30° ne doit donc pas être transformé en frontière absolue entre « normal » et « anormal ».
 
@@ -82,7 +82,7 @@ L'urologue recherche également l'histoire de la courbure et son retentissement.
 
 ## Comment mesure-t-on une courbure ?
 
-Les recommandations de l'Association française d'urologie indiquent que le diagnostic d'une courbure congénitale repose notamment sur l'interrogatoire et l'examen clinique, avec possibilité d'utiliser des photographies du pénis en érection.
+Les recommandations de l'Association française d'urologie indiquent que le diagnostic d'une courbure congénitale est clinique : il repose sur l'interrogatoire et l'examen clinique, associés à des photographies du pénis en érection.
 
 Les recommandations européennes mentionnent également l'auto-photographie, les méthodes permettant de provoquer une érection et, dans certains contextes, l'injection intracaverneuse pour obtenir une évaluation objective.
 

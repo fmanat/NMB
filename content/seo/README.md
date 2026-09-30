@@ -34,11 +34,11 @@ Texte. Lien vers [l'analyse](/analyse) et vers [une autre page](taille-repos-ere
 
 - Titres **H2 et H3 uniquement** dans le corps (le H1 vient du champ `title`).
 - Ni image, ni HTML brut.
-- Liens internes : `/analyse` ou le slug d'une des 8 pages (avec ou sans `/`). Tout autre lien interne est refusé. Les liens externes sont en `https://`.
+- Liens internes : `/analyse`, le slug d'une des 8 pages, ou `/methode`, `/confidentialite`, `/cgv`, `/contact`, `/mentions-legales` (avec ou sans `/`). Tout autre lien interne est refusé. Les liens externes sont en `https://`.
 - `title` ≤ 60 caractères, `metaDescription` ≤ 155 caractères, `targetKeyword` obligatoire.
 - Questions (`faq`) et sources : chacune avec tous ses champs ; adresses `http(s)` uniquement.
 
-Cible de longueur : 800 à 1 500 mots par page (simple avertissement).
+Cible de longueur : 600 à 1 500 mots par page (simple avertissement). Pas de rallonge artificielle.
 
 ## Vérifier
 

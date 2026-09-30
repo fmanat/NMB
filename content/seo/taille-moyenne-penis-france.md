@@ -17,8 +17,6 @@ faq:
 sources:
   - title: Veale et al. — Am I normal? A systematic review and construction of nomograms for flaccid and erect penis length and circumference in up to 15,521 men
     url: https://pubmed.ncbi.nlm.nih.gov/25487360/
-  - title: Veale et al. — BJU International, texte intégral
-    url: https://bjui-journals.onlinelibrary.wiley.com/doi/full/10.1111/bju.13010
   - title: Bondil et al. — Clinical study of the longitudinal deformation of the flaccid penis and of its variations with aging
     url: https://pubmed.ncbi.nlm.nih.gov/1459150/
 ---
@@ -43,6 +41,8 @@ Les valeurs moyennes rapportées sont :
 | Circonférence en érection | 11,66 cm | 1,10 cm |
 
 La valeur de **13,12 cm en érection** est donc une référence internationale importante lorsqu’on cherche à situer une mesure individuelle.
+
+Ces moyennes ne reposent pas sur le même nombre d'hommes. Les moyennes en érection reposent sur 692 hommes pour la longueur et 381 hommes pour la circonférence, contre 10 704 hommes pour la longueur flaccide pendante. Les auteurs signalent eux-mêmes que relativement peu de mesures en érection ont été réalisées en contexte clinique.
 
 Il est cependant incorrect de transformer directement cette valeur en « moyenne française ». L'étude de Veale est une synthèse internationale, pas une enquête représentative de la population française.
 

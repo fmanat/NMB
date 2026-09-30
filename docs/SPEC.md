@@ -114,7 +114,7 @@ Image générée côté serveur, formats 1080 × 1920 et 1200 × 630. Contenu ch
 - Rapports non payés effacés après 24 h.
 
 ## 12. Référencement naturel
-Pages au lancement, 800 à 1 500 mots chacune, ton sérieux, sources fiables citées, aucune image explicite, balisage FAQ (schema.org), liens internes et appel vers l'analyse :
+Pages au lancement, 600 à 1 500 mots chacune (cible ajustée le 01/10/2026, sans rallonge artificielle), ton sérieux, sources fiables citées, aucune image explicite, balisage FAQ (schema.org), liens internes et appel vers l'analyse :
 1. Taille moyenne du pénis en France
 2. Taille moyenne du pénis par pays (sources sérieuses uniquement)
 3. Comment mesurer son pénis correctement
@@ -174,4 +174,4 @@ README en français simple : chaque variable d'environnement expliquée, mise en
 - Publication : tant que `SEO_PUBLISH` n'est pas « on », chaque page affiche la mention interne « à relire avant publication », est en noindex, n'apparaît pas dans le sitemap et renvoie 404 en production. Réglage lu à la construction du site.
 - `sitemap.xml` (accueil, méthode, contact, pages légales, pages de contenu publiées) et `robots.txt` (interdit /r/, /paiement/, /defi/, /api/, /analyse/, /verification-age/ ; /c/ et /og/ restent accessibles aux robots d'aperçu des réseaux sociaux, les cartes étant en noindex). Jamais de page privée dans le sitemap.
 - Rapidité mobile : le bandeau de statistiques est chargé par le navigateur après l'affichage (`/api/stats`, mis en cache 60 s, sans aucun chiffre sous le seuil), pour que l'accueil et les pages de contenu restent statiques.
-- Contrôle : `npm run seo:check` (format, longueur 800 à 1 500 mots, liens, sources) ; `-- --urls` vérifie aussi que chaque adresse de source répond. La vérification qu'un chiffre cité figure dans sa source se fait à la relecture, page par page.
+- Contrôle : `npm run seo:check` (format, longueur 600 à 1 500 mots, liens, sources) ; `-- --urls` vérifie aussi que chaque adresse de source répond. La vérification qu'un chiffre cité figure dans sa source se fait à la relecture, page par page.

@@ -15,13 +15,11 @@ faq:
   - q: Peut-on comparer une mesure flaccide et une mesure en érection ?
     a: Non. Ce sont deux états physiologiques différents et ils doivent être comparés à des références correspondant au même état.
 sources:
-  - title: Veale et al. — Am I normal?
+  - title: Veale et al. — Am I normal? A systematic review and construction of nomograms for flaccid and erect penis length and circumference in up to 15,521 men
     url: https://pubmed.ncbi.nlm.nih.gov/25487360/
-  - title: Veale et al. — BJU International
-    url: https://bjui-journals.onlinelibrary.wiley.com/doi/full/10.1111/bju.13010
   - title: EAU Guidelines — Penile Size Abnormalities and Dysmorphophobia
     url: https://uroweb.org/guidelines/sexual-and-reproductive-health/chapter/penile-size-abnormalities-and-dysmorphophobia
-  - title: A Systematic Review and Meta-Analysis of Penis Length and Circumference According to WHO Regions
+  - title: A Systematic Review and Meta-Analysis of Penis Length and Circumference According to WHO Regions: Who has the Biggest One?
     url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11923605/
 ---
 La **circonférence moyenne du pénis** est moins souvent évoquée que la longueur, alors qu'elle constitue une dimension importante des études morphométriques.
@@ -42,6 +40,8 @@ Elle rapporte :
 | En érection | 11,66 cm | 1,10 cm |
 
 La valeur de **11,66 cm** correspond donc à la circonférence moyenne en érection dans cette grande synthèse internationale.
+
+Cette moyenne en érection repose sur 381 hommes (contre 9 407 hommes pour la circonférence flaccide), et les auteurs signalent que relativement peu de mesures en érection ont été réalisées en contexte clinique.
 
 Elle ne doit pas être interprétée comme une valeur spécifiquement française.
 

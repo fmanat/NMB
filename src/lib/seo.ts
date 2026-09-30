@@ -15,7 +15,10 @@ export const SEO_SLUGS = [
 ] as const;
 export type SeoSlug = (typeof SEO_SLUGS)[number];
 
-export const SEO_LIMITS = { titleMax: 60, metaDescriptionMax: 155, wordsMin: 800, wordsMax: 1500 } as const;
+/** Pages publiques du site vers lesquelles le corps d'une page de contenu peut renvoyer (en plus de /analyse et des 8 slugs). */
+export const PUBLIC_PAGES = ["methode", "confidentialite", "cgv", "contact", "mentions-legales"] as const;
+
+export const SEO_LIMITS = { titleMax: 60, metaDescriptionMax: 155, wordsMin: 600, wordsMax: 1500 } as const;
 export const SEO_DIR = join(process.cwd(), "content", "seo");
 
 export class SeoError extends Error {}
@@ -140,12 +143,12 @@ function resolveHref(href: string, file: string, pending: Set<string>, existing:
   if (/^https?:\/\//i.test(href)) return href;
   const clean = href.replace(/^\/+/, "");
   const [base, hash] = clean.split("#");
-  if (base === "analyse") return "/analyse" + (hash ? `#${hash}` : "");
+  if (base === "analyse" || (PUBLIC_PAGES as readonly string[]).includes(base)) return `/${base}` + (hash ? `#${hash}` : "");
   if (isSlug(base)) {
     if (!existing.has(base)) pending.add(base);
     return `/${base}` + (hash ? `#${hash}` : "");
   }
-  throw new SeoError(`${file} : lien interne inconnu « ${href} » (autorisés : /analyse ou le slug d'une des 8 pages).`);
+  throw new SeoError(`${file} : lien interne inconnu « ${href} » (autorisés : /analyse, le slug d'une des 8 pages, ou /methode, /confidentialite, /cgv, /contact, /mentions-legales).`);
 }
 
 /** Convertit le Markdown en HTML après validation stricte : titres H2/H3 seulement, ni image, ni HTML brut, liens contrôlés. */
