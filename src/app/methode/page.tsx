@@ -38,8 +38,10 @@ export default function Page() {
       </p>
       <h2>Traitement de la photo</h2>
       <p>
-        La photo est traitée en mémoire uniquement, pendant l&apos;analyse, puis supprimée. Elle n&apos;est jamais
-        enregistrée dans notre base ni dans nos journaux.
+        Bitomètre ne stocke jamais la photo : elle est traitée en mémoire pendant l&apos;analyse, et n&apos;est
+        enregistrée ni dans notre base ni dans nos journaux. Elle est envoyée au prestataire d&apos;analyse (xAI, États-Unis),
+        qui conserve les requêtes 30 jours pour détecter les abus. Voir la{" "}
+        <a href="/confidentialite" className="underline">politique de confidentialité</a>.
       </p>
     </Doc>
   );

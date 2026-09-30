@@ -25,7 +25,7 @@ const MODEL = process.env.XAI_MODEL || "grok-4.7";
 // Tarif en dollars par million de jetons (page officielle des modèles). Modifiable dans .env.
 const PRICE_IN = Number(process.env.XAI_PRICE_IN_PER_M ?? 2.0);
 const PRICE_OUT = Number(process.env.XAI_PRICE_OUT_PER_M ?? 6.0);
-const TIMEOUT_MS = 90_000;
+const TIMEOUT_MS = 240_000;
 
 const args = process.argv.slice(2);
 const SELFTEST = args.includes("--selftest");
@@ -91,6 +91,7 @@ async function reencode(buf) {
 
 // ---------- Appels xAI ----------
 
+const T0 = Date.now();
 const usage = { in: 0, out: 0 };
 let badKeySeen = false;
 
@@ -253,6 +254,7 @@ console.log(`Modèle : ${MODEL}\n`);
 
 let blocked = false;
 let uncertain = false;
+let techError = false;
 
 // Quitte proprement (évite une erreur d'arrêt de Node sous Windows quand des connexions sont encore ouvertes).
 async function finish(code) {
@@ -271,7 +273,8 @@ async function stopIfBadKey() {
 console.log("1/3 Recevabilité");
 const r1 = await callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_RECEVABILITE), schema: SCHEMA_RECEVABILITE, schemaName: "recevabilite" });
 if (!verdictForCall("recevabilité", r1)) {
-  blocked = true;
+  if (r1.kind === "reseau") techError = true;
+  else blocked = true;
 } else {
   const j = parseJson(r1.text);
   console.log(`  format de réponse : ${r1.mode}`);
@@ -289,7 +292,8 @@ if (!blocked) {
   console.log("\n2/3 Repérage des points");
   const r2 = await callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_REPERAGE), schema: SCHEMA_REPERAGE, schemaName: "reperage" });
   if (!verdictForCall("repérage", r2)) {
-    blocked = true;
+    if (r2.kind === "reseau") techError = true;
+    else blocked = true;
   } else {
     const j = parseJson(r2.text);
     console.log(`  format de réponse : ${r2.mode}`);
@@ -333,7 +337,10 @@ const cost = (usage.in * PRICE_IN + usage.out * PRICE_OUT) / 1e6;
 console.log(`\nJetons : ${usage.in} en entrée, ${usage.out} en sortie → coût réel de cet essai ≈ ${cost.toFixed(4)} $ (tarif ${PRICE_IN}/${PRICE_OUT} $ par million)`);
 
 console.log("\n=== VERDICT ===");
-if (blocked) {
+if (techError && !blocked) {
+  console.log("ERREUR TECHNIQUE (délai dépassé ou réseau) : ce n'est pas un refus d'xAI. Relancez ; si cela se répète, copiez-moi ce texte.");
+  await finish(5);
+} else if (blocked) {
   console.log("REFUSÉ PAR xAI (ou erreur bloquante) : on s'arrête ici et on décide de la suite ensemble. Copiez-moi ce texte (sans la photo).");
   await finish(2);
 } else if (uncertain) {

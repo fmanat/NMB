@@ -3,7 +3,7 @@ import { FORMULAS, formatEur } from "@/config/site";
 import { ScanButton } from "@/components/ScanButton";
 import { Gauge } from "@/components/Gauge";
 
-const BADGES = ["Connexion chiffrée", "Photo supprimée après analyse", "Aucun compte"];
+const BADGES = ["Connexion chiffrée", "Photo jamais stockée par Bitomètre", "Aucun compte"];
 
 const FORMULA_TEXT: Record<string, string> = {
   A: "Vos mesures déclarées et quelques questions de forme. Rapport calculé sans photo.",

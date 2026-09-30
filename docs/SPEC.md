@@ -39,7 +39,7 @@ Au clic sur le bouton de scan : fenêtre modale demandant l'année de naissance 
 
 ### Formules B et C
 1. Vérification d'âge par prestataire tiers (section 7) AVANT tout envoi de photo. Sans jeton de majorité valide, l'écran d'envoi est inaccessible.
-2. Trois cases obligatoires, non cochées par défaut : « J'ai 18 ans ou plus », « Cette photo est de moi », « Je consens au traitement de cette donnée sensible pour l'analyse » (RGPD, art. 9).
+2. Trois cases obligatoires, non cochées par défaut : « J'ai 18 ans ou plus », « Cette photo est de moi », « Je consens au traitement de cette donnée sensible pour l'analyse, et à son envoi à un prestataire situé aux États-Unis qui la conserve 30 jours » (RGPD, art. 9 et art. 49).
 3. Consignes photo, illustrées par un schéma neutre (aucune photo réelle) : carte au format bancaire (85,60 × 53,98 mm) posée à côté, côté verso pour masquer les numéros ; vue de profil ou de dessus, bien éclairée ; aucun visage ni autre élément identifiant. L'utilisateur déclare l'état (repos ou érection).
 4. Formule C uniquement : saisie des mesures déclarées.
 5. La photo est réencodée dans le navigateur avant envoi (JPEG, 1 600 px maximum, métadonnées EXIF supprimées).
@@ -107,7 +107,7 @@ Image générée côté serveur, formats 1080 × 1920 et 1200 × 630. Contenu ch
 - Chacun peut retirer son rapport de la comparaison à tout moment.
 
 ## 11. Données et confidentialité
-- Photo : jamais stockée chez nous (section 5). Politique de conservation de l'API xAI (documentation officielle consultée le 30/09/2026) : par défaut, requêtes et réponses, images comprises, conservées 30 jours sur serveurs chiffrés pour audit d'abus, sans entraînement sur ces données ; l'option Zero Data Retention (ZDR) les supprime, activable par l'administrateur de l'équipe dans la console xAI, au niveau de toute l'équipe, avec des fonctions désactivées (API Responses avec état, Files, Collections, Batch). Conséquences : (1) ZDR activé obligatoirement avant la mise en ligne, sinon les libellés « Photo supprimée après analyse » et la politique de confidentialité seraient inexacts ; (2) utiliser l'endpoint sans état /v1/chat/completions ; (3) xAI est un prestataire hors UE : prévoir l'information RGPD sur le transfert hors UE et un accord de traitement des données (DPA).
+- Photo : jamais stockée chez nous (section 5). Politique de conservation de l'API xAI (documentation officielle consultée le 30/09/2026) : par défaut, requêtes et réponses, images comprises, conservées 30 jours sur serveurs chiffrés pour audit d'abus, sans entraînement sur ces données ; l'option Zero Data Retention (ZDR) les supprime, activable par l'administrateur de l'équipe dans la console xAI, au niveau de toute l'équipe, avec des fonctions désactivées (API Responses avec état, Files, Collections, Batch). Conséquences : (1) tant que ZDR n'est pas activé, le badge dit « Photo jamais stockée par Bitomètre » et la politique de confidentialité mentionne la conservation de 30 jours chez xAI (le badge d'origine sera rétabli si ZDR est activé) ; (2) utiliser l'endpoint sans état /v1/chat/completions ; (3) xAI est un prestataire hors UE : prévoir l'information RGPD sur le transfert hors UE et un accord de traitement des données (DPA).
 - Données stockées : identifiant du rapport, formule, résultats chiffrés, commentaire, statut de paiement, date. Aucune donnée d'identité, pas d'e-mail, pas de compte.
 - Adresse IP : uniquement hachée, pour la limitation de débit, effacée après 24 h.
 - Limite : 5 analyses par appareil et par 24 h ; captcha respectueux de la vie privée à l'envoi.
@@ -131,7 +131,7 @@ Mentions légales (éditeur ________, siège ________, SIREN ________, directeur
 ## 14. Design
 Thème « Dark Tech / IA cybersécurité » : fond noir/anthracite, chiffres en monospace, texte en sans-serif géométrique, accents bleu électrique et jaune/orange radar. Grilles de fond, jauges circulaires, faux sérieux assumé (numéros de dossier, horodatages). Aucune image explicite nulle part sur le site, aucune modélisation du corps (décor abstrait uniquement). Le site ne génère jamais d'image du corps de l'utilisateur.
 - Bandeau fixe en haut de page : nombre total d'analyses, score moyen, meilleur score de la semaine. Chiffres réels calculés depuis la base, jamais inventés ni arrondis à la hausse. Masqué tant que le total est inférieur à un seuil en configuration.
-- Badges de réassurance sous le bouton d'action, uniquement des affirmations vraies : « Connexion chiffrée », « Photo supprimée après analyse », « Aucun compte ».
+- Badges de réassurance sous le bouton d'action, uniquement des affirmations vraies : « Connexion chiffrée », « Photo jamais stockée par Bitomètre », « Aucun compte ». (Le libellé d'origine « Photo supprimée après analyse » ne sera rétabli que lorsque Zero Data Retention sera activé chez xAI.)
 
 ## 15. Administration
 Tableau de bord protégé : analyses lancées, refus par motif, conversion par formule, revenu brut et net (après TVA et commission du prestataire de paiement), défis créés et relevés, coût IA moyen par analyse.
