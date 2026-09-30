@@ -19,7 +19,7 @@ Public : adultes francophones (France, Belgique, Suisse, Luxembourg, Québec). P
 - Mesure d'audience sans cookie, hébergée dans l'UE. Aucun pixel publicitaire (Meta, Google, TikTok).
 
 ## 3. Les trois formules
-Tout résultat noté est payant. Paiement unique, sans abonnement, accès à vie au rapport.
+Tout résultat noté est payant. Paiement unique, sans abonnement, rapport accessible pendant au moins 3 ans (valeur `REPORT_ACCESS.minYears` dans la configuration, reportée dans les CGV, la FAQ et le paiement) et téléchargeable en PDF à tout moment. (Décision du propriétaire, session de nuit : remplace « accès à vie ».)
 - A. Questionnaire : 2,99 € TTC. Mesures déclarées et questions de forme, rapport calculé.
 - B. Photo : 4,99 € TTC. Analyse IA de la photo, rapport complet.
 - C. Photo + mesures : 6,99 € TTC. Formule B, plus mesures déclarées et comparaison déclaré / estimé.

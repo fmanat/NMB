@@ -21,7 +21,7 @@ faq:
   - q: Pourquoi ma photo a-t-elle été refusée ?
     a: L’analyse est refusée lorsque la photo ne permet pas un repérage fiable ou ne respecte pas les consignes (carte de référence absente ou illisible, visage visible, image non conforme). Le message est volontairement le même dans tous les cas. Aucun paiement n’est demandé et vous pouvez reprendre la photo.
   - q: Comment se passe le paiement ?
-    a: Le paiement est unique, en euros, sans abonnement. Le prix de chaque protocole est affiché avant le paiement. Avant de payer, vous cochez une case pour demander l’accès immédiat à votre rapport et renoncer à votre droit de rétractation. Le rapport ne s’ouvre qu’après confirmation du paiement par le prestataire de paiement.
+    a: Le paiement est unique, en euros, sans abonnement. Le prix de chaque protocole est affiché avant le paiement. Avant de payer, vous cochez une case pour demander l’accès immédiat à votre rapport et renoncer à votre droit de rétractation. Le rapport ne s’ouvre qu’après confirmation du paiement par le prestataire de paiement. Il reste ensuite accessible pendant au moins 3 ans et téléchargeable en PDF à tout moment.
   - q: Comment retrouver ou supprimer mon rapport ?
     a: Sans compte, le lien de votre rapport est le seul moyen de le retrouver : enregistrez-le dans vos favoris. Ce lien est long et aléatoire, et la page n’est pas indexée par les moteurs de recherche. Le bouton « Supprimer mon rapport » l’efface définitivement.
   - q: Comment fonctionne le défi entre amis ?

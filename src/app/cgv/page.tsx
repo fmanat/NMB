@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Doc } from "@/components/Doc";
+import { REPORT_ACCESS } from "@/config/site";
 
 export const metadata = { title: "Conditions générales de vente" };
 
@@ -15,6 +16,13 @@ export default function Page() {
       <p>
         Vente d&apos;un rapport d&apos;analyse chiffré, en paiement unique et sans abonnement. Le prix de chaque protocole est
         indiqué en euros, toutes taxes comprises, avant le paiement.
+      </p>
+
+      <h2>Durée d&apos;accès au rapport</h2>
+      <p>
+        Le rapport reste accessible par son lien privé pendant au moins {REPORT_ACCESS.minYears} ans à compter du paiement, et
+        téléchargeable en PDF à tout moment pendant cette période. L&apos;acheteur peut le supprimer à tout moment ; la suppression
+        est définitive.
       </p>
 
       <h2>Accès immédiat et renonciation au droit de rétractation</h2>

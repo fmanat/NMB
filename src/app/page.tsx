@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FORMULAS, formatEur } from "@/config/site";
+import { FORMULAS, REPORT_ACCESS, formatEur } from "@/config/site";
 import { ScanButton } from "@/components/ScanButton";
 import { Gauge } from "@/components/Gauge";
 
@@ -56,7 +56,7 @@ export default function Home() {
           ))}
         </div>
         <p className="mt-4 text-xs text-muted">
-          Paiement unique, sans abonnement, accès à votre rapport par son lien privé. Le détail du calcul est public :{" "}
+          Paiement unique, sans abonnement, rapport accessible par son lien privé pendant au moins {REPORT_ACCESS.minYears} ans et téléchargeable en PDF à tout moment. Le détail du calcul est public :{" "}
           <Link href="/methode" className="underline">
             Précision et méthode
           </Link>

@@ -8,6 +8,10 @@ export const SITE = {
   contactEmail: "________", // à compléter
 } as const;
 
+// Durée minimale pendant laquelle un rapport payé reste accessible (en années). Reportée dans les CGV, le paiement et la FAQ.
+// Le rapport reste téléchargeable en PDF à tout moment. Si vous changez cette valeur, mettez aussi à jour content/seo/faq.md (un test le vérifie).
+export const REPORT_ACCESS = { minYears: 3 } as const;
+
 export const FORMULAS = {
   A: { id: "A", label: "Questionnaire", priceEur: 2.99, needsPhoto: false },
   B: { id: "B", label: "Photo", priceEur: 4.99, needsPhoto: true },
