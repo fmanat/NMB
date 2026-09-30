@@ -26,3 +26,11 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - `clevercloud/cron.json` + 2 scripts (purge horaire, webhook quotidien 4 h 30), `docs/CLEVER-CLOUD.md` (pas à pas, variables), lecture de `POSTGRESQL_ADDON_URI`, `engines`, `tsx` en dépendance, `.gitattributes`, test `tests/deploy-config.test.ts`.
 - **Défaut corrigé** : le script de purge planifié `scripts/purge.mjs` n'effaçait pas les empreintes d'IP de `analysis_attempts` (seule la fonction interne le faisait) : les IP hachées des tentatives restaient donc indéfiniment. Corrigé et testé.
 - Non vérifié : noms exacts des variables Clever Cloud (listés dans CLEVER-CLOUD.md, « à confirmer au premier déploiement »). Rien n'est déployé.
+
+## Bloc 2 : comparaison des prestataires : FAIT
+- `docs/PRESTATAIRES.md` : 4 rôles, tableaux, clauses citées avec liens (de seconde main : résumés d'un outil de lecture, à relire sur les pages), recommandations, risques, questions écrites à poser, et 4 QCM.
+- Recommandations : paiement Stripe (validation écrite d'abord ; repli Mollie), âge AgeVerif sous conditions (repli Yoti ; AgeGO écarté), filtrage PhotoDNA (éligibilité et signalement à faire trancher par un juriste ; repli IWF), captcha ALTCHA auto-hébergé (repli Friendly Captcha).
+- Limites : pages en 403/404, archive.org bloqué ; aucune vérification à la source des citations.
+- Découverte importante : aucune certification Arcom n'existe (auto-déclaration) ; ne jamais écrire « certifié Arcom » ni « anonyme ».
+
+## Prochain bloc : Bloc 3, adaptateurs (Stripe, ALTCHA, AgeVerif ; PhotoDNA impossible sans accès)
