@@ -42,7 +42,7 @@ Bitomètre est un service d'analyse chiffrée : il situe des mesures par rapport
 
 1. Vous choisissez un protocole : questionnaire, photo, ou photo accompagnée de mesures déclarées. Avant d'envoyer une photo, vous indiquez votre année de naissance, vous cochez trois cases de confirmation et une vérification d'âge est réalisée par un prestataire tiers, qui ne transmet au site qu'une réponse « majeur : oui », valable 30 minutes.
 2. Pour une photo, vous posez une carte au format bancaire à côté du sujet, côté verso visible. La photo est réduite et nettoyée de ses métadonnées dans votre navigateur avant l'envoi.
-3. L'analyse dure en général de 20 à 60 secondes. L'écran affiche uniquement les étapes réellement exécutées : contrôle de recevabilité et extraction de la ligne médiane, calibration sur la carte de référence, calcul des percentiles.
+3. L'analyse dure en général de 15 à 45 secondes. L'écran affiche uniquement les étapes réellement exécutées : contrôle de recevabilité et extraction de la ligne médiane, calibration sur la carte de référence, calcul des percentiles.
 4. Vous voyez d'abord un aperçu : pour les protocoles photo, l'indice de confiance et la symétrie. Le reste du rapport est verrouillé jusqu'au paiement.
 5. Après le paiement, le rapport complet s'affiche à une adresse privée.
 

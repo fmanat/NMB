@@ -36,6 +36,7 @@ const opt = (n) => {
 };
 const SELFTEST = flag("selftest");
 const MERGE = flag("merge"); // recevabilité et repérage en un seul appel
+const PARALLEL = flag("parallel"); // recevabilité et repérage en deux appels lancés EN MÊME TEMPS
 const SIZE = Number(opt("size") ?? 1600); // taille maximale de l'image envoyée, en pixels
 const EFFORT = opt("effort"); // raisonnement : low, medium ou high (si l'API le permet)
 const MARGIN_PCT = 10;
@@ -52,7 +53,7 @@ if (!KEY) {
 async function loadImage() {
   if (SELFTEST) {
     // Image neutre : un objet cylindrique posé à côté d'une carte (aucune personne, aucun corps).
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="3000" height="2000" viewBox="0 0 1200 800">
       <rect width="1200" height="800" fill="#d9d4c7"/>
       <rect x="140" y="470" width="342" height="216" rx="14" fill="#2a4d8f"/>
       <rect x="140" y="520" width="342" height="44" fill="#111"/>
@@ -381,10 +382,19 @@ if (MERGE) {
     }
   }
 } else {
-  console.log("1/3 Recevabilité");
-  const r1 = await timed("recevabilité", () =>
-    callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_RECEVABILITE), schema: SCHEMA_RECEVABILITE, schemaName: "recevabilite" }),
-  );
+  console.log(PARALLEL ? "1-2/3 Recevabilité ‖ repérage (deux appels en parallèle)" : "1/3 Recevabilité");
+  const callRecev = () => callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_RECEVABILITE), schema: SCHEMA_RECEVABILITE, schemaName: "recevabilite" });
+  const callRepere = () => callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_REPERAGE), schema: REPERAGE_SCHEMA, schemaName: "reperage" });
+  let parallelR2 = null;
+  let r1;
+  if (PARALLEL) {
+    // L'attente est celle du plus long des deux appels. Inconvénient : le repérage est payé même si la photo est refusée.
+    const both = await timed("recevabilité ‖ repérage (parallèle)", () => Promise.all([callRecev(), callRepere()]));
+    r1 = both[0];
+    parallelR2 = both[1];
+  } else {
+    r1 = await timed("recevabilité", callRecev);
+  }
   if (!verdictForCall("recevabilité", r1)) {
     if (r1.kind === "reseau") techError = true;
     else blocked = true;
@@ -401,9 +411,7 @@ if (MERGE) {
   await stopIfBadKey();
   if (!blocked && !techError) {
     console.log("\n2/3 Repérage des points");
-    const r2 = await timed("repérage", () =>
-      callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_REPERAGE), schema: REPERAGE_SCHEMA, schemaName: "reperage" }),
-    );
+    const r2 = parallelR2 ?? (await timed("repérage", callRepere));
     if (!verdictForCall("repérage", r2)) {
       if (r2.kind === "reseau") techError = true;
       else blocked = true;

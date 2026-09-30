@@ -31,3 +31,44 @@ Règle suivie : pour toute décision non couverte par SPEC.md, l'option la plus 
 | Ancien calcul conservé dans le code (`estimateMeasures`) uniquement pour le mode règle du script d'essai xAI et pour les tests qui documentent pourquoi il a été abandonné. | Le mode règle n'a pas de carte, donc pas de pose. |
 
 Commandes : `npm run geometry:report` (tableaux complets), `npm run verify` (tout : lint, types, tests, SEO, build).
+
+## Bloc 3 : latence de l'analyse xAI (image neutre uniquement)
+
+Méthode : `npm run latency:bench` (outil avec plafond de dépense) appelle réellement l'API avec l'image neutre fabriquée par le script d'essai (un objet cylindrique à côté d'une carte, 3 000 × 2 000 px, aucune photo personnelle). « Attente avec photo » = ce que l'utilisateur attend avant l'aperçu ; la rédaction du commentaire se fait ensuite. Modèle `grok-4.7`.
+
+| Config | Description | Essais | Attente avec photo (médiane · min–max) | Confiance moyenne du repérage (min) | Coût par analyse |
+|---|---|---|---|---|---|
+| A | 1 600 px · 2 appels à la suite · raisonnement par défaut | 1 | 186,7 s | 0,93 | 0,0217 $ |
+| B | 1 600 px · 2 appels à la suite · raisonnement `low` | 2 | 33,7 s · 33,6–33,7 | 0,92 (0,91) | 0,0217 $ |
+| F | 1 024 px · 2 appels à la suite · `low` | 2 | 35,0 s · 34,4–35,5 | 0,93 (0,93) | 0,0177 $ |
+| C | 1 600 px · 1 appel fusionné · `low` | 2 | 38,4 s · 37,4–39,4 | 0,65 (**0,40**) | 0,0154 $ |
+| D | 1 024 px · 1 appel fusionné · `low` | 2 | 18,5 s · 17,1–19,8 | 0,77 (**0,64**) | 0,0134 $ |
+| G | 1 024 px · 1 appel fusionné · `minimal` | 6 | 19,1 s · 15,0–**173,3** | 0,65 (**0,12**) | 0,0137 $ |
+| H | 1 600 px · 1 appel fusionné · `minimal` | 2 | 12,2 s · 10,1–14,3 | 0,28 (**0,28**, un essai inexploitable) | 0,0138 $ |
+| **P** | **1 600 px · 2 appels EN PARALLÈLE · `low`** | 3 | **17,7 s · 16,2–22,2** | **0,93 (0,92)** | 0,0216 $ |
+| Q | 1 024 px · 2 appels en parallèle · `low` | 3 | 21,3 s · 18,6–23,3 | 0,91 (0,89) | 0,0176 $ |
+
+Paramètre de raisonnement : l'API accepte `minimal`, `low` et `medium` ; elle refuse `none` (HTTP 400). Le raisonnement par défaut est très lent (187 s).
+
+**Décision : configuration P** (deux appels distincts lancés en parallèle, image de 1 600 px, raisonnement `low`). Raisons :
+- critère demandé (« la plus rapide qui garde une confiance moyenne ≥ 0,8 ») : seules B, F, P et Q le remplissent sur tous leurs essais ; P est la plus rapide (médiane 17,7 s, maximum 22,2 s : objectif de 30 s atteint) ;
+- les appels fusionnés (C, D, G, H) sont rapides mais **instables** : un essai sur trois à six a une confiance effondrée (0,12 à 0,64), ce qui provoquerait des refus injustifiés ;
+- réduire l'image à 1 024 px n'améliore pas la vitesse des appels parallèles (Q plus lent que P) et baisse légèrement la confiance ; la taille reste donc 1 600 px (`UPLOAD.maxPx`), identique côté navigateur et serveur ;
+- coût : 0,0216 $ par analyse, environ 40 % de plus qu'un appel fusionné, parce que le repérage est payé même si la photo est refusée. Accepté pour la fiabilité.
+
+Limites : mesuré sur une image dessinée, pas sur des photos réelles ; la confiance est auto-déclarée par le modèle et ne mesure pas la précision (voir `docs/CALIBRATION.md`) ; 2 à 6 essais par configuration.
+
+Vérification de bout en bout avec le vrai moteur (image neutre dessinée, via le site, `VISION_PROVIDER=xai`) : 18,5 s, image refusée « sujet non conforme » (attendu : ce n'est pas un sujet anatomique), message neutre, aucun rapport ni paiement, tentative journalisée avec motif, durée et jetons (6 960 entrée / 620 sortie).
+
+**Dépense xAI de la session : environ 0,46 $** (plafond 0,50 $) : essais préalables sur le raisonnement 0,031 $ ; configuration A 0,022 $ (+ un essai interrompu, compté 0,022 $) ; campagne B, C, D, F, G, H 0,191 $ ; quatre essais G supplémentaires 0,055 $ ; configurations P et Q 0,118 $ ; passage par le site avec le vrai moteur 0,018 $.
+
+## Bloc 4 : formules B et C
+
+| Décision | Raison |
+|---|---|
+| Écrans, consentements, consignes, vérification d'âge simulée, étapes réelles, aperçu, paiement simulé et rapport : déjà en place depuis l'étape 3 ; revérifiés dans le navigateur (formule C, image 3 000 × 2 000 px). | Rien à refaire ; seules des finitions ont été ajoutées (ci-dessous). |
+| Module d'analyse réel : deux appels parallèles (config P), `src/lib/vision/xai.ts`. Le repérage est ignoré si la photo n'est pas recevable ; s'il échoue sur une photo recevable, l'analyse échoue (message « service momentanément indisponible »). | Résultat du Bloc 3. |
+| La photo reçue est abandonnée (`input.photo = null`) à la fin de tout traitement, y compris refus, erreur ou interruption. | « Suppression de la photo » demandée ; testé dans tous les cas. |
+| Captcha et filtrage d'empreintes : interfaces simulées (défaut) et mode `off` (`CAPTCHA_PROVIDER=off`, `SCREENING_PROVIDER=off`). Tous interdits en production. | « Désactivables » demandé ; un vrai prestataire reste obligatoire en ligne. |
+| Tests ajoutés : fournisseur xAI réel avec `fetch` simulé (requêtes, réglages, refus, erreurs, parallélisme, rien dans les journaux) ; photo jamais écrite sur disque (dossier temporaire isolé, racine du projet), ni en base (aucune colonne binaire, aucun contenu d'image), ni dans les journaux ; suppression de la photo en mémoire. | Exigence du cahier des charges (section 5) et de la session. |
+| Formule de la durée affichée : « de 15 à 45 secondes ». | Mesures : 16 à 22 s d'attente avant l'aperçu, marge pour les pics. |

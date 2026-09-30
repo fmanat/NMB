@@ -3,8 +3,9 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GuidanceDiagram } from "@/components/GuidanceDiagram";
+import { UPLOAD } from "@/config/site";
 
-const MAX_PX = 1600;
+const MAX_PX = UPLOAD.maxPx; // même taille que celle retenue par le serveur (voir docs/DECISIONS.md)
 const field = "num mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-lg outline-none focus:border-accent";
 
 type Step = { id: string; label: string; done: boolean };
@@ -179,7 +180,7 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
       <button type="submit" className="btn-primary" disabled={busy || (captchaMode === "simulation" && !captchaOk)}>
         {busy ? "Analyse en cours…" : "Lancer l'analyse"}
       </button>
-      {busy && <p className="text-xs text-muted">L&apos;analyse peut durer de 20 à 60 secondes. Ne fermez pas cette page.</p>}
+      {busy && <p className="text-xs text-muted">L&apos;analyse dure en général de 15 à 45 secondes. Ne fermez pas cette page.</p>}
     </form>
   );
 }

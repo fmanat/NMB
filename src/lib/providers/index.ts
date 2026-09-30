@@ -1,7 +1,7 @@
 import { createSimulatedVision } from "../vision/simulation";
 import type { VisionProvider } from "../vision/types";
 import { xaiVision } from "../vision/xai";
-import { simulatedAge, simulatedCaptcha, simulatedScreening } from "./simulated";
+import { disabledCaptcha, disabledScreening, simulatedAge, simulatedCaptcha, simulatedScreening } from "./simulated";
 import type { AgeVerificationProvider, CaptchaProvider, ImageScreeningProvider } from "./types";
 
 // Pour brancher un vrai prestataire : créer un fichier qui implémente l'interface correspondante,
@@ -23,11 +23,13 @@ export function getAgeProvider(): AgeVerificationProvider {
 export function getScreening(): ImageScreeningProvider {
   const id = process.env.SCREENING_PROVIDER ?? "simulation";
   if (id === "simulation") return simulatedScreening;
+  if (id === "off") return disabledScreening; // désactivé (développement seulement)
   throw new Error(`Prestataire de filtrage d'empreintes inconnu : ${id}`);
 }
 
 export function getCaptcha(): CaptchaProvider {
   const id = process.env.CAPTCHA_PROVIDER ?? "simulation";
   if (id === "simulation") return simulatedCaptcha;
+  if (id === "off") return disabledCaptcha; // désactivé (développement seulement)
   throw new Error(`Prestataire de captcha inconnu : ${id}`);
 }

@@ -60,6 +60,14 @@ export function acceptComment(text: string | null, curvatureDeg: number): string
  * Produit des événements que l'interface affiche en direct : uniquement des étapes réellement exécutées.
  */
 export async function* runAnalysis(input: FlowInput, deps: FlowDeps): AsyncGenerator<FlowEvent> {
+  try {
+    yield* runAnalysisSteps(input, deps);
+  } finally {
+    input.photo = null; // la photo reçue est abandonnée dans tous les cas (succès, refus, erreur, interruption)
+  }
+}
+
+async function* runAnalysisSteps(input: FlowInput, deps: FlowDeps): AsyncGenerator<FlowEvent> {
   if (!input.ageTokenValid) {
     yield { type: "error", code: "age", message: "Vérification d'âge requise avant l'envoi d'une photo." };
     return;

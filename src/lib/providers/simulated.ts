@@ -21,6 +21,24 @@ export const simulatedScreening: ImageScreeningProvider = {
   },
 };
 
+// Mode « off » : le contrôle est désactivé (toujours accepté). Développement et tests seulement : interdit en production,
+// où un vrai prestataire doit être branché.
+export const disabledScreening: ImageScreeningProvider = {
+  id: "off",
+  async screen() {
+    assertNotProduction("filtrage d'empreintes désactivé");
+    return { blocked: false };
+  },
+};
+
+export const disabledCaptcha: CaptchaProvider = {
+  id: "off",
+  async verify() {
+    assertNotProduction("captcha désactivé");
+    return true;
+  },
+};
+
 export const SIMULATED_CAPTCHA_TOKEN = "simulation-ok";
 
 export const simulatedCaptcha: CaptchaProvider = {
