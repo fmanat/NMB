@@ -1,6 +1,6 @@
 ---
 slug: etudes-taille-penis
-title: Études sur la taille du pénis : quelles sont les références scientifiques ?
+title: Études sur la taille du pénis : références scientifiques
 metaDescription: Quelles sont les principales études scientifiques sur la taille du pénis ? Méta-analyses, méthodes de mesure, populations et chiffres de référence.
 targetKeyword: études taille pénis
 faq:

@@ -1,7 +1,7 @@
 ---
 slug: circonference-moyenne-penis
-title: Circonférence moyenne du pénis : quelles sont les valeurs de référence ?
-metaDescription: Quelle est la circonférence moyenne du pénis ? Découvrez les données scientifiques sur le tour du pénis au repos et en érection et comment interpréter une mesure.
+title: Circonférence moyenne du pénis : valeurs de référence
+metaDescription: Quelle est la circonférence moyenne du pénis ? Données scientifiques sur le tour du pénis au repos et en érection, et comment interpréter une mesure.
 targetKeyword: circonférence moyenne pénis
 faq:
   - q: Quelle est la circonférence moyenne du pénis en érection ?

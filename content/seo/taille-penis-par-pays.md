@@ -1,7 +1,7 @@
 ---
 slug: taille-penis-par-pays
-title: Taille du pénis par pays : que disent réellement les études ?
-metaDescription: Existe-t-il vraiment un classement de la taille du pénis par pays ? Découvrez ce que montrent les études scientifiques et pourquoi les classements Internet sont difficiles à interpréter.
+title: Taille du pénis par pays : que disent les études ?
+metaDescription: Existe-t-il un classement de la taille du pénis par pays ? Ce que montrent les études et pourquoi les classements Internet sont difficiles à interpréter.
 targetKeyword: taille pénis par pays
 faq:
   - q: Peut-on classer les pays selon la taille du pénis ?

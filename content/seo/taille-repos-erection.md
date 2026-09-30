@@ -1,6 +1,6 @@
 ---
 slug: taille-repos-erection
-title: Taille du pénis au repos et en érection : quelle différence ?
+title: Taille du pénis au repos et en érection : les écarts
 metaDescription: Quelle est la différence entre la taille du pénis au repos et en érection ? Données scientifiques sur les mesures flaccides, étirées et érectiles.
 targetKeyword: taille pénis repos érection
 faq:

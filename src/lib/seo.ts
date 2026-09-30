@@ -201,10 +201,13 @@ export function parseSeoFile(raw: string, filename: string, existingSlugs: Set<s
   if (filename !== `${slug}.md`) throw new SeoError(`${filename} : le nom du fichier doit être ${slug}.md.`);
 
   const title = nonEmpty(meta.title, "title", filename);
-  if ([...title].length > SEO_LIMITS.titleMax) throw new SeoError(`${filename} : title de ${[...title].length} caractères (maximum ${SEO_LIMITS.titleMax}).`);
   const metaDescription = nonEmpty(meta.metaDescription, "metaDescription", filename);
+  // Tous les dépassements de longueur sont signalés ensemble, pour ne pas obliger à corriger en plusieurs passes.
+  const limitErrors: string[] = [];
+  if ([...title].length > SEO_LIMITS.titleMax) limitErrors.push(`title de ${[...title].length} caractères (maximum ${SEO_LIMITS.titleMax})`);
   if ([...metaDescription].length > SEO_LIMITS.metaDescriptionMax)
-    throw new SeoError(`${filename} : metaDescription de ${[...metaDescription].length} caractères (maximum ${SEO_LIMITS.metaDescriptionMax}).`);
+    limitErrors.push(`metaDescription de ${[...metaDescription].length} caractères (maximum ${SEO_LIMITS.metaDescriptionMax})`);
+  if (limitErrors.length) throw new SeoError(`${filename} : ${limitErrors.join(" ; ")}.`);
   const targetKeyword = nonEmpty(meta.targetKeyword, "targetKeyword", filename);
 
   const faqRaw = meta.faq ?? [];

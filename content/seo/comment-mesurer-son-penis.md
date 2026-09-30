@@ -1,7 +1,7 @@
 ---
 slug: comment-mesurer-son-penis
 title: Comment mesurer son pénis correctement ?
-metaDescription: Comment mesurer la longueur et la circonférence du pénis ? Méthode, position, règle, mesure flaccide, étirée et en érection selon les protocoles scientifiques.
+metaDescription: Comment mesurer la longueur et la circonférence du pénis ? Méthode, position, règle, mesures flaccide, étirée et en érection selon les études.
 targetKeyword: comment mesurer son pénis
 faq:
   - q: Où placer la règle pour mesurer la longueur ?

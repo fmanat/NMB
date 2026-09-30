@@ -1,7 +1,7 @@
 ---
 slug: taille-moyenne-penis-france
 title: Taille moyenne pénis France : que disent les études ?
-metaDescription: Quelle est la taille moyenne du pénis en France ? Découvrez les données scientifiques disponibles, les limites des études françaises et les références internationales.
+metaDescription: Taille moyenne du pénis en France : les données scientifiques disponibles, les limites des études françaises et les références internationales.
 targetKeyword: taille moyenne pénis France
 faq:
   - q: Quelle est la taille moyenne d’un pénis en érection ?

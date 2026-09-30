@@ -48,6 +48,14 @@ describe("en-tête au format du cahier des charges (sans guillemets)", () => {
     expect(() => parse(wrap(`${base}\nfaq: oui`))).toThrow(/doit être suivi d'une liste/);
   });
 
+  it("signale ensemble le titre ET la description trop longs", () => {
+    const raw = wrap(`slug: faq
+title: ${"t".repeat(61)}
+metaDescription: ${"d".repeat(156)}
+targetKeyword: k`);
+    expect(() => parse(raw)).toThrow(/title de 61 caractères.*metaDescription de 156 caractères/);
+  });
+
   it("une réponse sans question est refusée", () => {
     expect(() => parse(wrap(`${base}\nfaq:\n  - a: Réponse seule`))).toThrow(/faq\[1\]\.q/);
   });
