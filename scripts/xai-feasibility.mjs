@@ -21,15 +21,26 @@ import sharp from "sharp";
 
 const API_URL = "https://api.x.ai/v1/chat/completions";
 const KEY = process.env.XAI_API_KEY;
-const MODEL = process.env.XAI_MODEL || "grok-4.7";
+let MODEL = process.env.XAI_MODEL || "grok-4.7";
 // Tarif en dollars par million de jetons (page officielle des modèles). Modifiable dans .env.
 const PRICE_IN = Number(process.env.XAI_PRICE_IN_PER_M ?? 2.0);
 const PRICE_OUT = Number(process.env.XAI_PRICE_OUT_PER_M ?? 6.0);
 const TIMEOUT_MS = 240_000;
 
 const args = process.argv.slice(2);
-const SELFTEST = args.includes("--selftest");
-const fileArg = args.find((a) => !a.startsWith("--"));
+const VALUE_OPTS = ["length", "girth", "state", "size", "effort", "model"];
+const flag = (n) => args.includes(`--${n}`);
+const opt = (n) => {
+  const i = args.indexOf(`--${n}`);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+const SELFTEST = flag("selftest");
+const MERGE = flag("merge"); // recevabilité et repérage en un seul appel
+const SIZE = Number(opt("size") ?? 1600); // taille maximale de l'image envoyée, en pixels
+const EFFORT = opt("effort"); // raisonnement : low, medium ou high (si l'API le permet)
+const MARGIN_PCT = 10;
+const fileArg = args.find((a, i) => !a.startsWith("--") && !(i > 0 && VALUE_OPTS.includes(args[i - 1].slice(2)) && args[i - 1].startsWith("--")));
+if (opt("model")) MODEL = opt("model");
 
 if (!KEY) {
   console.error("XAI_API_KEY est vide. Ouvrez le fichier .env et collez votre clé après XAI_API_KEY=");
@@ -78,10 +89,12 @@ async function loadImage() {
 // aucune métadonnée conservée (sharp n'en copie aucune par défaut).
 async function reencode(buf) {
   const before = await sharp(buf).metadata();
-  const out = await sharp(buf).rotate().resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 88 }).toBuffer();
+  const out = await sharp(buf).rotate().resize({ width: SIZE, height: SIZE, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 88 }).toBuffer();
   const after = await sharp(out).metadata();
   return {
     out,
+    width: after.width,
+    height: after.height,
     info: {
       avant: `${before.width}x${before.height} ${before.format}${before.exif ? ", EXIF présent" : ""}`,
       apres: `${after.width}x${after.height} jpeg, ${(out.length / 1024).toFixed(0)} Ko, EXIF ${after.exif ? "PRÉSENT (anormal)" : "supprimé"}`,
@@ -99,6 +112,7 @@ async function callXai({ system, content, schema, schemaName }) {
   const base = {
     model: MODEL,
     temperature: 0,
+    ...(EFFORT ? { reasoning_effort: EFFORT } : {}),
     messages: [
       { role: "system", content: system },
       { role: "user", content },
@@ -209,6 +223,13 @@ const SCHEMA_REPERAGE = {
   },
 };
 
+const SCHEMA_MERGED = {
+  type: "object",
+  additionalProperties: false,
+  required: ["recevable", "motif", "reperage"],
+  properties: { ...SCHEMA_RECEVABILITE.properties, reperage: SCHEMA_REPERAGE },
+};
+
 const SYSTEM_VISION =
   "Tu es un module de repérage de points pour un service de statistiques biométriques réservé aux adultes. " +
   "Tu ne mesures rien et tu ne commentes rien. Tu réponds uniquement en JSON conforme au schéma. " +
@@ -247,14 +268,20 @@ function verdictForCall(name, r) {
 
 const { buf, label } = await loadImage();
 console.log(`Image : ${label}`);
-const { out, info } = await reencode(buf);
+const { out, info, width, height } = await reencode(buf);
 console.log(`  avant : ${info.avant}\n  après : ${info.apres}`);
 const dataUrl = `data:image/jpeg;base64,${out.toString("base64")}`;
-console.log(`Modèle : ${MODEL}\n`);
+console.log(`Modèle : ${MODEL}${EFFORT ? ` (raisonnement : ${EFFORT})` : ""} · taille max ${SIZE} px${MERGE ? " · appels fusionnés" : ""}\n`);
 
-let blocked = false;
-let uncertain = false;
-let techError = false;
+const timings = [];
+async function timed(name, fn) {
+  const t = Date.now();
+  const r = await fn();
+  const ms = Date.now() - t;
+  timings.push([name, ms]);
+  console.log(`  durée : ${(ms / 1000).toFixed(1)} s`);
+  return r;
+}
 
 // Quitte proprement (évite une erreur d'arrêt de Node sous Windows quand des connexions sont encore ouvertes).
 async function finish(code) {
@@ -270,68 +297,157 @@ async function stopIfBadKey() {
   await finish(4);
 }
 
-console.log("1/3 Recevabilité");
-const r1 = await callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_RECEVABILITE), schema: SCHEMA_RECEVABILITE, schemaName: "recevabilite" });
-if (!verdictForCall("recevabilité", r1)) {
-  if (r1.kind === "reseau") techError = true;
-  else blocked = true;
-} else {
-  const j = parseJson(r1.text);
-  console.log(`  format de réponse : ${r1.mode}`);
-  if (!j || typeof j.recevable !== "boolean") {
-    console.log("  ✗ réponse non exploitable :", r1.text.slice(0, 300));
-    uncertain = true;
-  } else {
-    console.log(`  ✓ réponse exploitable : recevable=${j.recevable}, motif=${j.motif}`);
-    if (!j.recevable) console.log("    (le modèle a jugé l'image non recevable selon nos règles : normal pour un refus voulu, à examiner sinon)");
-  }
+function checkRepere(j) {
+  const inRange = (p) => p && [p.x, p.y, p.confiance].every((v) => typeof v === "number" && v >= 0 && v <= 1);
+  const all = [...(j.coins_carte ?? []), j.base, j.extremite, ...(j.ligne_mediane ?? []), ...(j.bords ?? []).flatMap((b) => [b.gauche, b.droite])];
+  const problems = [];
+  if (j.coins_carte?.length !== 4) problems.push(`coins de carte : ${j.coins_carte?.length ?? 0} au lieu de 4`);
+  const n = j.ligne_mediane?.length ?? 0;
+  if (n < 8 || n > 12) problems.push(`points de ligne médiane : ${n} (attendu 8 à 12)`);
+  if ((j.bords?.length ?? 0) !== 5) problems.push(`hauteurs de bords : ${j.bords?.length ?? 0} au lieu de 5`);
+  if (!all.every(inRange)) problems.push("coordonnées ou confiances hors de l'intervalle 0 à 1");
+  const conf = all.filter(inRange).map((p) => p.confiance);
+  const avg = conf.length ? conf.reduce((a, b) => a + b, 0) / conf.length : 0;
+  return { problems, avg };
 }
 
-await stopIfBadKey();
-if (!blocked) {
-  console.log("\n2/3 Repérage des points");
-  const r2 = await callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_REPERAGE), schema: SCHEMA_REPERAGE, schemaName: "reperage" });
-  if (!verdictForCall("repérage", r2)) {
-    if (r2.kind === "reseau") techError = true;
+let blocked = false;
+let uncertain = false;
+let techError = false;
+let recev = null;
+let repere = null;
+
+if (MERGE) {
+  console.log("1-2/3 Recevabilité + repérage (un seul appel)");
+  const r = await timed("recevabilité + repérage", () =>
+    callXai({
+      system: SYSTEM_VISION,
+      content: imgContent(dataUrl, PROMPT_RECEVABILITE + " Renseigne aussi le repérage : " + PROMPT_REPERAGE),
+      schema: SCHEMA_MERGED,
+      schemaName: "recevabilite_reperage",
+    }),
+  );
+  if (!verdictForCall("recevabilité + repérage", r)) {
+    if (r.kind === "reseau") techError = true;
     else blocked = true;
   } else {
-    const j = parseJson(r2.text);
-    console.log(`  format de réponse : ${r2.mode}`);
-    if (!j) {
-      console.log("  ✗ réponse non exploitable :", r2.text.slice(0, 300));
+    const j = parseJson(r.text);
+    console.log(`  format de réponse : ${r.mode}`);
+    if (!j || typeof j.recevable !== "boolean") {
+      console.log("  ✗ réponse non exploitable :", r.text.slice(0, 300));
       uncertain = true;
     } else {
-      const inRange = (p) => p && [p.x, p.y, p.confiance].every((v) => typeof v === "number" && v >= 0 && v <= 1);
-      const all = [...(j.coins_carte ?? []), j.base, j.extremite, ...(j.ligne_mediane ?? []), ...(j.bords ?? []).flatMap((b) => [b.gauche, b.droite])];
-      const problems = [];
-      if (j.coins_carte?.length !== 4) problems.push(`coins de carte : ${j.coins_carte?.length ?? 0} au lieu de 4`);
-      const n = j.ligne_mediane?.length ?? 0;
-      if (n < 8 || n > 12) problems.push(`points de ligne médiane : ${n} (attendu 8 à 12)`);
-      if ((j.bords?.length ?? 0) !== 5) problems.push(`hauteurs de bords : ${j.bords?.length ?? 0} au lieu de 5`);
-      if (!all.every(inRange)) problems.push("coordonnées ou confiances hors de l'intervalle 0 à 1");
-      const conf = all.filter(inRange).map((p) => p.confiance);
-      const avg = conf.length ? conf.reduce((a, b) => a + b, 0) / conf.length : 0;
-      if (problems.length) {
-        console.log("  ⚠ structure incomplète :", problems.join(" ; "));
+      recev = { recevable: j.recevable, motif: j.motif };
+      repere = j.reperage;
+    }
+  }
+} else {
+  console.log("1/3 Recevabilité");
+  const r1 = await timed("recevabilité", () =>
+    callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_RECEVABILITE), schema: SCHEMA_RECEVABILITE, schemaName: "recevabilite" }),
+  );
+  if (!verdictForCall("recevabilité", r1)) {
+    if (r1.kind === "reseau") techError = true;
+    else blocked = true;
+  } else {
+    const j = parseJson(r1.text);
+    console.log(`  format de réponse : ${r1.mode}`);
+    if (!j || typeof j.recevable !== "boolean") {
+      console.log("  ✗ réponse non exploitable :", r1.text.slice(0, 300));
+      uncertain = true;
+    } else {
+      recev = { recevable: j.recevable, motif: j.motif };
+    }
+  }
+  await stopIfBadKey();
+  if (!blocked && !techError) {
+    console.log("\n2/3 Repérage des points");
+    const r2 = await timed("repérage", () =>
+      callXai({ system: SYSTEM_VISION, content: imgContent(dataUrl, PROMPT_REPERAGE), schema: SCHEMA_REPERAGE, schemaName: "reperage" }),
+    );
+    if (!verdictForCall("repérage", r2)) {
+      if (r2.kind === "reseau") techError = true;
+      else blocked = true;
+    } else {
+      const j = parseJson(r2.text);
+      console.log(`  format de réponse : ${r2.mode}`);
+      if (!j) {
+        console.log("  ✗ réponse non exploitable :", r2.text.slice(0, 300));
         uncertain = true;
-      } else {
-        console.log(`  ✓ structure valide (confiance moyenne ${avg.toFixed(2)})`);
+      } else repere = j;
+    }
+  }
+}
+await stopIfBadKey();
+
+if (recev) {
+  console.log(`\n  recevabilité : recevable=${recev.recevable}, motif=${recev.motif}`);
+  if (!recev.recevable) console.log("  (le modèle a jugé l'image non recevable selon nos règles : à examiner)");
+}
+
+if (repere) {
+  const { problems, avg } = checkRepere(repere);
+  if (problems.length) {
+    console.log("  ⚠ repérage : structure incomplète :", problems.join(" ; "));
+    uncertain = true;
+  } else {
+    console.log(`  ✓ repérage : structure valide (confiance moyenne ${avg.toFixed(2)})`);
+    const { estimateMeasures } = await import("../src/lib/measure.ts");
+    let est = null;
+    try {
+      est = estimateMeasures(repere, width, height);
+    } catch (e) {
+      console.log("  ✗ calcul impossible :", e.message);
+      uncertain = true;
+    }
+    if (est) {
+      console.log("\nMesures estimées (calcul local à partir des points, homographie sur la carte)");
+      console.log(`  longueur                : ${est.lengthCm.toFixed(1)} cm`);
+      console.log(`  largeur max / moyenne   : ${est.maxWidthCm.toFixed(2)} / ${est.meanWidthCm.toFixed(2)} cm`);
+      console.log(`  circonférence (π×larg.) : ${est.girthFromMaxCm.toFixed(1)} cm (largeur max) · ${est.girthFromMeanCm.toFixed(1)} cm (largeur moyenne)`);
+      console.log(`  courbure                : ${est.curvatureDeg.toFixed(0)}°`);
+      console.log(`  carte : échelle ${est.cardPxPerMm.toFixed(2)} px/mm, déformation de perspective ${est.cardSkew.toFixed(2)} (1 = de face)`);
+
+      const realL = Number(opt("length"));
+      const realG = Number(opt("girth"));
+      if (realL || realG) {
+        console.log(`\nComparaison avec vos mesures réelles (état déclaré : ${opt("state") ?? "non précisé"}, marge affichée ± ${MARGIN_PCT} % minimum)`);
+        const cmp = (name, e, r) => {
+          const d = e - r;
+          const pct = (d / r) * 100;
+          const ok = Math.abs(pct) <= MARGIN_PCT;
+          console.log(`  ${name.padEnd(27)}: estimé ${e.toFixed(1)} cm · réel ${r} cm · écart ${d >= 0 ? "+" : ""}${d.toFixed(1)} cm (${pct >= 0 ? "+" : ""}${pct.toFixed(0)} %) → ${ok ? "DANS la marge" : "HORS marge"}`);
+        };
+        if (realL) cmp("longueur", est.lengthCm, realL);
+        if (realG) {
+          cmp("circonférence (larg. max)", est.girthFromMaxCm, realG);
+          cmp("circonférence (larg. moy.)", est.girthFromMeanCm, realG);
+          if (realG < 5) console.log(`  ⚠ circonférence réelle saisie (${realG} cm) peu plausible : faute de frappe possible (ordre de grandeur attendu : 9 à 13 cm).`);
+        }
       }
     }
   }
 }
 
 console.log("\n3/3 Rédaction (texte seul, chiffres factices, aucune image envoyée)");
-const r3 = await callXai({
-  system: "Tu rédiges des commentaires pince-sans-rire, au vocabulaire strictement scientifique, sans vulgarité, sans humiliation et sans diagnostic médical.",
-  content:
-    "Chiffres calculés : score 74/100, longueur au percentile 62, circonférence au percentile 55, symétrie 91/100, courbure 8 degrés. " +
-    "Rédige un commentaire de 120 à 180 mots. Rappelle qu'il s'agit d'estimations.",
-});
+const r3 = await timed("rédaction", () =>
+  callXai({
+    system: "Tu rédiges des commentaires pince-sans-rire, au vocabulaire strictement scientifique, sans vulgarité, sans humiliation et sans diagnostic médical.",
+    content:
+      "Chiffres calculés : score 74/100, longueur au percentile 62, circonférence au percentile 55, symétrie 91/100, courbure 8 degrés. " +
+      "Rédige un commentaire de 120 à 180 mots. Rappelle qu'il s'agit d'estimations.",
+  }),
+);
 if (verdictForCall("rédaction", r3)) {
   const words = r3.text.trim().split(/\s+/).length;
   console.log(`  ✓ texte reçu : ${words} mots ${words >= 120 && words <= 180 ? "(dans la cible 120–180)" : "(hors cible 120–180, à régler par le prompt)"}`);
 }
+
+console.log("\nDurées des appels");
+for (const [n, ms] of timings) console.log(`  ${n.padEnd(26)}: ${(ms / 1000).toFixed(1)} s`);
+const photoMs = timings.filter(([n]) => n !== "rédaction").reduce((s, [, ms]) => s + ms, 0);
+const totalMs = timings.reduce((s, [, ms]) => s + ms, 0);
+console.log(`  attente avec photo        : ${(photoMs / 1000).toFixed(1)} s ; avec rédaction : ${(totalMs / 1000).toFixed(1)} s (objectif : moins de 30 s)`);
 
 const cost = (usage.in * PRICE_IN + usage.out * PRICE_OUT) / 1e6;
 console.log(`\nJetons : ${usage.in} en entrée, ${usage.out} en sortie → coût réel de cet essai ≈ ${cost.toFixed(4)} $ (tarif ${PRICE_IN}/${PRICE_OUT} $ par million)`);

@@ -47,3 +47,22 @@ Le script réencode la photo (JPEG, 1 600 px maximum, toutes les métadonnées s
 
 - Par défaut, xAI conserve les requêtes (images comprises) 30 jours pour détecter les abus, sans les utiliser pour l'entraînement. Une option « Zero Data Retention » supprime cette conservation. Pour que l'affirmation « Photo supprimée après analyse » reste vraie, il faudra l'activer dans la console xAI (réglage de l'équipe) avant le lancement. Vérifiez qu'elle est disponible sur votre compte.
 - Pendant ce test, votre photo est donc conservée 30 jours par xAI, comme tout appel API, sauf si cette option est active sur votre compte.
+
+## 5. Résultats des essais (30/09/2026)
+
+Modèle `grok-4.7`, endpoint `/v1/chat/completions`, sortie JSON stricte acceptée avec des images.
+
+**Photo réelle de l'utilisateur (une seule passe)** : xAI ne refuse pas l'image et répond. La recevabilité a répondu « carte absente ou illisible » et le repérage n'a renvoyé aucun coin de carte : aucune mesure n'a pu être calculée, donc aucune comparaison avec les mesures réelles n'est possible. Cause à établir : carte absente de la photo ou carte non reconnue. La photo a été supprimée du dossier ; rien n'a jamais été versionné.
+
+**Durées** (une mesure par configuration, à confirmer ; image neutre pour les variantes) :
+
+| Configuration | Appels avec photo | Avec rédaction |
+|---|---|---|
+| Défaut, deux appels séparés, photo réelle | 77 s (16 + 61) | 101 s |
+| Raisonnement réduit (`--effort low`), deux appels | 26 s | 33 s |
+| Raisonnement réduit + appels fusionnés (`--merge`) | 21 s | 29 s |
+| Image 1 024 px au lieu de 1 600 | 71 s | 84 s |
+
+Conclusions : le raisonnement du modèle est la cause principale de la lenteur ; réduire la taille de l'image n'aide pas ; la rédaction du commentaire peut se faire après l'affichage de l'aperçu. Coût réel : entre 1,4 et 2,2 centimes de dollar par analyse complète.
+
+Options du script : `--effort low`, `--merge`, `--size 1024`, `--model NOM`, `--length`, `--girth`, `--state`.

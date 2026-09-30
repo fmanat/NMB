@@ -10,7 +10,7 @@
     "db:migrate": "node --env-file=.env scripts/migrate.mjs",
     "db:purge": "node --env-file=.env scripts/purge.mjs",
     "test": "vitest run",
-    "xai:test": "node --env-file=.env scripts/xai-feasibility.mjs"
+    "xai:test": "node --no-warnings --env-file=.env scripts/xai-feasibility.mjs"
   },
   "dependencies": {
     "next": "16.3.7",
