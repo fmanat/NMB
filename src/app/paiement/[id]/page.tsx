@@ -11,7 +11,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { id } = await params;
   const view = await getReportView(id);
   if (view.status === "not_found") notFound();
-  if (view.status === "unlocked") redirect(`/r/${id}`);
+  if (view.status === "unlocked" || view.relocked) redirect(`/r/${id}`); // un rapport reverrouillé (remboursement, contestation) ne se repaie pas ici
   return (
     <Doc title="Débloquer mon rapport">
       <div className="mt-6">

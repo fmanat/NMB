@@ -1,6 +1,8 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { PAY_COOKIE, PAY_COOKIE_MAX_AGE_SECONDS } from "@/lib/payments/return";
 import { CheckoutError, startCheckout } from "@/lib/payments/checkout";
 import { handleWebhook } from "@/lib/payments/confirm";
 import { signSimulated } from "@/lib/payments/simulation";
@@ -13,6 +15,10 @@ export async function pay(reportId: string, _prev: PayState, fd: FormData): Prom
   let url: string;
   try {
     url = await startCheckout(reportId, fd.get("waiver") === "on");
+    // Prestataire externe : il ne connaît pas l'adresse du rapport ; le retour du client la retrouve par ce cookie fonctionnel.
+    if (getPaymentProvider().id !== "simulation") {
+      (await cookies()).set(PAY_COOKIE, reportId, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/paiement", maxAge: PAY_COOKIE_MAX_AGE_SECONDS });
+    }
   } catch (e) {
     if (e instanceof CheckoutError) return { error: e.message };
     throw e;

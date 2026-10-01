@@ -14,6 +14,7 @@ export async function startCheckout(reportId: string, waiverAccepted: boolean): 
   const report = await getReport(reportId);
   if (!report) throw new CheckoutError("Rapport introuvable.");
   if (report.paid) throw new CheckoutError("Ce rapport est déjà débloqué.");
+  if (report.relocked_at) throw new CheckoutError("Ce rapport a été remboursé ou contesté : il ne peut pas être repayé.");
 
   await setWaiverAccepted(reportId);
   const provider = getPaymentProvider();

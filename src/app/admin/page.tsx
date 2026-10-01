@@ -154,7 +154,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
 
       <Card
         title="Revenus"
-        note={`TVA ${(FINANCE.vatRate * 100).toFixed(0)} % et commission du prestataire de paiement ${(FINANCE.paymentFeeRate * 100).toFixed(0)} % (valeur provisoire), modifiables dans src/config/site.ts. Brut = encaissé TTC. Net = TTC − TVA − commission. Le coût d'analyse (en dollars) n'est pas déduit.`}
+        note={`TVA ${(FINANCE.vatRate * 100).toFixed(0)} % et commission du prestataire de paiement ${(FINANCE.paymentFeeRate * 100).toFixed(0)} % (valeur provisoire), modifiables dans src/config/site.ts. Brut = encaissé TTC. Net = TTC − TVA − commission. Le coût d'analyse (en dollars) n'est pas déduit. Remboursés ou contestés sur la période (déjà exclus de ces revenus) : ${nb(d.refunds.refunded)} remboursement(s), ${nb(d.refunds.disputed)} contestation(s), soit ${eur(d.refunds.cents)}.`}
       >
         <Table
           head={["Protocole", "Paiements", "Brut TTC", "TVA", "HT", "Commission", "Net"]}

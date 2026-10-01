@@ -62,6 +62,8 @@ export type Dashboard = {
   conversion: Record<FormulaKey, { created: number; paid: number; rate: number | null }>;
   /** Rapports créés en bêta gratuite sur la période (débloqués sans paiement, exclus de la conversion). */
   freeBetaReports: number;
+  /** Paiements remboursés ou contestés sur la période (exclus du revenu). */
+  refunds: { refunded: number; disputed: number; cents: number };
   revenue: { total: Finance; byFormula: Record<FormulaKey, Finance> };
   challenges: { created: number; taken: number };
   ai: AiCost;
@@ -128,6 +130,13 @@ export async function dashboardStats(days: number | null): Promise<Dashboard> {
     totalTx += r.n;
   }
 
+  const rf = await p.query(
+    `SELECT count(*) FILTER (WHERE status = 'refunded')::int AS refunded, count(*) FILTER (WHERE status = 'disputed')::int AS disputed,
+            COALESCE(sum(amount_cents), 0)::int AS cents
+       FROM payments WHERE status IN ('refunded', 'disputed') AND ($1::timestamptz IS NULL OR refunded_at >= $1)`,
+    [since],
+  );
+
   // Défis créés et relevés.
   const ch = await p.query(
     `SELECT kind, count(*)::int AS n FROM stat_events WHERE ($1::timestamptz IS NULL OR created_at >= $1) GROUP BY kind`,
@@ -153,6 +162,7 @@ export async function dashboardStats(days: number | null): Promise<Dashboard> {
     refusals: ref.rows,
     conversion,
     freeBetaReports: beta.rows[0].n,
+    refunds: rf.rows[0],
     revenue: { total: computeFinance(totalGross, totalTx), byFormula },
     challenges: { created: chMap.challenge_created ?? 0, taken: chMap.challenge_taken ?? 0 },
     ai: computeAiCost({

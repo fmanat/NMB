@@ -28,3 +28,9 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - `npm run e2e:remote` : 6 tests passés sur le site déployé (401 sans identifiants, en-têtes de sécurité, routes masquées, parcours A, carte, défi, administration, mentions légales). Les rapports de test sont supprimés par le test lui-même.
 - Incident : `railway.json` ne s'applique plus (Config as Code obsolète, refus d'un chemin de fichier par service) : la première mise en ligne n'a pas lancé les migrations (erreur « relation reports n'existe pas »), corrigé en posant les réglages dans le tableau de bord (API) et en redéployant. `railway.json` supprimé du dépôt.
 - Écrits : `docs/RAILWAY.md`, `docs/OUVERTURE.md`, README, HEBERGEMENT.md (décision Railway), CLEVER-CLOUD.md (obsolète).
+
+## Bloc 4 : adaptateur Verotel : FAIT
+- `src/lib/payments/verotel.ts` : URL d'achat FlexPay signée, notifications signées (GET, réponse « OK »), événements `initial`, `credit` (remboursement), `chargeback` ; `/paiement/retour` + cookie fonctionnel ; migration 008 ; reverrouillage ; administration (remboursements). Désactivé tant que `VEROTEL_SHOP_ID` / `VEROTEL_SIGNATURE_KEY` sont vides.
+- Clauses de Verotel citées dans `docs/PRESTATAIRES.md` (contrat type public lu directement). **Points bloquants possibles** : FlexPay réservé au compte Premium (6 mois de relevés exigés), art. 4 (vente de « content » soumise à accord écrit), aucune clause sur les sociétés britanniques.
+- 32 tests Verotel (signature contre le jeu d'essai officiel, rejeu, signature invalide, montant incorrect, remboursement, contestation, purge à 30 jours, route GET). Total : 318 unitaires, 31 e2e. `verify` vert.
+- Non vérifié : tout ce qui dépend de la documentation officielle FlexPay (voir « À CONFIRMER »).

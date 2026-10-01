@@ -10,8 +10,13 @@ export type Checkout = {
 };
 
 export type PaymentEvent = {
-  type: "payment.succeeded" | "payment.failed";
+  /** refunded : remboursement ; chargeback : contestation bancaire. Les deux reverrouillent le rapport. */
+  type: "payment.succeeded" | "payment.failed" | "payment.refunded" | "payment.chargeback";
+  /** Référence du paiement chez nous (peut être vide pour un remboursement qui ne porte que le numéro de vente). */
   providerRef: string;
+  /** Numéro de vente chez le prestataire, s'il en fournit un. */
+  saleId?: string;
+  /** Non utilisé pour un remboursement ou une contestation. */
   amountCents: number;
   currency: string;
 };

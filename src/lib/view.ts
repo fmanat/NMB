@@ -9,6 +9,8 @@ export type ReportView =
       formula: FormulaId;
       priceEur: number;
       waiverAccepted: boolean;
+      /** Rapport reverrouillé après un remboursement ou une contestation : pas de nouveau paiement proposé. */
+      relocked: boolean;
       /** Formules photo : seuls l'indice de confiance et la symétrie sont visibles avant paiement. */
       preview?: { confidence: number; symmetry: number };
     }
@@ -28,6 +30,7 @@ export async function getReportView(id: string): Promise<ReportView> {
       formula: row.formula,
       priceEur: FORMULAS[row.formula].priceEur,
       waiverAccepted: row.waiver_accepted_at !== null,
+      relocked: row.relocked_at !== null,
       ...(row.formula !== "A" && typeof r.confidence === "number" && typeof r.symmetry === "number"
         ? { preview: { confidence: r.confidence, symmetry: r.symmetry } }
         : {}),

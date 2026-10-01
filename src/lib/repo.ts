@@ -4,6 +4,9 @@ import { pool } from "./db";
 import { BETA } from "./mode";
 import type { QuestionnaireInput, ReportResults } from "./report";
 
+/** Un rapport reverrouillé après remboursement ou contestation est conservé ce nombre de jours (au lieu de 24 h). */
+export const RELOCKED_TTL_DAYS = 30;
+
 export type ReportRow = {
   id: string;
   formula: FormulaId;
@@ -13,6 +16,7 @@ export type ReportRow = {
   paid: boolean;
   paid_at: Date | null;
   free_beta: boolean;
+  relocked_at: Date | null;
   waiver_accepted_at: Date | null;
   created_at: Date;
 };
@@ -110,8 +114,10 @@ export function priceCents(formula: FormulaId): number {
 /** Efface les rapports non payés trop anciens, les rapports de la bêta gratuite de plus de BETA.reportTtlDays jours et les IP hachées de plus de 24 h. */
 export async function purgeExpired(): Promise<{ reports: number; ips: number }> {
   const del = await pool().query(
-    "DELETE FROM reports WHERE (paid = false AND created_at < now() - make_interval(hours => $1)) OR (free_beta AND created_at < now() - make_interval(days => $2))",
-    [UNPAID_TTL_HOURS, BETA.reportTtlDays],
+    "DELETE FROM reports WHERE (paid = false AND relocked_at IS NULL AND created_at < now() - make_interval(hours => $1))" +
+      " OR (paid = false AND relocked_at < now() - make_interval(days => $3))" + // rapport reverrouillé (remboursement, contestation) : 30 jours
+      " OR (free_beta AND created_at < now() - make_interval(days => $2))",
+    [UNPAID_TTL_HOURS, BETA.reportTtlDays, RELOCKED_TTL_DAYS],
   );
   const ips = await pool().query(
     "UPDATE reports SET ip_hash = NULL WHERE ip_hash IS NOT NULL AND created_at < now() - make_interval(hours => $1)",

@@ -147,3 +147,48 @@ Pour comparaison : hCaptcha collecte mouvements de souris, défilement et frappe
 2. **Vérification d'âge** : A. AgeVerif sous conditions (questions 1, 2 et 7 à faire confirmer par écrit), Yoti en repli (recommandé) · B. Yoti d'abord · C. Autre.
 3. **Filtrage d'empreintes** : A. Demander l'éligibilité à PhotoDNA et faire trancher l'obligation de signalement par un juriste avant tout branchement (recommandé) · B. IWF · C. Ne pas filtrer au lancement (à décider avec le juriste).
 4. **Captcha** : A. ALTCHA auto-hébergé, Friendly Captcha en repli (recommandé) · B. Friendly Captcha · C. Turnstile.
+
+---
+
+# Mise à jour de la session de nuit n° 3 (01/10/2026) : décisions du propriétaire et Verotel
+
+## Décisions inscrites
+
+- **Paiement** : **Stripe est exclu définitivement.** Prestataire visé : **Verotel**, repli **CCBill** ou **Segpay**. Adaptateur Verotel écrit (`src/lib/payments/verotel.ts`), adaptateur Stripe laissé, désactivé.
+- **Vérification d'âge** : demandes **en parallèle à AgeVerif et à Yoti**, décision sur **réponses écrites**, critère principal : **indépendance vis-à-vis des exploitants de sites pour adultes**.
+- **Filtrage d'empreintes** : **demande d'éligibilité à PhotoDNA** ; signalement à trancher par le juriste.
+- **Captcha** : ALTCHA auto-hébergé, Friendly Captcha en repli.
+- Les demandes à envoyer sont dans `docs/DEMANDES/` (une par destinataire).
+
+## Verotel : ce que disent ses textes (lus le 01/10/2026)
+
+**Méthode et limites.** Pages publiques de verotel.com lues directement (pas par un résumé) : le **contrat marchand type** (https://www.verotel.com/en/merchantagreement.html : « Please do not use the agreement below, as this is just an example »), les offres (https://www.verotel.com/en/productchoice.html et https://www.verotel.com/en/pricechart.html) et l'intégration (https://www.verotel.com/en/integration.html). **Non lus** : la politique de contenu (« content policy », annoncée par le contrat comme « sent on request and … published on www.verotel.com » : introuvable sur le site à cette date), la documentation FlexPay et le Control Center (derrière une connexion), les conditions de souscription réelles (envoyées après dépôt de la demande). Les clauses ci-dessous sont celles du contrat **type** ; le contrat réellement proposé peut différer.
+
+### Clauses citées, numérotées comme dans le contrat type
+
+| Sujet | Citation | Portée pour ce service |
+|---|---|---|
+| Éligibilité à FlexPay | Page « productchoice » : ligne « Verotel FlexPay » : BASIC « No », PREMIUM « Yes ». Même page : « Premium merchants should provide 6 months of processing statements to open an account. » | **Obstacle probable** : l'adaptateur utilise FlexPay (montant et référence propres à chaque rapport). Une société nouvellement créée n'a pas de relevés de traitement. À demander par écrit : une dérogation existe-t-elle ? (voir `docs/DEMANDES/verotel.md`). Sans FlexPay, un compte Basic ne permet pas ce flux. |
+| Frais | Page « productchoice » : BASIC « Annual registration fee EUR 500.00 », « Pricing non-recurring transactions 15,5% » ; PREMIUM : « Weekly fee EUR 25 / week (only if Weekly Volume is less than EUR 1000) », taux selon le volume. Pricechart : « If this ratio is 1.0% or more, a surcharge of 2.5% will apply to the base rate » (taux de contestations). | La commission provisoire du site (12 %, `FINANCE.paymentFeeRate`) est **inférieure** aux 15,5 % du compte Basic. À réviser. |
+| Retenue | Art. 2 : « Company shall also hold a 10% of Customer Charges for a period of 26 weeks against potential charge backs (“Holdback”). » | Trésorerie : 10 % bloqués 26 semaines. |
+| Remboursements et contestations | Art. 2 : le paiement dû au marchand est diminué de « all refunds processed on account of Merchant's Customer Charges » et des sommes « charged back by the Acquirer ». | Un remboursement reprend l'argent ; d'où le reverrouillage du rapport (implémenté). |
+| Nature de ce qui peut être vendu | Art. 4 : « Merchant shall accept Codes only as payment for access to its restricted web sites … Without the express written consent of Company, Merchant may not accept Codes, or other Verotel-provided Proofs of Purchase as payment for the sale of content of any kind. » | **À clarifier par écrit** : le rapport est un contenu numérique vendu à l'unité, pas l'accès à un site restreint. Il faut le « express written consent » de Verotel. |
+| Description du service | Art. 4 : le marchand doit « actively communicate modifications or changes … and a complete description of goods sold and services provided ». | Description exacte et tenue à jour (celle de `docs/DEMANDES/verotel.md`). |
+| Contenu et loyauté | Art. 4 : « refrain from engaging in any illegal, unfair, deceptive or disparaging trade practices » ; art. 8 : « fully responsible for the contents of Merchant's Web site and follow the content policy of Company ». | Cohérent avec la règle du projet (jamais de présentation trompeuse). La politique de contenu n'a pas été lue. |
+| Exigences américaines | Art. 8 : documentation « 18 U.S.C. § 2257 and 28 C.F.R. 75 » exigible « at any time » ; « Failure … may result in immediate suspension of processing. » | Concerne le contenu sexuellement explicite produit avec des acteurs ; le site n'en contient pas. À faire confirmer comme sans objet. |
+| Résiliation | Art. 9 : « Company reserves the right to terminate this … Agreement without cause upon notification to the Merchant. » ; résiliation immédiate possible en cas de manquement ou d'« activities harmful to Company ». Art. 3 : le marchand peut résilier à tout moment. | Risque de coupure sans motif : prévoir un prestataire de repli (CCBill, Segpay). |
+| Modification unilatérale | Art. 14 : Verotel peut modifier le contrat « to take into account changes in law … and to accommodate changes imposed on Company by its Acquirer, and to make other changes deemed necessary », sauf refus écrit sous 15 jours. | À connaître. |
+| Pouvoir de représentation | Art. 2 « Power of Attorney » : le marchand donne à Verotel « full power of attorney … to register Merchant with acquiring banks and other processors ». | À faire relire par le juriste. |
+| Pays à risque | Art. 2 « High Risk Countries » : Verotel peut bloquer certains pays « without the need to compensate Merchant ». | Le public visé (France, Belgique, Suisse, Luxembourg, Québec) est à confirmer comme non concerné. |
+| Droit applicable | Art. 12 : « laws of the Netherlands and the venue … shall be the Netherlands ». | Droit et tribunaux néerlandais. |
+| Lutte contre le blanchiment | Art. 4 : le marchand fournit « necessary information or documents » au titre de la loi néerlandaise (Wwft/Wft). | Vérification d'identité de la société et de ses dirigeants à prévoir (Companies House, pièces d'identité). |
+
+### Sociétés britanniques
+
+**Aucune clause du contrat type ne vise les sociétés britanniques** (ni pour les accepter, ni pour les exclure) : le contrat prévoit seulement une adresse de société et un pays, et des virements « to an account in United Kingdom » (GBP 15.00, tableau « Payment fees international payments »). Une source tierce de seconde main (un comparateur de prestataires, non officiel) indique que Verotel travaille avec des sociétés quel que soit leur pays d'immatriculation : **non vérifié à la source**. La question reste à poser par écrit.
+
+### Ce que cela change
+
+1. **Le compte Premium (FlexPay) est probablement le point bloquant** pour une société nouvelle : demander la dérogation ou une alternative. Si elle est refusée : CCBill ou Segpay (non étudiés cette nuit : leurs conditions n'ont pas été lues ; à faire avant toute demande).
+2. L'adaptateur est écrit d'après le client officiel (signature et URL, **vérifié contre le jeu d'essai public de Verotel** : la signature SHA-1 de son test est reproduite à l'identique) et une bibliothèque tierce (noms des événements et des paramètres de notification). **À confirmer en mode test**, avant tout paiement réel : (a) la valeur exacte de l'événement d'une vente unique (« initial », ou absence d'événement avec « type=purchase »), (b) les noms des paramètres de montant et de devise dans la notification (« priceAmount » / « amount »), (c) la présence de « referenceID » dans les notifications de remboursement et de contestation (sinon le numéro de vente est utilisé), (d) l'adresse de retour acceptée, (e) le format de signature (SHA-256 ; SHA-1 refusé par défaut).
+3. Aucune donnée d'identité n'est reçue de Verotel par le site ; seuls la référence du paiement, le numéro de vente, le montant et la devise sont lus. L'adresse privée du rapport n'est jamais transmise à Verotel.

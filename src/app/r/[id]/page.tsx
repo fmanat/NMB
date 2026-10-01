@@ -62,10 +62,19 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             ))}
           </div>
           {retour && <AwaitPayment />}
-          <p className="text-sm text-muted">Les résultats sont verrouillés jusqu&apos;au paiement.</p>
-          <Link href={`/paiement/${id}`} className="btn-primary">
-            Débloquer pour {formatEur(view.priceEur)}
-          </Link>
+          {view.relocked ? (
+            <p className="text-sm text-accent-2">
+              Le paiement de ce rapport a été remboursé ou contesté : il est de nouveau verrouillé. Pour toute question, voir la page{" "}
+              <Link href="/contact" className="underline">Contact et signalement</Link>.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-muted">Les résultats sont verrouillés jusqu&apos;au paiement.</p>
+              <Link href={`/paiement/${id}`} className="btn-primary">
+                Débloquer pour {formatEur(view.priceEur)}
+              </Link>
+            </>
+          )}
         </div>
       </div>
     );
