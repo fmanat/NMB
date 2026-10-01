@@ -9,8 +9,9 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Base de départ : `npm run verify` vert (18 tests e2e).
 
 ## Bloc 1 : mode « bêta gratuite » : FAIT
--  : formule A seule, rapport débloqué sans paiement (mention « Bêta gratuite »), B/C/âge/captcha/paiement/CGV en 404,  (conditions de la bêta), mentions légales au nom de la Ltd (marqueurs à compléter), confidentialité limitée à la bêta, accueil/pied de page/méthode/défi/sitemap adaptés. Code de paiement intact.
-- Garde-fou : production + pas de  + marqueurs  = 503 (, ).
-- Migration 006 (), purge à 90 jours des rapports bêta, , .
-- Tests : 276 unitaires, 28 e2e (11 nouveaux dont 10 en mode bêta + mot de passe sur le port 3204).  vert.
-- Décisions : DECISIONS.md (section « Session de nuit n° 3 »). À noter : le  n'avait pas d'empreinte d'administration.
+- `FREE_BETA=on` : formule A seule, rapport débloqué sans paiement (mention « Bêta gratuite »), B/C/âge/captcha/paiement/CGV en 404, `/conditions` (conditions de la bêta), mentions légales au nom de la Ltd (marqueurs à compléter), confidentialité limitée à la bêta, accueil/pied de page/méthode/défi/sitemap adaptés. Code de paiement intact.
+- Garde-fou : production + pas de `SITE_PASSWORD` + marqueurs `[À COMPLÉTER]` = 503 (`src/proxy.ts`, `src/lib/siteGate.ts`).
+- Migration 006 (`free_beta`), purge à 90 jours des rapports bêta, `DB_POOL_MAX`, `/api/health`.
+- Tests : 276 unitaires, 28 e2e (10 nouveaux, en mode bêta + mot de passe, port 3204). `verify` vert.
+- Décisions : DECISIONS.md (section « Session de nuit n° 3 »). À noter : le `.env` n'avait pas d'empreinte d'administration.
+- Commit : voir `git log` (« Bloc 1 (nuit 3) »).
