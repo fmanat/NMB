@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, request as pwRequest, test, type Page } from "@playwright/test";
 
 // Test de fumée du site de test déployé (bêta gratuite, protégé par mot de passe). Voir playwright.remote.config.ts.
@@ -114,6 +115,15 @@ test.describe("Site de test Railway", () => {
     await expect(page.getByRole("heading", { name: "Entonnoir de conversion" })).toBeVisible();
     await expect(page.getByText(/bêta gratuite/i).first()).toBeVisible();
     await page.getByRole("button", { name: "Se déconnecter" }).click();
+  });
+
+  test("accessibilité (axe-core) sur la version de production déployée", async ({ page }) => {
+    for (const path of ["/", "/analyse/questionnaire", "/conditions", "/confidentialite", "/mentions-legales", "/methode", "/contact"]) {
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+      const res = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"]).analyze();
+      expect(res.violations.map((v) => `${v.id} : ${v.help}`), path).toEqual([]);
+    }
   });
 
   test("mentions légales : marqueurs à compléter visibles (identité de la Ltd non renseignée)", async ({ page }) => {

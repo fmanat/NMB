@@ -55,3 +55,91 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Petits écrans 320 / 375 / 390 px : détecteur de recouvrement, de texte coupé et de débordement (`e2e/layout.ts`, validé par un test de sensibilité) sur toutes les pages et plusieurs états, bêta et payant : **aucun défaut réel trouvé** ; deux fausses alertes corrigées dans le détecteur.
 - Un test instable corrigé (titre de page diffusé en flux par Next.js : le test attend désormais le titre).
 - Tests : 350 unitaires, 62 e2e. `verify` vert (7,4 minutes).
+
+---
+
+# RAPPORT FINAL de la session de nuit n° 3 (01-02/10/2026)
+
+## Site de test
+- **Adresse** : https://web-production-a03fb.up.railway.app (adresse fournie par Railway, région UE Amsterdam). Aucun nom de domaine relié, rien chez Cloudflare.
+- **Identifiants** : dans votre fichier `.env` local (ignoré par git) : `RAILWAY_TEST_URL`, `RAILWAY_TEST_SITE_USER` / `RAILWAY_TEST_SITE_PASSWORD` (fenêtre « identifiants requis » du navigateur), `RAILWAY_TEST_ADMIN_PASSWORD` (page `/admin`). Le `.env` ne contenait **pas** d'empreinte d'administration à réutiliser : mot de passe d'administration généré aléatoirement.
+- État : en ligne, 4 services (web, Postgres, purge, stats), bêta gratuite, protégé par mot de passe. Dernier déploiement du code : `a7d5598` (le script de remise à zéro, ajouté ensuite, n'est pas déployé).
+
+## Commits (tous poussés sur GitHub, `verify` vert à chacun)
+| Bloc | Commit |
+|---|---|
+| 1 Bêta gratuite | `f580410` (+ journal `92c2825`) |
+| 2 Entonnoir | `952f34a` |
+| 3 Déploiement Railway | `ee50208` |
+| 4 Adaptateur Verotel | `ac0e8ac` |
+| 5, 6, 7 Demandes, feuille de route, dossier juriste | `9b05554` |
+| 8 Accessibilité et petits écrans | `a7d5598` |
+| Remise à zéro (script gardé), docs finales, rapport | dernier commit |
+
+État final de `verify` : **353 tests unitaires et 62 tests de navigateur passés**, 0 erreur de code. Test de fumée sur le site déployé : 7 tests passés (`npm run e2e:remote`).
+
+## Ce qui est fait
+1. **Bêta gratuite** (`FREE_BETA=on`) : formule A seule, rapport sans paiement avec mention « Bêta gratuite », B/C/âge/captcha/paiement/CGV en 404, conditions de la bêta, mentions légales au nom de la Ltd, confidentialité limitée à la bêta, carte et défi fonctionnels, code de paiement intact. Garde-fou : sans mot de passe, le site répond 503 tant qu'il reste un `[À COMPLÉTER]`.
+2. **Entonnoir** anonyme (sans cookie ni IP), vue dans l'administration, politique de confidentialité mise à jour.
+3. **Railway** : projet, base, site, 2 tâches planifiées, point de santé, mot de passe, limite de 5 connexions à la base, variables, migrations au démarrage ; **tâche horaire vérifiée à l'exécution (00 h 00), tâche quotidienne vérifiée par un déclenchement temporaire** (« STATS_WEBHOOK_URL n'est pas renseigné : rien à envoyer »), horaires remis en place. `docs/RAILWAY.md`, `docs/OUVERTURE.md` (Cloudflare pas à pas, deux cas de domaine).
+4. **Verotel** : adaptateur complet et testé (32 tests, signature vérifiée contre le jeu d'essai public de Verotel), remboursement et contestation reverrouillent le rapport ; clauses citées dans `docs/PRESTATAIRES.md` (contrat type lu directement).
+5. **Demandes** : `docs/DEMANDES/` (6 destinataires + récapitulatif), rien n'est envoyé.
+6. **Feuille de route** : `docs/PASSAGE-PAYANT.md` (15 étapes ; sauvegardes vérifiées obligatoires avant tout paiement).
+7. **Dossier juriste** : `docs/JURISTE.md` (10 sujets + liste de contrôle B1-B14 de la bêta).
+8. **Accessibilité** (axe-core, clavier, focus, mouvement réduit) et **petits écrans** (320/375/390 px) : corrections faites, aucun recouvrement de texte réel trouvé.
+
+## Ce qui n'est pas fait, ou pas vérifié
+- **Informations de la Ltd** : vides dans votre consigne → marqueurs visibles `[À COMPLÉTER]` partout (mentions légales, confidentialité, demandes à envoyer) ; adresse de Railway Corporation à relever.
+- **Aucune sauvegarde de la base n'est active** (obligatoire avant tout paiement : étape 7 de `docs/PASSAGE-PAYANT.md`).
+- **Verotel** : l'adaptateur n'a jamais parlé à un vrai Verotel. La documentation officielle FlexPay est derrière une connexion : cinq points restent « À CONFIRMER en mode test » (événement d'une vente unique, noms des paramètres de montant, `referenceID` dans les remboursements, format de signature, adresse de retour). **Obstacles possibles lus dans leur contrat type** : FlexPay réservé au compte Premium (6 mois de relevés exigés), vente de « contenu » soumise à accord écrit, aucune clause sur les sociétés britanniques.
+- **CCBill et Segpay** : leurs conditions n'ont pas été lues (repli).
+- **Remise à zéro des données de test distantes** : non faite. Mon environnement a refusé l'effacement de données sur le service distant ; je ne l'ai pas contourné. Les rapports de test ont été supprimés par les tests, mais des **compteurs anonymes de test** (journal, événements de l'entonnoir) restent. Script prêt et gardé : `scripts/reset-test-data.mjs`.
+- **Adresses des demandes** : Microsoft (PhotoDNA), x.ai/console xAI : procédure non lue (accès refusé aux outils automatiques) ; aucune adresse e-mail inventée.
+- **Accessibilité** : pas d'essai avec un vrai lecteur d'écran ni sur de vrais téléphones.
+- **Tests de navigateur** : Chromium seulement.
+- **Non lu** : politique de contenu de Verotel, documentation FlexPay, Légifrance (références de lois « à vérifier » dans `docs/JURISTE.md`).
+- Aucun appel xAI, aucune photo réelle, aucun compte ouvert, aucun message envoyé, `SEO_PUBLISH` inchangé (vide), mot de passe de protection en place.
+
+## Décisions prises (détail : `docs/DECISIONS.md`)
+Rapports de la bêta conservés **90 jours** au plus ; case de **consentement explicite art. 9** ajoutée en bêta ; **aucun identifiant de rapport envoyé à Verotel** (retour par `/paiement/retour` et cookie fonctionnel) ; signatures SHA-1 **refusées** par défaut ; rapport reverrouillé conservé **30 jours** et non repayable ; Stripe retiré de la politique de sécurité (adaptateur laissé) ; commission provisoire de 12 % **inchangée** (le compte Basic Verotel affiche 15,5 %) ; réglages Railway posés dans le tableau de bord (le fichier `railway.json` n'est plus pris en compte) ; ressources **0,5 vCPU / 0,5 Go** par service (plus petit réglage viable pour Next.js ; le plus petit réglage possible, 0,1/0,1, est trop petit) ; `/api/payments/webhook` joignable sans mot de passe dès que Verotel est configuré ; aucune limite de dépense Railway posée (réglage de compte : à vous).
+
+## Incident de la nuit
+La première mise en ligne n'a pas lancé les migrations (`railway.json` ignoré) : erreurs « relation reports n'existe pas » sur le site de test, corrigé (réglages dans le tableau de bord, redéploiement). Aucune donnée perdue (base vide à ce moment).
+
+## Coût Railway engagé
+`bitometre-test` : **0,0042 $** mesuré à 00 h 33 (environ 1 h 25 après la création ; compteurs en léger retard). Espace : 4,32 $ (4,29 $ au début), facture estimée 8,47 $, **aucune limite d'usage**. Détail et estimation : fin de `docs/RAILWAY.md`.
+
+## Vos questions (QCM, recommandation en premier)
+
+**1. Informations de la Ltd** : comment me les transmettre ?
+- A. **Me donner raison sociale, numéro Companies House, siège, directeur de la publication, numéro ICO, e-mail de contact et adresse de Railway ; je les inscris, je redéploie.** (recommandé : sans cela le site ne peut pas s'ouvrir et les demandes ne peuvent pas partir)
+- B. Les remplir vous-même dans `src/config/company.ts`.
+
+**2. Prestataire de paiement : que faire du risque Premium/FlexPay (6 mois de relevés) ?**
+- A. **Envoyer la demande Verotel telle quelle (elle pose la question) et, en parallèle, me faire lire les conditions de CCBill et Segpay.** (recommandé)
+- B. Passer directement à CCBill ou Segpay.
+- C. Attendre la réponse de Verotel avant tout autre travail.
+
+**3. Sauvegardes de la base (obligatoires avant tout paiement)** : quand ?
+- A. **Les activer et tester une restauration dès la prochaine session, avant même l'ouverture de la bêta (coût : quelques centimes à quelques dollars par mois).** (recommandé)
+- B. Seulement juste avant le passage au payant.
+
+**4. Limite de dépense Railway** :
+- A. **La définir vous-même (Settings → Usage, limite dure à 20 $ environ) avant l'ouverture au public.** (recommandé : aucune limite aujourd'hui)
+- B. Me laisser la poser (réglage de compte : j'ai besoin de votre accord écrit).
+
+**5. Données de test distantes** (compteurs anonymes de mes essais) :
+- A. **Les remettre à zéro avant de montrer l'administration : confirmez-moi par écrit que la base du site de test peut être vidée et je lance le script gardé.** (recommandé)
+- B. Les laisser.
+
+**6. Commission du paiement dans l'administration (12 % provisoire)** :
+- A. **La passer à 15,5 % (tarif public du compte Basic de Verotel) en attendant la réponse écrite.** (recommandé : plus prudent pour les chiffres de revenu net)
+- B. La garder à 12 %.
+
+**7. Ouverture publique de la bêta (bitometre.com)** :
+- A. **Attendre la validation écrite du juriste sur B1-B5 et B13 de `docs/JURISTE.md`, puis suivre `docs/OUVERTURE.md`.** (recommandé)
+- B. Ouvrir plus tôt avec les textes actuels (non recommandé : données sur la vie sexuelle, aucun avis juridique).
+
+**8. Ordre des demandes à envoyer** :
+- A. **Verotel et Railway d'abord ; AgeVerif, Yoti, PhotoDNA et xAI quand les formules photo reviennent à l'ordre du jour.** (recommandé)
+- B. Tout envoyer en même temps.

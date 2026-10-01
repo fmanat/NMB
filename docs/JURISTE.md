@@ -160,6 +160,6 @@ Document à remettre à un juriste (droit du numérique, protection des données
 | B11 | **Pages de guide (SEO)** | `content/seo/*.md` (non publiées) | À relire avant `SEO_PUBLISH=on` ; certaines citent des prix ou des chiffres de sources ; rédigées par le propriétaire |
 | B12 | **Suppression de l'adresse de test Railway** | `*.up.railway.app` | Une fois le mot de passe retiré, elle devient publique aussi (`docs/OUVERTURE.md`) |
 | B13 | **Réclamations et signalement** | `/contact` | Adresse e-mail surveillée, délai de réponse, procédure de retrait d'une carte ou d'un rapport |
-| B14 | **Données déjà collectées pendant les essais** | base du site de test | Tous les rapports de test sont effacés avant l'ouverture (fait par Claude, à confirmer) |
+| B14 | **Données déjà collectées pendant les essais** | base du site de test | Les rapports créés par les essais automatiques sont supprimés par les essais eux-mêmes ; en revanche, les **compteurs anonymes** (journal des rapports : formule, score, date ; événements de l'entonnoir) des essais restent dans la base. Une remise à zéro complète est prête (`scripts/reset-test-data.mjs`, gardée) mais **n'a pas été lancée** : décision du propriétaire avant l'ouverture (voir `docs/RAILWAY.md`) |
 
 **Recommandation de Claude (non juridique)** : ne pas retirer le mot de passe avant que B1 à B5 et B13 soient validés par écrit ; les autres peuvent être traités en parallèle de l'ouverture seulement si le juriste le confirme.

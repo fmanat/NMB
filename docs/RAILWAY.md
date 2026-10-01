@@ -58,3 +58,17 @@ Railway facture à l'usage (CPU, mémoire, volume, trafic sortant). Le plan de l
 ## Sauvegardes
 
 **Aucune sauvegarde n'est activée** sur la base de test (restauration à un instant donné désactivée : elle exige un stockage objet supplémentaire). Étape **obligatoire avant tout paiement** : voir `docs/PASSAGE-PAYANT.md`.
+
+## Remise à zéro des données du site de test (non faite)
+
+Les essais automatiques sur le site déployé suppriment les rapports qu'ils créent, mais laissent des **compteurs anonymes** : lignes du journal des rapports (formule, score, date), événements de l'entonnoir, défis créés et relevés. L'administration les affiche donc comme de vrais chiffres. Un script de remise à zéro est prêt (`scripts/reset-test-data.mjs`, testé dans `tests/reset-test-data.test.ts`) :
+
+- il refuse de tourner sans `RESET_TEST_DATA=oui-effacer-les-donnees-de-test` ;
+- il refuse si la base contient un paiement réel (réussi, remboursé ou contesté chez un prestataire autre que « simulation ») ;
+- il vide les données (pas le schéma, pas la table des migrations).
+
+**Je ne l'ai pas lancé** : l'accès à la base de Railway depuis votre ordinateur n'est pas ouvert (pas de proxy TCP public, volontairement), et mon environnement a refusé l'effacement de données sur le service distant. À vous de décider : soit laisser les compteurs (ils ne contiennent aucune donnée personnelle), soit demander à Claude de le faire explicitement, en lui confirmant par écrit que la base du site de test peut être vidée. Ne jamais le lancer sur un site réel.
+
+## Coût engagé pendant la nuit
+
+Mesuré avec `railway usage projects` le 02/10/2026 à 00 h 33, environ 1 h 20 après la création du projet : **bitometre-test = 0,0042 $** (les compteurs de Railway sont en retard de quelques minutes). Les autres projets de l'espace (alluring-integrity 2,09 $, adequate-contentment 1,92 $, distinguished-emotion 0,30 $) ne sont pas de mon fait. Total de l'espace sur la période : 4,32 $ (4,29 $ au début de la nuit), facture estimée 8,47 $. **Estimation du coût mensuel du site de test** : non mesurée sur une durée suffisante ; ordre de grandeur de quelques dollars par mois (4 services de 0,5 vCPU / 0,5 Go facturés à l'usage réel, base avec volume) : à relever dans quelques jours avec `railway usage projects`.
