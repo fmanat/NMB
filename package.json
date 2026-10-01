@@ -18,7 +18,8 @@
     "verify": "npm run lint && tsc --noEmit && vitest run && tsx scripts/seo-check.mts && npm run e2e",
     "geometry:report": "tsx scripts/geometry-report.mts",
     "latency:bench": "tsx scripts/latency-bench.mts",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:remote": "playwright test -c playwright.remote.config.ts"
   },
   "dependencies": {
     "marked": "^18.0.14",

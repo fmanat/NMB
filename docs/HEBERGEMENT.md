@@ -1,3 +1,5 @@
+> **Décision du propriétaire (session de nuit n° 3, 01/10/2026) : hébergeur = Railway (région UE) ; DNS = Cloudflare.** Clever Cloud (recommandation ci-dessous) n'est plus retenu ; les fichiers `clevercloud/` et `docs/CLEVER-CLOUD.md` restent comme solution de repli. Installation réalisée : [RAILWAY.md](RAILWAY.md). Les conditions de Railway sur ce type de service **n'ont pas été confirmées par écrit** : voir `docs/DEMANDES/railway.md`. Constat de lecture (01/10/2026) : la politique d'usage acceptable de Railway (railway.com/legal/acceptable-use) ne cite ni contenu pour adultes ni pornographie ; elle interdit notamment la diffusion d'images intimes non consenties. Lecture de seconde main (outil de lecture automatique) : à relire sur la page.
+
 # Choix de l'hébergeur (recherche, sans aucune inscription)
 
 Recherche faite dans la session autonome, à partir des conditions publiées. Aucun compte n'a été ouvert, aucun message envoyé. Ce document sert à décider ; il n'est pas un avis juridique.

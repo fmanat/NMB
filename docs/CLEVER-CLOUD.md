@@ -1,3 +1,5 @@
+> **Obsolète depuis le 01/10/2026 : l'hébergeur retenu est Railway (voir [RAILWAY.md](RAILWAY.md)).** Ce guide est conservé comme solution de repli.
+
 # Mise en ligne sur Clever Cloud (préparation : rien n'est déployé)
 
 Ce guide décrit ce qu'il faudra faire **après** avoir : (1) obtenu la confirmation écrite de Clever Cloud que le service est accepté (voir [HEBERGEMENT.md](HEBERGEMENT.md)), (2) fait relire les textes juridiques, (3) choisi et configuré les vrais prestataires ([PRESTATAIRES.md](PRESTATAIRES.md)). Chaque étape qui crée un compte ou un abonnement payant doit être validée par le propriétaire.

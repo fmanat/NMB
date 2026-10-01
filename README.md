@@ -6,7 +6,7 @@ Site francophone (pensé pour le téléphone) qui vend une analyse chiffrée de 
 - Le cahier des charges complet est dans [docs/SPEC.md](docs/SPEC.md). Les choix pris en autonomie sont dans [docs/DECISIONS.md](docs/DECISIONS.md).
 - La photo n'est jamais enregistrée par le site : elle est analysée en mémoire puis abandonnée.
 
-> **État actuel : le site n'est pas en ligne.** Tout fonctionne en local, avec des prestataires **simulés** (paiement, vérification d'âge, filtrage d'images, captcha). Ils sont interdits en production : le site refuse de les utiliser en production (la fonction concernée échoue). Il faut de vrais prestataires avant la mise en ligne (voir la partie 5).
+> **État actuel : un site de TEST tourne sur Railway (région UE), en mode bêta gratuite, protégé par mot de passe et relié à aucun nom de domaine** (voir [docs/RAILWAY.md](docs/RAILWAY.md) ; ouverture : [docs/OUVERTURE.md](docs/OUVERTURE.md) ; passage au payant : [docs/PASSAGE-PAYANT.md](docs/PASSAGE-PAYANT.md)). Hébergeur : **Railway** ; DNS de bitometre.com : **Cloudflare**. En local, tout fonctionne avec des prestataires **simulés** (paiement, vérification d'âge, filtrage d'images, captcha). Ils sont interdits en production : le site refuse de les utiliser en production (la fonction concernée échoue). Il faut de vrais prestataires avant la mise en ligne (voir la partie 5).
 
 ---
 
@@ -47,7 +47,10 @@ Un secret = une longue chaîne de caractères aléatoires (au moins 32), différ
 | `SITE_URL` | Adresse publique du site (ex. `https://bitometre.com`). Sert aux liens, aux images de partage et à la sécurité (https forcé si l'adresse est en https). | Oui |
 | `IP_HASH_SECRET` | Secret pour brouiller les adresses IP (limite de 5 essais par 24 h). Les IP ne sont jamais gardées en clair. | Oui |
 | `AGE_TOKEN_SECRET` | Secret qui signe le jeton « majeur : oui » (valable 30 minutes). | Oui |
-| `PAYMENT_PROVIDER` | `simulation` en local. En production : `stripe` (adaptateur prêt, désactivé tant que ses clés manquent). | Oui |
+| `FREE_BETA` | `on` = **bêta gratuite** : formule A seule, rapport débloqué sans paiement, formules B et C / paiement / CGV introuvables (404). Vide = version payante. À changer, puis redéployer. | Non |
+| `SITE_PASSWORD`, `SITE_USER` | Protège **tout** le site par mot de passe (fenêtre d'identifiants du navigateur). Vide = site public. En production, **sans mot de passe**, le site répond 503 tant que `src/config/company.ts` contient des `[À COMPLÉTER]`. | Non |
+| `DB_POOL_MAX` | Nombre maximal de connexions simultanées à la base (défaut 10 ; 5 sur Railway). | Non |
+| `PAYMENT_PROVIDER` | `simulation` en local. En production payante : `verotel` (adaptateur prévu, bloc 4 de la nuit 3). `stripe` est **exclu définitivement** (adaptateur laissé, désactivé). | Oui |
 | `PAYMENT_WEBHOOK_SECRET` | Secret qui signe les notifications de paiement. Seule une notification signée débloque un rapport. | Oui |
 | `VISION_PROVIDER` | `simulation` en local ; `xai` pour le vrai moteur d'analyse. | Oui |
 | `XAI_API_KEY` | Clé de l'API xAI. Reste sur le serveur, jamais envoyée au navigateur. | Si `xai` |
@@ -81,10 +84,10 @@ Après une modification : `npm run verify`, puis commit. Les formules de calcul 
 
 | Commande | Fréquence | Rôle |
 |---|---|---|
-| `npm run db:purge` | **toutes les heures** | Supprime les rapports non payés et les empreintes d'IP de plus de 24 h. Sans elle, le site ne respecte pas sa politique de confidentialité. |
+| `npm run db:purge` | **toutes les heures** | Supprime les rapports non payés, les rapports de la bêta gratuite de plus de 90 jours et les empreintes d'IP de plus de 24 h. Sans elle, le site ne respecte pas sa politique de confidentialité. |
 | `npm run stats:webhook` | **une fois par jour** | Envoie les chiffres agrégés anonymes (seulement si `STATS_WEBHOOK_URL` est rempli). |
 
-Les deux se lancent avec les mêmes réglages que le site. Chaque hébergeur a sa façon de programmer une tâche : voir [docs/HEBERGEMENT.md](docs/HEBERGEMENT.md).
+Les deux se lancent avec les mêmes réglages que le site. Sur Railway, ce sont deux services « cron » (`purge`, `stats`) : voir [docs/RAILWAY.md](docs/RAILWAY.md). Sur un hébergeur sans variables d'environnement, ajouter `--env-file=.env` aux commandes.
 
 Les statistiques durables (journal anonyme, paiements) sont conservées même après suppression des rapports ; elles ne contiennent ni photo, ni mesure, ni adresse IP.
 
@@ -92,7 +95,7 @@ Les statistiques durables (journal anonyme, paiements) sont conservées même ap
 
 **Rien de ceci n'est fait.** Chaque étape qui crée un compte ou un abonnement doit être validée par vous d'abord.
 
-1. **Choisir l'hébergeur** : voir [docs/HEBERGEMENT.md](docs/HEBERGEMENT.md). Écrire à l'hébergeur pour confirmer que ce service est accepté avant de payer (la plupart des conditions interdisent le contenu « pornographique » ; ce site n'en contient pas, mais une confirmation écrite évite une suspension).
+1. **Hébergeur : Railway** (décidé) : voir [docs/RAILWAY.md](docs/RAILWAY.md) et [docs/HEBERGEMENT.md](docs/HEBERGEMENT.md). Pour les formules photo, demander à Railway une confirmation écrite (message prêt dans `docs/DEMANDES/`).
 2. **Faire relire par un juriste** les CGV, la politique de confidentialité, les mentions légales et la clause de renonciation au droit de rétractation (point signalé dans `docs/DECISIONS.md`).
 3. **Choisir les vrais prestataires** et les brancher (une interface existe pour chacun dans `src/lib/providers`) : paiement, vérification d'âge, filtrage d'images par empreinte, captcha. Ajouter leur domaine, et lui seul, dans la politique de sécurité de `next.config.ts` si leur page charge un script.
 4. **Créer la base PostgreSQL** chez l'hébergeur, renseigner `DATABASE_URL`, puis lancer `npm run db:migrate`.
@@ -110,7 +113,8 @@ Les statistiques durables (journal anonyme, paiements) sont conservées même ap
 | `npm run dev` | Site en mode développement. |
 | `npm run verify` | Code, types, tests, contrôle des pages de contenu, construction : à lancer avant chaque commit. |
 | `npm test` | Tests unitaires seuls. |
-| `npm run e2e` | Tests du navigateur (parcours complets avec prestataires simulés, sans aucun appel xAI). Premier usage : `npx playwright install chromium`. |
+| `npm run e2e` | Tests du navigateur (parcours complets avec prestataires simulés, sans aucun appel xAI), y compris le mode bêta gratuite protégé par mot de passe. Premier usage : `npx playwright install chromium`. |
+| `npm run e2e:remote` | Test de fumée du site de test déployé (adresse et identifiants lus dans `.env`). Supprime les rapports qu'il crée. |
 | `npm run db:migrate` | Crée ou met à jour les tables. |
 | `npm run db:purge` | Purge (voir partie 4). |
 | `npm run seo:check` | Contrôle les pages de contenu (`-- --urls` : contrôle aussi le site en ligne). |

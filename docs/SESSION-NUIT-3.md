@@ -20,3 +20,11 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Événements anonymes (`funnel_events`, migration 007 ; défis dans `stat_events` ; paiements dans `payments`), route `/api/e`, composant `TrackView`, respect de DNT/GPC, robots écartés. Vue « Entonnoir de conversion » dans l'administration (7 j, 30 j, depuis le début, taux par étape et depuis l'accueil). Politique de confidentialité mise à jour (deux versions).
 - Limite assumée : comptages d'événements, pas de visiteurs uniques.
 - Tests : 286 unitaires, 31 e2e. `verify` vert.
+
+## Bloc 3 : déploiement de test sur Railway : FAIT (vérification des tâches planifiées : voir la fin du journal)
+- Projet `bitometre-test` (UE, Amsterdam) : `web` (0,5 vCPU / 0,5 Go), `Postgres` (18), `purge` (cron horaire), `stats` (cron quotidien, aucune URL de destination). Détails : `docs/RAILWAY.md`.
+- Adresse de test : voir `RAILWAY_TEST_URL` dans `.env`. Identifiants du site : `RAILWAY_TEST_SITE_USER` / `RAILWAY_TEST_SITE_PASSWORD` ; administration : `RAILWAY_TEST_ADMIN_PASSWORD` (tous dans `.env`, jamais dans le dépôt).
+- Variables : mode bêta, mot de passe, `DB_POOL_MAX=5`, secrets aléatoires. Migrations au démarrage (`preDeployCommand`). Point de santé `/api/health`.
+- `npm run e2e:remote` : 6 tests passés sur le site déployé (401 sans identifiants, en-têtes de sécurité, routes masquées, parcours A, carte, défi, administration, mentions légales). Les rapports de test sont supprimés par le test lui-même.
+- Incident : `railway.json` ne s'applique plus (Config as Code obsolète, refus d'un chemin de fichier par service) : la première mise en ligne n'a pas lancé les migrations (erreur « relation reports n'existe pas »), corrigé en posant les réglages dans le tableau de bord (API) et en redéployant. `railway.json` supprimé du dépôt.
+- Écrits : `docs/RAILWAY.md`, `docs/OUVERTURE.md`, README, HEBERGEMENT.md (décision Railway), CLEVER-CLOUD.md (obsolète).
