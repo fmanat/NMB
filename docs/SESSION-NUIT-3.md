@@ -34,3 +34,18 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Clauses de Verotel citées dans `docs/PRESTATAIRES.md` (contrat type public lu directement). **Points bloquants possibles** : FlexPay réservé au compte Premium (6 mois de relevés exigés), art. 4 (vente de « content » soumise à accord écrit), aucune clause sur les sociétés britanniques.
 - 32 tests Verotel (signature contre le jeu d'essai officiel, rejeu, signature invalide, montant incorrect, remboursement, contestation, purge à 30 jours, route GET). Total : 318 unitaires, 31 e2e. `verify` vert.
 - Non vérifié : tout ce qui dépend de la documentation officielle FlexPay (voir « À CONFIRMER »).
+
+## Bloc 5 : demandes à envoyer : FAIT (rien n'est envoyé)
+- `docs/DEMANDES/` : `README.md` (récapitulatif, ordre conseillé, description commune) + un fichier par destinataire : `verotel.md`, `railway.md`, `ageverif.md` (français), `yoti.md`, `microsoft-photodna.md`, `xai.md`. Chacun : « nécessaire ou non pour le payant de la formule A » en tête (seule Verotel : OUI), canal d'envoi avec lien, objet, message prêt à copier signé au nom de la Ltd (marqueurs `[À COMPLÉTER]`), pièces à joindre, questions appelant une réponse écrite.
+- Description honnête et complète du service dans chaque message (photos d'anatomie intime pour les formules photo, pas encore ouvertes, jamais stockées).
+- Limites : Microsoft (PhotoDNA, accès refusé aux outils automatiques), x.ai et la console xAI : procédure et adresses non lues ; je n'ai inventé aucune adresse e-mail (un test le vérifie). Politique d'usage de Railway lue directement : « If you are unsure whether your use case is allowed, ask us before deploying. »
+- Test : `tests/demandes.test.ts` (22 tests).
+
+## Bloc 6 : feuille de route du payant : FAIT
+- `docs/PASSAGE-PAYANT.md` : 15 étapes ordonnées (qui, dépendance, délai, chemin critique 6 à 10 semaines), dont l'**étape obligatoire 7 : sauvegardes quotidiennes de la base vérifiées (test de restauration) avant tout paiement** ; liste séparée pour les formules photo. Les délais sont des ordres de grandeur, non vérifiés.
+- Ajout lié : `/api/payments/webhook` joignable sans mot de passe sur le site de test dès que `PAYMENT_PROVIDER=verotel` (signature vérifiée avant la base), testé.
+
+## Bloc 7 : dossier pour le juriste : FAIT
+- `docs/JURISTE.md` : 10 sujets demandés (contexte, questions, passages concernés) + section à part « bêta gratuite » (liste de contrôle B1 à B14 avant ouverture au public).
+- Ajout lié : section « Cookies » dans la politique de confidentialité (bêta et payant).
+- Test : `tests/docs-nuit3.test.ts`.

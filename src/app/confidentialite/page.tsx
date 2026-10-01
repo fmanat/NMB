@@ -60,6 +60,14 @@ export default function Page() {
       <h2>Adresse IP</h2>
       <p>Hachée, utilisée uniquement pour limiter le nombre d&apos;analyses, effacée après 24 heures.</p>
 
+      <h2>Cookies</h2>
+      <p>
+        Aucun cookie de suivi, de publicité ou de mesure d&apos;audience. Seuls des cookies fonctionnels peuvent être posés, illisibles par
+        les scripts de la page : « défi » (24 heures) lorsque vous relevez le défi d&apos;un ami ; « âge » (30 minutes, sans donnée
+        d&apos;identité) après la vérification d&apos;âge d&apos;une formule avec photo ; « paiement » (2 heures) pour vous ramener à votre rapport
+        après la page du prestataire de paiement. L&apos;administration du site utilise en plus un cookie de session réservé à ses administrateurs.
+      </p>
+
       <h2>Mesure d&apos;audience</h2>
       <p>
         Sans cookie, hébergée dans l&apos;Union européenne. Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé, aperçu verrouillé et paiement. Chaque événement n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control. Aucun pixel publicitaire, aucun outil tiers de suivi.
@@ -106,6 +114,13 @@ function BetaPolicy() {
       <h2>Mesure d&apos;audience</h2>
       <p>
         Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé. Chaque événement n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control. Aucun pixel publicitaire, aucun outil tiers de suivi.
+      </p>
+
+      <h2>Cookies</h2>
+      <p>
+        Aucun cookie de suivi, de publicité ou de mesure d&apos;audience. Un seul cookie fonctionnel peut être posé : lorsque vous relevez le
+        défi d&apos;un ami, un cookie « défi » (24 heures, illisible par les scripts de la page) rattache votre rapport à ce défi. Il ne sert
+        à rien d&apos;autre. L&apos;administration du site utilise en plus un cookie de session réservé à ses administrateurs.
       </p>
 
       <h2>Aucun envoi à un prestataire d&apos;analyse</h2>

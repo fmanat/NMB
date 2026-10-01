@@ -43,6 +43,21 @@ describe("protection par mot de passe", () => {
   });
 });
 
+describe("notifications du prestataire de paiement sur un site protégé", () => {
+  const env = { ...prod, SITE_PASSWORD: "s3cret-de-test" };
+  it("avec Verotel configuré : seul /api/payments/webhook est joignable sans identifiants (la signature protège)", () => {
+    const v = { ...env, PAYMENT_PROVIDER: "verotel" };
+    expect(decideAccess("/api/payments/webhook", null, v, false)).toEqual({ action: "next", protectedSite: false });
+    for (const p of ["/api/payments/webhook/x", "/api/payments", "/paiement/retour", "/api/analyse", "/"]) expect(decideAccess(p, null, v, false).action, p).toBe("unauthorized");
+  });
+  it("avec un autre prestataire (ou aucun) : tout reste protégé", () => {
+    for (const provider of [undefined, "simulation", "stripe"]) expect(decideAccess("/api/payments/webhook", null, { ...env, PAYMENT_PROVIDER: provider }, false).action).toBe("unauthorized");
+  });
+  it("en bêta gratuite, ce chemin reste introuvable même avec Verotel configuré", () => {
+    expect(decideAccess("/api/payments/webhook", null, { ...env, PAYMENT_PROVIDER: "verotel", FREE_BETA: "on" }, false).action).toBe("not_found");
+  });
+});
+
 describe("garde-fou : identité de la Ltd non complétée", () => {
   it("les marqueurs sont présents tant que rien n'est renseigné (état actuel du dépôt)", () => {
     expect(hasCompanyPlaceholders()).toBe(true);

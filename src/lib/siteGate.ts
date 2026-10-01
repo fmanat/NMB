@@ -12,6 +12,7 @@ export type GateDecision = { action: "next"; protectedSite: boolean } | { action
 type Env = Record<string, string | undefined>;
 
 export const HEALTH_PATH = "/api/health";
+export const PAYMENT_WEBHOOK_PATH = "/api/payments/webhook";
 
 /** Comparaison en temps constant (évite de révéler le mot de passe par le temps de réponse). */
 export function safeEqual(a: string, b: string): boolean {
@@ -44,7 +45,11 @@ export function decideAccess(pathname: string, authorization: string | null, env
   const password = env.SITE_PASSWORD ?? "";
   if (!password && env.NODE_ENV === "production" && placeholders) return { action: "closed" };
 
-  if (password) {
+  // Notifications du prestataire de paiement (Verotel) : elles ne portent pas d'identifiants du site et sont authentifiées par leur propre
+  // signature (vérifiée avant tout accès à la base). Exception limitée à ce chemin, et seulement si ce prestataire est configuré :
+  // sans elle, un site de test protégé ne recevrait jamais les notifications de paiement.
+  const signedByProvider = pathname === PAYMENT_WEBHOOK_PATH && env.PAYMENT_PROVIDER === "verotel";
+  if (password && !signedByProvider) {
     const creds = parseBasicAuth(authorization);
     const user = env.SITE_USER || "bitometre";
     // Les deux comparaisons sont toujours faites (pas de court-circuit).
@@ -54,5 +59,5 @@ export function decideAccess(pathname: string, authorization: string | null, env
   }
 
   if (isFreeBeta(env) ? isHiddenInBeta(pathname) : isBetaOnly(pathname)) return { action: "not_found" };
-  return { action: "next", protectedSite: password !== "" };
+  return { action: "next", protectedSite: password !== "" && !signedByProvider };
 }
