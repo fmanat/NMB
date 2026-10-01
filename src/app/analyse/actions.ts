@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { RATE_LIMIT } from "@/config/site";
+import { recordEvent } from "@/lib/funnel";
 import { isFreeBeta } from "@/lib/mode";
 import { attachFriend, CHALLENGE_COOKIE } from "@/lib/challenge";
 import { buildQuestionnaireReport, isOutOfReferenceRange, questionnaireSchema } from "@/lib/report";
@@ -51,6 +52,7 @@ export async function submitQuestionnaire(_prev: FormState, fd: FormData): Promi
     ipHash,
     freeBeta: isFreeBeta(), // bêta gratuite : rapport débloqué sans paiement
   });
+  await recordEvent("questionnaire_done");
   const challenge = (await cookies()).get(CHALLENGE_COOKIE)?.value;
   if (challenge) await attachFriend(challenge, id); // défi d'un ami : le rapport devient celui de l'ami
   redirect(`/r/${id}`);

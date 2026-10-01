@@ -15,3 +15,8 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - Tests : 276 unitaires, 28 e2e (10 nouveaux, en mode bêta + mot de passe, port 3204). `verify` vert.
 - Décisions : DECISIONS.md (section « Session de nuit n° 3 »). À noter : le `.env` n'avait pas d'empreinte d'administration.
 - Commit : voir `git log` (« Bloc 1 (nuit 3) »).
+
+## Bloc 2 : entonnoir de conversion : FAIT
+- Événements anonymes (`funnel_events`, migration 007 ; défis dans `stat_events` ; paiements dans `payments`), route `/api/e`, composant `TrackView`, respect de DNT/GPC, robots écartés. Vue « Entonnoir de conversion » dans l'administration (7 j, 30 j, depuis le début, taux par étape et depuis l'accueil). Politique de confidentialité mise à jour (deux versions).
+- Limite assumée : comptages d'événements, pas de visiteurs uniques.
+- Tests : 286 unitaires, 31 e2e. `verify` vert.

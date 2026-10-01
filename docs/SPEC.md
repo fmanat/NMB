@@ -203,3 +203,10 @@ README en français simple : chaque variable d'environnement expliquée, mise en
 - **Protection du site de test** : authentification HTTP gérée par l'application (`SITE_PASSWORD`, `SITE_USER`, `src/proxy.ts`) ; seul `/api/health` reste libre.
 - **Relecture juridique complète** par un juriste **avant le passage au payant** (et avant l'ouverture au public de la bêta : voir docs/JURISTE.md, section bêta).
 - **Comptes et demandes** : Claude prépare les demandes (docs/DEMANDES/), le propriétaire les envoie. Aucun compte n'est ouvert par Claude.
+
+## 24. Entonnoir de conversion (session de nuit n° 3)
+
+- Événements **anonymes**, sans cookie, sans adresse IP, sans user-agent conservé, sans identifiant : table `funnel_events` (type + date, migration 007) ; défis dans `stat_events` ; paiements dans `payments`. Étapes : visite de l'accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte créée, défi créé, défi relevé ; version payante : aperçu verrouillé, paiement lancé, paiement réussi.
+- Le navigateur n'envoie que 4 événements (liste fermée, `/api/e`, signal `sendBeacon`) ; les autres sont écrits par le serveur à l'action réelle. Robots et visiteurs avec Do Not Track / Global Privacy Control : non comptés.
+- Ce sont des **comptages d'événements, pas de personnes** : les taux de passage sont des ordres de grandeur (un visiteur peut produire plusieurs événements). L'administration (« Entonnoir de conversion ») affiche, pour 7 jours, 30 jours et depuis le début, le nombre par étape et le taux par rapport à l'étape précédente de sa chaîne (entre parenthèses, par rapport aux visites de l'accueil).
+- La politique de confidentialité (version bêta et version payante) décrit cette mesure.

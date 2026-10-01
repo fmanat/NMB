@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { FINANCE, FORMULAS } from "@/config/site";
 import { ADMIN_COOKIE, isAdminTokenValid } from "@/lib/admin/auth";
 import { dashboardStats, type Finance, type FormulaKey } from "@/lib/admin/stats";
+import { computeFunnel, funnelCounts } from "@/lib/funnel";
 import { logout } from "./actions";
 
 export const metadata = { title: "Tableau de bord", robots: { index: false, follow: false, nocache: true } };
@@ -80,6 +81,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
   const period = PERIODS.find((p) => p.key === jours) ?? PERIODS[1];
   const d = await dashboardStats(period.days);
   const keys = Object.keys(FORMULAS) as FormulaKey[];
+  // Entonnoir : trois périodes côte à côte, toujours les mêmes (7 jours, 30 jours, depuis le début).
+  const funnelPeriods = PERIODS.filter((p) => p.key === "7" || p.key === "30" || p.key === "tout");
+  const funnels = await Promise.all(funnelPeriods.map(async (p) => ({ p, rows: computeFunnel(await funnelCounts(p.days)) })));
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 space-y-6">
@@ -100,6 +104,22 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
           </Link>
         ))}
       </nav>
+
+      <Card
+        title="Entonnoir de conversion"
+        note="Événements anonymes, sans cookie ni adresse IP : ce sont des comptages d'événements, pas de personnes (un visiteur peut en produire plusieurs ; les robots et les visiteurs qui refusent le suivi — Do Not Track, Global Privacy Control — ne sont pas comptés). Chaque taux est le rapport à l'étape précédente de sa chaîne ; entre parenthèses, le rapport aux visites de l'accueil. Les étapes de la version payante restent à 0 pendant la bêta gratuite. Les périodes sont indépendantes de celle choisie ci-dessus."
+      >
+        <Table
+          head={["Étape", ...funnels.flatMap(({ p }) => [`Nombre · ${p.label}`, "Taux"])]}
+          rows={funnels[0].rows.map((s, i) => [
+            s.label,
+            ...funnels.flatMap(({ rows }) => {
+              const r = rows[i];
+              return [nb(r.count), r.parent ? `${pct(r.rateFromParent)} (${pct(r.rateFromTop)})` : "—"];
+            }),
+          ])}
+        />
+      </Card>
 
       <Card
         title="Analyses lancées"

@@ -172,3 +172,14 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 | Hébergeur dans les mentions légales : « Railway Corporation (États-Unis) » (nom lu sur railway.com/legal/acceptable-use) ; adresse en marqueur. | Adresse non lisible dans les pages consultées : à compléter. Je n'invente rien. |
 | Le `.env` local ne contenait **pas** `ADMIN_PASSWORD_HASH` (la consigne disait « réutilise l'empreinte déjà présente »). | Voir Bloc 3 : mot de passe d'administration généré aléatoirement pour le site de test. |
 | Hors périmètre (note) : les guides de `content/seo/` (rédigés par le propriétaire) peuvent citer des prix ; ils ne sont pas publiés (`SEO_PUBLISH` vide), donc absents du site de test. À relire avant publication en mode bêta. | Règle : je ne réécris pas ces textes. |
+
+## Session de nuit n° 3, Bloc 2 : entonnoir de conversion
+
+| Décision | Raison |
+|---|---|
+| Comptages d'événements, **pas de visiteurs uniques** : aucune déduplication possible sans cookie ni IP. Les taux sont annoncés comme des ordres de grandeur dans l'administration. | « Sans cookie ni adresse IP » : seule option compatible. |
+| Événements de navigation envoyés par le navigateur (liste fermée de 4) ; événements d'action (questionnaire terminé, carte créée) écrits par le serveur ; défis et paiements lus dans les tables existantes. | Un événement serveur ne peut pas être falsifié par un script ; un chargement de page se mesure côté navigateur (les pages d'accueil sont statiques). |
+| Le rapport n'est compté qu'une fois par onglet (`sessionStorage`, stocké sur l'appareil, jamais envoyé). | Ne pas compter les rechargements. |
+| Respect de Do Not Track et Global Privacy Control ; robots écartés par le user-agent (qui n'est pas conservé). | Option la plus prudente pour la vie privée. Le filtre « headless » n'est pas appliqué, pour que les tests navigateur soient comptés. |
+| Pas de limitation de débit sur `/api/e`. | Sans IP, pas de clé. Risque : gonflement des compteurs par un tiers ; aucun effet sur les données personnelles. À revoir si un abus apparaît (limite globale). |
+| Un échec d'écriture d'un événement est journalisé et ignoré. | La mesure ne doit jamais casser le parcours. |

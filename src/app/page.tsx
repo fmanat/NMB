@@ -3,6 +3,7 @@ import { FORMULAS, REPORT_ACCESS, formatEur } from "@/config/site";
 import { BETA, isFreeBeta } from "@/lib/mode";
 import { ScanButton } from "@/components/ScanButton";
 import { Gauge } from "@/components/Gauge";
+import { TrackView } from "@/components/TrackView";
 
 const BADGES = ["Connexion chiffrée", "Photo jamais stockée par Bitomètre", "Aucun compte"];
 const BADGES_BETA = ["Connexion chiffrée", "Aucun compte", "Bêta gratuite"];
@@ -17,6 +18,7 @@ export default function Home() {
   const beta = isFreeBeta();
   return (
     <div className="mx-auto max-w-5xl px-4">
+      <TrackView event="home_view" />
       <section className="py-16 sm:py-24 text-center">
         <p className="num text-xs text-accent tracking-widest uppercase mb-4">
           Dossier n° ---- · Laboratoire de statistiques biométriques

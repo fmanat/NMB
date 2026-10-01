@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BETA, isFreeBeta } from "@/lib/mode";
 import { REPORT_ACCESS, SITE, formatEur } from "@/config/site";
 import { Distribution } from "@/components/Distribution";
+import { TrackView } from "@/components/TrackView";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { DIRECTION_FR } from "@/lib/report";
 import { referenceFor } from "@/lib/stats";
@@ -35,6 +36,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (view.status === "locked") {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 space-y-6">
+        <TrackView event="locked_preview" once={id} />
         {banner}
         <div className="panel p-6 text-center space-y-4">
           <p className="num text-xs text-accent tracking-widest">ANALYSE TERMINÉE</p>
@@ -76,6 +78,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 space-y-8">
+      <TrackView event="report_view" once={id} />
       {banner}
       <header className="flex items-end justify-between gap-4">
         <div>

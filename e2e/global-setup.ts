@@ -15,6 +15,6 @@ export default async function setup() {
 
   const db = new pg.Client({ connectionString: E2E.dbUrl });
   await db.connect();
-  await db.query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
+  await db.query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries, funnel_events CASCADE");
   await db.end();
 }

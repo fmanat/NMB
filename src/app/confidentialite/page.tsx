@@ -61,7 +61,9 @@ export default function Page() {
       <p>Hachée, utilisée uniquement pour limiter le nombre d&apos;analyses, effacée après 24 heures.</p>
 
       <h2>Mesure d&apos;audience</h2>
-      <p>Sans cookie, hébergée dans l&apos;Union européenne. Aucun pixel publicitaire.</p>
+      <p>
+        Sans cookie, hébergée dans l&apos;Union européenne. Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé, aperçu verrouillé et paiement. Chaque événement n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control. Aucun pixel publicitaire, aucun outil tiers de suivi.
+      </p>
 
       <h2>Vos droits</h2>
       <p>
@@ -102,7 +104,9 @@ function BetaPolicy() {
       </p>
 
       <h2>Mesure d&apos;audience</h2>
-      <p>Sans cookie et sans adresse IP. Aucun pixel publicitaire, aucun outil tiers de suivi.</p>
+      <p>
+        Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé. Chaque événement n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control. Aucun pixel publicitaire, aucun outil tiers de suivi.
+      </p>
 
       <h2>Aucun envoi à un prestataire d&apos;analyse</h2>
       <p>

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { ChallengeError, createChallenge, withdraw } from "@/lib/challenge";
+import { recordEvent } from "@/lib/funnel";
 import { createCard, deleteCard, ShareError, type CardOptions } from "@/lib/share";
 
 const back = (id: string, page: string, error?: string) => `/r/${id}/${page}${error ? `?erreur=${encodeURIComponent(error)}` : ""}`;
@@ -20,6 +21,7 @@ export async function createShareCard(reportId: string, fd: FormData): Promise<v
     if (e instanceof ShareError) redirect(back(reportId, "partager", e.message));
     throw e;
   }
+  await recordEvent("card_created");
   redirect(`/c/${cardId}`);
 }
 

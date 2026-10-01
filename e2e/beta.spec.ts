@@ -185,3 +185,72 @@ test.describe("Bêta gratuite : formule A seule", () => {
     await expect(page.getByText(/bêta gratuite/i).first()).toBeVisible();
   });
 });
+
+test.describe("Entonnoir de conversion (événements anonymes)", () => {
+  const counts = () =>
+    withDb(async (db) => {
+      const r = await db.query("SELECT kind, count(*)::int AS n FROM funnel_events GROUP BY kind");
+      const s = await db.query("SELECT kind, count(*)::int AS n FROM stat_events GROUP BY kind");
+      return Object.fromEntries([...r.rows, ...s.rows].map((x) => [x.kind, x.n as number])) as Record<string, number>;
+    });
+  const n = (c: Record<string, number>, k: string) => c[k] ?? 0;
+
+  test("accueil, début, questionnaire terminé, rapport affiché, carte, défi créé et relevé sont comptés, sans aucun cookie", async ({ page, browser, baseURL }) => {
+    const before = await counts();
+    await page.goto("/");
+    await expect.poll(async () => n(await counts(), "home_view")).toBe(n(before, "home_view") + 1);
+    const id = await betaReport(page); // questionnaire_start, questionnaire_done, report_view
+    await expect.poll(async () => n(await counts(), "report_view")).toBe(n(before, "report_view") + 1);
+    await page.goto(`/r/${id}/partager`);
+    await page.getByRole("button", { name: "Créer la carte" }).click();
+    await expect(page).toHaveURL(/\/c\//);
+    await page.goto(`/r/${id}/defi`);
+    await page.getByRole("button", { name: "Créer mon lien de défi" }).click();
+    const path = new URL(await page.locator("input[readonly]").inputValue()).pathname;
+    // Aucun cookie posé par la mesure d'audience ni par le parcours du créateur.
+    expect(await page.context().cookies()).toEqual([]);
+
+    const friend = await browser.newContext({ baseURL, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword }, extraHTTPHeaders: { "x-forwarded-for": fakeIp() } });
+    const fp = await friend.newPage();
+    await fp.goto(path);
+    await fp.getByRole("button", { name: "Relever le défi" }).click();
+    await expect(fp).toHaveURL(/\/analyse\/questionnaire$/);
+    await betaReport(fp); // le défi est « relevé » quand le rapport de l'ami est créé
+    await friend.close();
+
+    const after = await counts();
+    for (const k of ["questionnaire_start", "questionnaire_done", "card_created", "challenge_created", "challenge_taken"]) {
+      expect(n(after, k), k).toBeGreaterThanOrEqual(n(before, k) + 1);
+    }
+    expect(n(after, "locked_preview")).toBe(n(before, "locked_preview")); // pas d'aperçu verrouillé en bêta
+    // La table n'a aucune colonne d'identité.
+    await withDb(async (db) => {
+      const cols = (await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'funnel_events' AND table_schema = current_schema()")).rows.map((r) => r.column_name).sort();
+      expect(cols).toEqual(["created_at", "id", "kind"]);
+    });
+  });
+
+  test("Do Not Track : aucun événement compté", async ({ browser, baseURL }) => {
+    const before = await counts();
+    const ctx = await browser.newContext({ baseURL, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword }, extraHTTPHeaders: { dnt: "1", "x-forwarded-for": fakeIp() } });
+    const p = await ctx.newPage();
+    await p.goto("/");
+    await p.goto("/analyse/questionnaire");
+    await p.waitForTimeout(1500);
+    expect(await counts()).toEqual(before);
+    await ctx.close();
+  });
+
+  test("l'administration affiche l'entonnoir avec les taux de passage", async ({ page }) => {
+    await page.goto("/admin");
+    await page.getByLabel("Mot de passe").fill(E2E.adminPassword);
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await expect(page.getByRole("heading", { name: "Entonnoir de conversion" })).toBeVisible();
+    const card = page.locator("section", { has: page.getByRole("heading", { name: "Entonnoir de conversion" }) });
+    await expect(card.getByRole("row", { name: /Visite de l'accueil/ })).toBeVisible();
+    await expect(card.getByRole("row", { name: /Défi relevé/ })).toBeVisible();
+    expect(await card.innerText()).toMatch(/\d+ %/);
+    await expect(card.getByRole("columnheader", { name: /7 jours/ })).toBeVisible();
+    await expect(card.getByRole("columnheader", { name: /Depuis le début/ })).toBeVisible();
+  });
+});
