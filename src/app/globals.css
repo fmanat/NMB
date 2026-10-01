@@ -128,3 +128,44 @@ body {
   padding: 0.5rem 0.75rem;
   text-align: left;
 }
+
+/* ---------- Accessibilité ---------- */
+
+/* Focus toujours visible au clavier : contour de 3 px (contraste élevé sur fond sombre), y compris sur les champs dont le style
+   d'origine supprime le contour (les classes « outline-none » de Tailwind). */
+:focus-visible {
+  outline: 3px solid var(--accent-2) !important;
+  outline-offset: 2px !important;
+}
+
+/* Lien d'évitement : invisible tant qu'il n'a pas le focus, puis visible en haut à gauche. */
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0;
+  z-index: 100;
+  transform: translateY(-120%);
+  background: var(--accent-2);
+  color: #1a1000;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+main:focus {
+  outline: none !important; /* le conteneur reçoit le focus par programme (lien d'évitement) : pas de cadre autour de la page */
+}
+
+/* Mouvement réduit : aucune animation ni transition, défilement instantané. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

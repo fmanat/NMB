@@ -18,7 +18,7 @@ const basisLabel = (s: Side) => (s.basis === "declared" ? "valeurs déclarées" 
 function Row({ label, me, other }: { label: string; me: string; other: string }) {
   return (
     <tr className="border-t border-border">
-      <td className="p-3 font-sans text-muted">{label}</td>
+      <th scope="row" className="p-3 font-sans font-normal text-left text-muted">{label}</th>
       <td className="p-3 text-accent">{me}</td>
       <td className="p-3 text-accent-2">{other}</td>
     </tr>
@@ -83,9 +83,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <table className="w-full text-sm num">
               <thead className="text-left text-muted font-sans">
                 <tr>
-                  <th className="p-3"></th>
-                  <th className="p-3">Vous</th>
-                  <th className="p-3">Votre ami</th>
+                  <th scope="col" className="p-3"><span className="sr-only">Indicateur</span></th>
+                  <th scope="col" className="p-3">Vous</th>
+                  <th scope="col" className="p-3">Votre ami</th>
                 </tr>
               </thead>
               <tbody>

@@ -110,30 +110,30 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <table className="w-full text-sm">
           <thead className="text-left text-muted">
             <tr>
-              <th className="p-3">Mesure</th>
-              <th className="p-3">Valeur</th>
-              <th className="p-3">Marge</th>
-              <th className="p-3">Percentile</th>
-              <th className="p-3">Médiane de référence</th>
+              <th scope="col" className="p-3">Mesure</th>
+              <th scope="col" className="p-3">Valeur</th>
+              <th scope="col" className="p-3">Marge</th>
+              <th scope="col" className="p-3">Percentile</th>
+              <th scope="col" className="p-3">Médiane de référence</th>
             </tr>
           </thead>
           <tbody className="num">
             <tr className="border-t border-border">
-              <td className="p-3 font-sans">Longueur</td>
+              <th scope="row" className="p-3 font-sans font-normal text-left">Longueur</th>
               <td className="p-3">{f1(r.length.value)} cm</td>
               <td className="p-3 font-sans text-muted">{r.length.marginPct ? `± ${r.length.marginPct} %` : "déclarée"}</td>
               <td className="p-3 text-accent-2">{f1(r.length.percentile)}</td>
               <td className="p-3">{f1(r.length.referenceMedian)} cm</td>
             </tr>
             <tr className="border-t border-border">
-              <td className="p-3 font-sans">Circonférence</td>
+              <th scope="row" className="p-3 font-sans font-normal text-left">Circonférence</th>
               <td className="p-3">{f1(r.girth.value)} cm</td>
               <td className="p-3 font-sans text-muted">{r.girth.marginPct ? `± ${r.girth.marginPct} %` : "déclarée"}</td>
               <td className="p-3 text-accent-2">{f1(r.girth.percentile)}</td>
               <td className="p-3">{f1(r.girth.referenceMedian)} cm</td>
             </tr>
             <tr className="border-t border-border">
-              <td className="p-3 font-sans">Courbure</td>
+              <th scope="row" className="p-3 font-sans font-normal text-left">Courbure</th>
               <td className="p-3 font-sans" colSpan={4}>
                 {{ none: "Aucune", light: "Légère", marked: "Marquée" }[r.curvature.category]}
                 {r.curvature.direction !== "none" && ` ${DIRECTION_FR[r.curvature.direction]}`}
@@ -143,17 +143,17 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             {r.symmetry !== undefined && (
               <>
                 <tr className="border-t border-border">
-                  <td className="p-3 font-sans">Symétrie</td>
+                  <th scope="row" className="p-3 font-sans font-normal text-left">Symétrie</th>
                   <td className="p-3">{Math.round(r.symmetry)} / 100</td>
                   <td className="p-3 font-sans text-muted" colSpan={3}>écart entre demi-largeurs gauche et droite</td>
                 </tr>
                 <tr className="border-t border-border">
-                  <td className="p-3 font-sans">Conicité</td>
+                  <th scope="row" className="p-3 font-sans font-normal text-left">Conicité</th>
                   <td className="p-3">{r.taper !== undefined ? String(r.taper).replace(".", ",") : "—"}</td>
                   <td className="p-3 font-sans text-muted" colSpan={3}>largeur sous le gland / largeur à la base</td>
                 </tr>
                 <tr className="border-t border-border">
-                  <td className="p-3 font-sans">Indice de confiance</td>
+                  <th scope="row" className="p-3 font-sans font-normal text-left">Indice de confiance</th>
                   <td className="p-3">{r.confidence} / 100</td>
                   <td className="p-3 font-sans text-muted" colSpan={3}>qualité du repérage des points</td>
                 </tr>

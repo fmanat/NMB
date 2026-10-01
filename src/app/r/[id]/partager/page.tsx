@@ -45,7 +45,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <input type="radio" name="mode" value="landmark" className="mt-1 accent-[var(--accent)]" />
             <span className="text-foreground">Score et une mesure de référence</span>
           </label>
-          <select name="landmark" className="ml-6 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+          <select name="landmark" aria-label="Mesure de référence à afficher sur la carte" className="ml-6 rounded-lg border border-border bg-background px-3 py-2 text-sm">
             {LANDMARKS.map((l) => (
               <option key={l.label} value={l.label}>{l.label}</option>
             ))}

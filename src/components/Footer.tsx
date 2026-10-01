@@ -47,7 +47,7 @@ export function Footer() {
             ))}
           </nav>
         )}
-        <nav className="flex flex-wrap gap-x-5 gap-y-2">
+        <nav aria-label="Informations légales" className="flex flex-wrap gap-x-5 gap-y-2">
           {(beta ? LINKS_BETA : LINKS).map(([href, label]) => (
             <Link key={href} href={href} className="hover:text-foreground">
               {label}

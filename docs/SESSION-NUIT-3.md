@@ -49,3 +49,9 @@ Règles : commit + push à la fin de chaque bloc ; `npm run verify` vert à chaq
 - `docs/JURISTE.md` : 10 sujets demandés (contexte, questions, passages concernés) + section à part « bêta gratuite » (liste de contrôle B1 à B14 avant ouverture au public).
 - Ajout lié : section « Cookies » dans la politique de confidentialité (bêta et payant).
 - Test : `tests/docs-nuit3.test.ts`.
+
+## Bloc 8 : accessibilité puis petits écrans : FAIT
+- Accessibilité : axe-core (WCAG 2.0 à 2.2 A et AA + bonnes pratiques) sur toutes les pages des deux modes, plus tests clavier (lien d'évitement, fenêtre d'âge, focus visible de 3 px, noms accessibles), structure (repères, titres, navigations nommées, tableaux), mouvement réduit. Corrections : voir `docs/DECISIONS.md` (section « Bloc 8 »). **Limite : pas d'essai avec un vrai lecteur d'écran.**
+- Petits écrans 320 / 375 / 390 px : détecteur de recouvrement, de texte coupé et de débordement (`e2e/layout.ts`, validé par un test de sensibilité) sur toutes les pages et plusieurs états, bêta et payant : **aucun défaut réel trouvé** ; deux fausses alertes corrigées dans le détecteur.
+- Un test instable corrigé (titre de page diffusé en flux par Next.js : le test attend désormais le titre).
+- Tests : 350 unitaires, 62 e2e. `verify` vert (7,4 minutes).

@@ -6,7 +6,7 @@ export function CopyLink({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex gap-2">
-      <input readOnly value={url} onFocus={(e) => e.currentTarget.select()} className="num flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+      <input readOnly aria-label="Lien du défi à envoyer à votre ami" value={url} onFocus={(e) => e.currentTarget.select()} className="num flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm" />
       <button
         type="button"
         className="panel px-4 py-2 text-sm hover:border-accent"
@@ -21,6 +21,7 @@ export function CopyLink({ url }: { url: string }) {
       >
         {copied ? "Copié" : "Copier"}
       </button>
+      <span role="status" className="sr-only">{copied ? "Lien copié dans le presse-papiers" : ""}</span>
     </div>
   );
 }

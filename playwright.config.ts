@@ -48,9 +48,9 @@ export default defineConfig({
   reporter: [["list"]],
   use: { baseURL: E2E.okUrl, locale: "fr-FR", trace: "retain-on-failure" },
   projects: [
-    { name: "chromium", testIgnore: /beta.spec.ts/, use: { browserName: "chromium" } },
+    { name: "chromium", testIgnore: /(beta|accessibilite|mobile).spec.ts/, use: { browserName: "chromium" } },
     // Mode bêta gratuite, site protégé par mot de passe (authentification HTTP) : copie dédiée sur le port 3204.
-    { name: "beta", testMatch: /beta.spec.ts/, use: { browserName: "chromium", baseURL: E2E.betaUrl, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword } } },
+    { name: "beta", testMatch: /(beta|accessibilite|mobile).spec.ts/, use: { browserName: "chromium", baseURL: E2E.betaUrl, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword } } },
   ],
   webServer: [
     { command: "npx next dev -p 3201", url: E2E.okUrl, env: env("ok", ".next-e2e-ok"), reuseExistingServer: false, timeout: 180_000 },

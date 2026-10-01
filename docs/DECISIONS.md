@@ -198,3 +198,24 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 | Migration 008 : statuts `refunded` / `disputed`, `provider_sale_id`, `refunded_at`, `relocked_at`. L'administration affiche les remboursements et contestations de la période (exclus du revenu). | |
 | CSP `form-action` : `secure.verotel.com` ajouté, **`checkout.stripe.com` retiré**. | Stripe est exclu ; l'origine Verotel est nécessaire à la redirection depuis le formulaire de paiement. À réintroduire si Stripe était un jour réactivé. |
 | La commission provisoire de 12 % (`FINANCE.paymentFeeRate`) n'a **pas** été modifiée. | Le compte Basic de Verotel affiche 15,5 % (tarif public) : décision de chiffrage laissée au propriétaire (question dans le rapport final). |
+
+## Session de nuit n° 3, Bloc 8 : accessibilité et petits écrans
+
+**Méthode.** Contrôle automatique avec **axe-core** (`@axe-core/playwright`, ajouté en dépendance de développement) : règles WCAG 2.0, 2.1 et 2.2 niveaux A et AA plus bonnes pratiques, sur toutes les pages des deux modes (bêta : `e2e/accessibilite.spec.ts` ; version payante : `e2e/accessibilite-payant.spec.ts`), y compris les états d'erreur et la fenêtre d'âge ouverte. Tests clavier et structure écrits à la main. **Limite : aucun essai avec un vrai lecteur d'écran (NVDA, VoiceOver, TalkBack) ni sur de vrais téléphones n'a été fait ; axe-core ne détecte qu'une partie des défauts d'accessibilité.**
+
+| Constat (avant) | Correction |
+|---|---|
+| Deux zones de navigation sans nom (axe : `landmark-unique`) | « Principale » (en-tête), « Informations légales » (pied de page) |
+| Aucun lien d'évitement | « Aller au contenu » (premier élément atteint par Tab, visible au focus), contenu principal `id="contenu"` |
+| Pas de style de focus global ; champs avec `outline-none` : seul un changement de bordure | Contour de 3 px orange sur tout `:focus-visible` (`!important` pour passer devant `outline-none`) ; cibles de la navigation d'en-tête agrandies |
+| Menu déroulant de la carte sans nom accessible (axe : `select-name`, critique) | `aria-label` |
+| Page de carte publique sans titre de niveau 1 | Le numéro de rapport est un `h1` |
+| Jauges décoratives annoncées comme images | Masquées aux lecteurs d'écran quand elles n'ont pas de valeur |
+| Champ du lien de défi sans étiquette ; « Copié » non annoncé | `aria-label` + zone `role="status"` |
+| En-têtes de colonnes sans `scope` ; première colonne en cellules ordinaires ; en-tête vide | `scope="col"` / `scope="row"`, en-tête vide nommé pour les lecteurs d'écran |
+| Fenêtre d'âge : titre non relié, erreur non annoncée | `aria-labelledby`, `role="alert"` |
+| Mouvement réduit : seule une transition de survol existait | Règle `prefers-reduced-motion` globale (aucune animation ni transition) ; test qui vérifie que rien ne bouge |
+
+Constat sans correction nécessaire : contrastes (axe : aucune violation), langue de la page, repères, hiérarchie des titres, étiquettes des champs, `role="alert"` des erreurs du questionnaire, fenêtre modale native (focus piégé, Échap, retour du focus).
+
+**Petits écrans (320, 375, 390 px).** Nouveau détecteur (`e2e/layout.ts`) fondé sur les rectangles réels de chaque morceau de texte : défilement horizontal, texte coupé à droite ou à gauche, contenu masqué par `overflow`, **textes qui se recouvrent**. Appliqué à toutes les pages et à plusieurs états (fenêtre d'âge ouverte, erreurs) dans les deux modes. **Aucun défaut réel trouvé.** Deux fausses alertes du détecteur ont été corrigées dans le détecteur lui-même (et non « résolues » dans le site) : l'interligne serré du score (le rectangle de la police dépasse l'interligne sans que les caractères se touchent) et le texte réservé aux lecteurs d'écran ; la page masquée derrière une fenêtre modale est ignorée. Un test de sensibilité vérifie que le détecteur signale bien un vrai recouvrement, un texte qui sort de l'écran et un défilement horizontal (sinon un test vert ne prouverait rien).

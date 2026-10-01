@@ -11,9 +11,9 @@ export function Header() {
           <span className="inline-block size-2.5 rounded-full bg-accent shadow-[0_0_10px_var(--accent)]" />
           {SITE.name}
         </Link>
-        <nav className="flex items-center gap-5 text-sm text-muted">
-          <Link href="/methode" className="hover:text-foreground">Méthode</Link>
-          <Link href="/contact" className="hover:text-foreground">Contact</Link>
+        <nav aria-label="Principale" className="flex items-center gap-2 text-sm text-muted">
+          <Link href="/methode" className="hover:text-foreground px-2 py-3">Méthode</Link>
+          <Link href="/contact" className="hover:text-foreground px-2 py-3">Contact</Link>
         </nav>
       </div>
     </header>

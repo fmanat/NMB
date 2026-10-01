@@ -62,10 +62,11 @@ export function ScanButton({ label = "Lancer l'analyse" }: { label?: string }) {
 
       <dialog
         ref={dialogRef}
+        aria-labelledby="age-gate-title"
         className="m-auto w-[min(92vw,26rem)] rounded-xl border border-border bg-surface text-foreground p-6 backdrop:bg-black/70"
       >
         <form onSubmit={submit} className="space-y-4">
-          <h2 className="text-lg font-semibold">Contrôle d&apos;accès</h2>
+          <h2 id="age-gate-title" className="text-lg font-semibold">Contrôle d&apos;accès</h2>
           <label className="block text-sm">
             <span className="text-muted">Année de naissance</span>
             <input
@@ -92,7 +93,7 @@ export function ScanButton({ label = "Lancer l'analyse" }: { label?: string }) {
               délit pénal.
             </span>
           </label>
-          {error && <p className="text-sm text-accent-2">{error}</p>}
+          {error && <p className="text-sm text-accent-2" role="alert">{error}</p>}
           <div className="flex gap-3 justify-end">
             <button
               type="button"
