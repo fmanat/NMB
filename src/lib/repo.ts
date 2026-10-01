@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { FORMULAS, RATE_LIMIT, TICKER, UNPAID_TTL_HOURS, type FormulaId } from "@/config/site";
 import { pool } from "./db";
+import { BETA } from "./mode";
 import type { QuestionnaireInput, ReportResults } from "./report";
 
 export type ReportRow = {
@@ -11,6 +12,7 @@ export type ReportRow = {
   score: number;
   paid: boolean;
   paid_at: Date | null;
+  free_beta: boolean;
   waiver_accepted_at: Date | null;
   created_at: Date;
 };
@@ -44,24 +46,25 @@ export async function createReport(args: {
   input: QuestionnaireInput;
   results: ReportResults;
   ipHash: string | null;
+  /** Bêta gratuite : le rapport est débloqué sans paiement (et exclu des statistiques de conversion). */
+  freeBeta?: boolean;
 }): Promise<string> {
   const id = newReportId();
   const client = await pool().connect();
   try {
     await client.query("BEGIN");
-    await client.query("INSERT INTO reports (id, formula, input, results, score, ip_hash) VALUES ($1, $2, $3, $4, $5, $6)", [
-      id,
-      args.formula,
-      args.input,
-      args.results,
-      args.results.score,
-      args.ipHash,
-    ]);
+    const free = args.freeBeta === true;
+    await client.query(
+      "INSERT INTO reports (id, formula, input, results, score, ip_hash, paid, free_beta) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)",
+      [id, args.formula, args.input, args.results, args.results.score, args.ipHash, free],
+    );
     // Journal anonyme durable : survit à la suppression du rapport et à la purge des rapports non payés.
-    await client.query("INSERT INTO report_log (key, formula, score, created_at) VALUES ($1, $2, $3, now())", [
+    // paid_at reste vide pour un rapport de la bêta gratuite : il n'a rien payé et ne compte ni dans la conversion ni dans le bandeau.
+    await client.query("INSERT INTO report_log (key, formula, score, created_at, free_beta) VALUES ($1, $2, $3, now(), $4)", [
       reportKey(id),
       args.formula,
       args.results.score,
+      free,
     ]);
     await client.query("COMMIT");
   } catch (e) {
@@ -104,11 +107,11 @@ export function priceCents(formula: FormulaId): number {
   return Math.round(FORMULAS[formula].priceEur * 100);
 }
 
-/** Efface les rapports non payés trop anciens et les adresses IP hachées de plus de 24 h. */
+/** Efface les rapports non payés trop anciens, les rapports de la bêta gratuite de plus de BETA.reportTtlDays jours et les IP hachées de plus de 24 h. */
 export async function purgeExpired(): Promise<{ reports: number; ips: number }> {
   const del = await pool().query(
-    "DELETE FROM reports WHERE paid = false AND created_at < now() - make_interval(hours => $1)",
-    [UNPAID_TTL_HOURS],
+    "DELETE FROM reports WHERE (paid = false AND created_at < now() - make_interval(hours => $1)) OR (free_beta AND created_at < now() - make_interval(days => $2))",
+    [UNPAID_TTL_HOURS, BETA.reportTtlDays],
   );
   const ips = await pool().query(
     "UPDATE reports SET ip_hash = NULL WHERE ip_hash IS NOT NULL AND created_at < now() - make_interval(hours => $1)",

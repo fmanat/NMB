@@ -124,7 +124,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
 
       <Card
         title="Conversion par protocole"
-        note="Parmi les rapports créés sur la période, part de ceux qui ont été payés. Un rapport payé après la fin de la période compte dans sa période de création."
+        note={`Parmi les rapports créés sur la période, part de ceux qui ont été payés. Un rapport payé après la fin de la période compte dans sa période de création. Hors bêta gratuite : ${nb(d.freeBetaReports)} rapport(s) créé(s) en bêta gratuite sur la période (débloqués sans paiement) ne sont pas comptés ici.`}
       >
         <Table
           head={["Protocole", "Rapports créés", "Payés", "Conversion"]}

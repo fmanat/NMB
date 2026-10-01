@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Doc } from "@/components/Doc";
+import { isFreeBeta } from "@/lib/mode";
 import { REPORT_ACCESS } from "@/config/site";
 
 export const metadata = { title: "Conditions générales de vente" };
 
 export default function Page() {
+  if (isFreeBeta()) notFound(); // bêta gratuite : /conditions à la place
   return (
     <Doc title="Conditions générales de vente" draft>
       <h2>Vendeur</h2>

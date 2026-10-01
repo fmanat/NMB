@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BETA, isFreeBeta } from "@/lib/mode";
 import { REPORT_ACCESS, SITE, formatEur } from "@/config/site";
 import { Distribution } from "@/components/Distribution";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
@@ -22,6 +23,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const { retour } = await searchParams;
   const view = await getReportView(id);
   if (view.status === "not_found") notFound();
+  // Bêta gratuite : il n'y a plus de paiement, donc plus de rapport verrouillé (un rapport antérieur non payé n'est pas proposé).
+  if (view.status === "locked" && isFreeBeta()) notFound();
 
   const banner = (
     <p className="text-xs border border-border rounded-lg px-3 py-2 bg-surface text-muted print:hidden">
@@ -76,7 +79,10 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       {banner}
       <header className="flex items-end justify-between gap-4">
         <div>
-          <p className="num text-xs text-accent tracking-widest">RAPPORT · {SITE.name.toUpperCase()}</p>
+          <p className="num text-xs text-accent tracking-widest">
+            RAPPORT · {SITE.name.toUpperCase()}
+            {view.freeBeta && <span className="ml-2 border border-border rounded px-1.5 py-0.5 text-accent-2">BÊTA GRATUITE</span>}
+          </p>
           <h1 className="text-3xl font-semibold">Rapport d&apos;analyse</h1>
           <p className="num text-xs text-muted mt-1">
             Dossier {id.slice(0, 8).toUpperCase()} · {dateFr} · {r.state === "rest" ? "Au repos" : "En érection"}
@@ -209,9 +215,15 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </div>
 
       <ReportActions id={id} />
-      <p className="text-xs text-muted print:hidden">
-        Ce rapport reste accessible par son lien pendant au moins {REPORT_ACCESS.minYears} ans et téléchargeable en PDF à tout moment.
-      </p>
+      {view.freeBeta ? (
+        <p className="text-xs text-muted print:hidden">
+          Bêta gratuite : ce rapport est conservé {BETA.reportTtlDays} jours au plus, sans garantie. Téléchargez-le en PDF pour le garder.
+        </p>
+      ) : (
+        <p className="text-xs text-muted print:hidden">
+          Ce rapport reste accessible par son lien pendant au moins {REPORT_ACCESS.minYears} ans et téléchargeable en PDF à tout moment.
+        </p>
+      )}
     </div>
   );
 }

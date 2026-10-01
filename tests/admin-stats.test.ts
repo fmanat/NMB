@@ -111,7 +111,7 @@ describe("journal anonyme durable", () => {
   it("le journal ne contient ni identifiant de rapport, ni image, ni adresse IP", async () => {
     await newReport("A");
     const cols = (await pool().query("SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'report_log' ORDER BY 1")).rows.map((r) => r.column_name);
-    expect(cols).toEqual(["created_at", "formula", "key", "paid_at", "score"]);
+    expect(cols).toEqual(["created_at", "formula", "free_beta", "key", "paid_at", "score"]);
   });
 });
 

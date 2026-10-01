@@ -60,6 +60,8 @@ export type Dashboard = {
   launched: Record<FormulaKey, { launched: number; delivered: number; refused: number; blocked: number; error: number }>;
   refusals: { outcome: string; motif: string; n: number }[];
   conversion: Record<FormulaKey, { created: number; paid: number; rate: number | null }>;
+  /** Rapports créés en bêta gratuite sur la période (débloqués sans paiement, exclus de la conversion). */
+  freeBetaReports: number;
   revenue: { total: Finance; byFormula: Record<FormulaKey, Finance> };
   challenges: { created: number; taken: number };
   ai: AiCost;
@@ -102,12 +104,14 @@ export async function dashboardStats(days: number | null): Promise<Dashboard> {
   const conversion = emptyFormulaRecord(() => ({ created: 0, paid: 0, rate: null as number | null }));
   const conv = await p.query(
     `SELECT formula, count(*)::int AS created, count(paid_at)::int AS paid
-       FROM report_log WHERE ($1::timestamptz IS NULL OR created_at >= $1) GROUP BY formula`,
+       FROM report_log WHERE NOT free_beta AND ($1::timestamptz IS NULL OR created_at >= $1) GROUP BY formula`,
     [since],
   );
   for (const r of conv.rows as { formula: FormulaKey; created: number; paid: number }[]) {
     conversion[r.formula] = { created: r.created, paid: r.paid, rate: r.created > 0 ? r.paid / r.created : null };
   }
+
+  const beta = await p.query("SELECT count(*)::int AS n FROM report_log WHERE free_beta AND ($1::timestamptz IS NULL OR created_at >= $1)", [since]);
 
   // Revenus : paiements confirmés sur la période (conservés même si le rapport a été supprimé).
   const pay = await p.query(
@@ -148,6 +152,7 @@ export async function dashboardStats(days: number | null): Promise<Dashboard> {
     launched,
     refusals: ref.rows,
     conversion,
+    freeBetaReports: beta.rows[0].n,
     revenue: { total: computeFinance(totalGross, totalTx), byFormula },
     challenges: { created: chMap.challenge_created ?? 0, taken: chMap.challenge_taken ?? 0 },
     ai: computeAiCost({

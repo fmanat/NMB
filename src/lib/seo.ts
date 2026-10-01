@@ -286,8 +286,8 @@ export function faqJsonLd(page: Pick<SeoPage, "faq">): string | null {
 }
 
 /** Entrées du sitemap : pages publiques fixes, plus les pages de contenu seulement si elles sont publiées. */
-export function sitemapEntries(base: string, pages: Pick<SeoPage, "slug" | "modifiedAt">[], published: boolean) {
-  const fixed = ["", "/methode", "/contact", "/mentions-legales", "/cgv", "/confidentialite"].map((p) => ({ url: `${base}${p}` }));
+export function sitemapEntries(base: string, pages: Pick<SeoPage, "slug" | "modifiedAt">[], published: boolean, beta = false) {
+  const fixed = ["", "/methode", "/contact", "/mentions-legales", beta ? "/conditions" : "/cgv", "/confidentialite"].map((p) => ({ url: `${base}${p}` }));
   const content = published ? pages.map((p) => ({ url: `${base}/${p.slug}`, lastModified: p.modifiedAt })) : [];
   return [...fixed, ...content];
 }

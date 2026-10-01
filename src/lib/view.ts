@@ -12,7 +12,7 @@ export type ReportView =
       /** Formules photo : seuls l'indice de confiance et la symétrie sont visibles avant paiement. */
       preview?: { confidence: number; symmetry: number };
     }
-  | { status: "unlocked"; formula: FormulaId; results: ReportResults; createdAt: Date };
+  | { status: "unlocked"; formula: FormulaId; results: ReportResults; createdAt: Date; freeBeta: boolean };
 
 /**
  * Point unique par lequel une page lit un rapport. Tant que `paid` est faux,
@@ -33,5 +33,5 @@ export async function getReportView(id: string): Promise<ReportView> {
         : {}),
     };
   }
-  return { status: "unlocked", formula: row.formula, results: row.results, createdAt: row.created_at };
+  return { status: "unlocked", formula: row.formula, results: row.results, createdAt: row.created_at, freeBeta: row.free_beta };
 }

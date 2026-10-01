@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FORMULAS, SITE, formatEur } from "@/config/site";
 import { isPublished, loadSeoPages } from "@/lib/seo";
+import { isFreeBeta } from "@/lib/mode";
 
 const LINKS = [
   ["/methode", "Précision et méthode"],
@@ -9,23 +10,33 @@ const LINKS = [
   ["/confidentialite", "Confidentialité"],
   ["/contact", "Contact et signalement"],
 ] as const;
+// Bêta gratuite : conditions d'utilisation de la bêta à la place des CGV.
+const LINKS_BETA = LINKS.map(([h, l]) => (h === "/cgv" ? (["/conditions", "Conditions d'utilisation (bêta)"] as const) : ([h, l] as const)));
 
 export function Footer() {
   // Guides : visibles seulement une fois publiés (ou hors production, pour la relecture).
+  const beta = isFreeBeta();
   const guides = isPublished() || process.env.NODE_ENV !== "production" ? loadSeoPages() : [];
   return (
     <footer className="border-t border-border mt-16">
       <div className="mx-auto max-w-5xl px-4 py-8 text-sm text-muted space-y-4">
         <p>
           <span className="num border border-border rounded px-1.5 py-0.5 mr-2 text-accent-2">18+</span>
-          Service réservé aux adultes. Prix TTC, paiement unique, sans abonnement :{" "}
-          {Object.values(FORMULAS).map((f, i) => (
-            <span key={f.id}>
-              {i > 0 && " · "}
-              {f.label} <span className="num">{formatEur(f.priceEur)}</span>
-            </span>
-          ))}
-          .
+          Service réservé aux adultes.{" "}
+          {beta ? (
+            "Bêta gratuite, sans compte."
+          ) : (
+            <>
+              Prix TTC, paiement unique, sans abonnement :{" "}
+              {Object.values(FORMULAS).map((f, i) => (
+                <span key={f.id}>
+                  {i > 0 && " · "}
+                  {f.label} <span className="num">{formatEur(f.priceEur)}</span>
+                </span>
+              ))}
+              .
+            </>
+          )}
         </p>
         {guides.length > 0 && (
           <nav aria-label="Guides" className="flex flex-wrap gap-x-5 gap-y-2">
@@ -37,7 +48,7 @@ export function Footer() {
           </nav>
         )}
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
-          {LINKS.map(([href, label]) => (
+          {(beta ? LINKS_BETA : LINKS).map(([href, label]) => (
             <Link key={href} href={href} className="hover:text-foreground">
               {label}
             </Link>

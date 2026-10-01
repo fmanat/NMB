@@ -1,11 +1,13 @@
 // Configuration centrale : prix, pondérations, score, références.
 // Pour modifier un prix ou une pondération, changez la valeur ici.
 
+import { COMPANY } from "./company";
+
 export const SITE = {
   name: "Bitomètre",
   domain: "bitometre.com",
   tagline: "Laboratoire d'analyse biométrique",
-  contactEmail: "________", // à compléter
+  contactEmail: COMPANY.contactEmail, // marqueur tant que COMPANY n'est pas complétée (src/config/company.ts)
 } as const;
 
 // Durée minimale pendant laquelle un rapport payé reste accessible (en années). Reportée dans les CGV, le paiement et la FAQ.

@@ -10,6 +10,9 @@ export const E2E = {
   okUrl: "http://localhost:3201",
   lowUrl: "http://localhost:3202",
   altchaUrl: "http://localhost:3203",
+  betaUrl: "http://localhost:3204",
+  betaUser: "testeur-e2e",
+  betaPassword: "mot-de-passe-de-protection-e2e",
   paymentSecret: "secret-e2e-paiement",
   adminPassword: "mot-de-passe-e2e-jetable",
 } as const;
@@ -44,7 +47,11 @@ export default defineConfig({
   expect: { timeout: 20_000 },
   reporter: [["list"]],
   use: { baseURL: E2E.okUrl, locale: "fr-FR", trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { browserName: "chromium" } }],
+  projects: [
+    { name: "chromium", testIgnore: /beta.spec.ts/, use: { browserName: "chromium" } },
+    // Mode bêta gratuite, site protégé par mot de passe (authentification HTTP) : copie dédiée sur le port 3204.
+    { name: "beta", testMatch: /beta.spec.ts/, use: { browserName: "chromium", baseURL: E2E.betaUrl, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword } } },
+  ],
   webServer: [
     { command: "npx next dev -p 3201", url: E2E.okUrl, env: env("ok", ".next-e2e-ok"), reuseExistingServer: false, timeout: 180_000 },
     // Captcha à preuve de travail réel (ALTCHA auto-hébergé), moteurs de vision simulés.
@@ -52,6 +59,13 @@ export default defineConfig({
       command: "npx next dev -p 3203",
       url: E2E.altchaUrl,
       env: env("ok", ".next-e2e-altcha", { CAPTCHA_PROVIDER: "altcha", ALTCHA_HMAC_KEY: "cle-e2e-altcha-de-32-caracteres-ou-plus", ALTCHA_MAX_NUMBER: "5000" }),
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+    {
+      command: "npx next dev -p 3204",
+      url: E2E.betaUrl + "/api/health",
+      env: env("ok", ".next-e2e-beta", { FREE_BETA: "on", SITE_PASSWORD: E2E.betaPassword, SITE_USER: E2E.betaUser, SITE_URL: E2E.betaUrl }),
       reuseExistingServer: false,
       timeout: 180_000,
     },

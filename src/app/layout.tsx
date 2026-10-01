@@ -2,16 +2,19 @@ import type { Metadata } from "next";
 import { Sora, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SITE } from "@/config/site";
+import { isFreeBeta } from "@/lib/mode";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const sans = Sora({ variable: "--font-sans-geo", subsets: ["latin"] });
 const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
+const beta = isFreeBeta();
+
 export const metadata: Metadata = {
   title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s — ${SITE.name}` },
   description:
-    "Analyse biométrique chiffrée : score, percentiles, courbure, symétrie. Paiement unique, aucun compte.",
+    "Analyse biométrique chiffrée : score, percentiles, courbure, symétrie. " + (beta ? "Bêta gratuite, aucun compte." : "Paiement unique, aucun compte."),
   metadataBase: new URL(process.env.SITE_URL ?? `https://${SITE.domain}`),
 };
 

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isFreeBeta } from "@/lib/mode";
 import { FORMULAS, formatEur } from "@/config/site";
 import { Doc } from "@/components/Doc";
 
@@ -12,6 +14,7 @@ const NOTE = {
 } as const;
 
 export default function Page() {
+  if (isFreeBeta()) redirect("/analyse/questionnaire"); // bêta gratuite : un seul protocole
   return (
     <Doc title="Choisissez un protocole">
       <div className="mt-6 space-y-3">

@@ -5,7 +5,7 @@ import { submitQuestionnaire, type FormState } from "./actions";
 
 const field = "num mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-lg outline-none focus:border-accent";
 
-export function QuestionnaireForm() {
+export function QuestionnaireForm({ beta = false }: { beta?: boolean }) {
   const [state, action, pending] = useActionState<FormState, FormData>(submitQuestionnaire, {});
   const [curvature, setCurvature] = useState("none");
   const v = state.values ?? {};
@@ -56,13 +56,23 @@ export function QuestionnaireForm() {
         <span>J&apos;ai 18 ans ou plus.</span>
       </label>
 
+      {beta && (
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="consent" className="mt-1 accent-[var(--accent)]" />
+          <span>
+            Je consens au traitement des valeurs que je saisis (données sensibles, RGPD art. 9) pour calculer mon rapport, comme
+            décrit dans la politique de confidentialité.
+          </span>
+        </label>
+      )}
+
       {state.error && <p className="text-sm text-accent-2" role="alert">{state.error}</p>}
 
       <button type="submit" className="btn-primary" disabled={pending}>
         {pending ? "Calcul en cours…" : "Calculer mon rapport"}
       </button>
       <p className="text-xs text-muted">
-        Le questionnaire est gratuit ; le rapport calculé est ensuite verrouillé jusqu&apos;au paiement.
+        {beta ? "Bêta gratuite : le rapport est affiché immédiatement, sans paiement." : "Le questionnaire est gratuit ; le rapport calculé est ensuite verrouillé jusqu'au paiement."}
       </p>
     </form>
   );

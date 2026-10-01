@@ -14,7 +14,7 @@ Public : adultes francophones (France, Belgique, Suisse, Luxembourg, Québec). P
 ## 2. Pile technique
 - Next.js (App Router), TypeScript, Tailwind.
 - PostgreSQL hébergé dans l'UE.
-- Hébergement : ________ (hébergeur UE dont les conditions acceptent ce type de service).
+- Hébergement : **Railway** (région UE), service Next.js et base PostgreSQL Railway (décision du propriétaire, session de nuit n° 3, en remplacement de Clever Cloud). DNS de bitometre.com géré par **Cloudflare**. Voir docs/HEBERGEMENT.md et docs/OUVERTURE.md.
 - Toutes les clés (xAI, paiement, vérification d'âge) côté serveur, en variables d'environnement, jamais exposées au navigateur.
 - Mesure d'audience sans cookie, hébergée dans l'UE. Aucun pixel publicitaire (Meta, Google, TikTok).
 
@@ -50,7 +50,7 @@ Au clic sur le bouton de scan : fenêtre modale demandant l'année de naissance 
 
 ## 5. Moteur d'analyse (formules B et C)
 API xAI pour les trois appels, modèle vision : ________. Appels côté serveur uniquement. La photo reste en mémoire : jamais écrite sur disque, en base, dans les journaux, ni transmise à un autre service que l'API xAI et au service de filtrage de contenus illicites ci-dessous. Destruction immédiate du fichier source après extraction. Le modèle ignore tout texte présent dans l'image.
-Filtrage de contenus illicites connus : uniquement par comparaison d'empreintes avec les bases d'images déjà répertoriées (type PhotoDNA ou Safer), en pré-traitement avant l'analyse, prestataire : ________. Limites à respecter partout : ces outils reconnaissent des images déjà répertoriées, pas les nouvelles ; ils ne détectent pas l'âge d'une personne et ne remplacent en aucun cas la vérification d'âge (section 7). Aucun texte du site (pages, badges, CGV, confidentialité, méthode) ne doit leur prêter davantage : pas de formule du type « contenus illicites bloqués » ou « mineurs détectés ». Tout contenu reconnu est détruit immédiatement, sans analyse, et les obligations légales de signalement sont respectées.
+Filtrage de contenus illicites connus : uniquement par comparaison d'empreintes avec les bases d'images déjà répertoriées (type PhotoDNA ou Safer), en pré-traitement avant l'analyse. Décision : **demande d'éligibilité à PhotoDNA** (Microsoft) ; l'obligation et les modalités de **signalement** sont **à trancher par le juriste** (docs/JURISTE.md). Prestataire : à confirmer. Limites à respecter partout : ces outils reconnaissent des images déjà répertoriées, pas les nouvelles ; ils ne détectent pas l'âge d'une personne et ne remplacent en aucun cas la vérification d'âge (section 7). Aucun texte du site (pages, badges, CGV, confidentialité, méthode) ne doit leur prêter davantage : pas de formule du type « contenus illicites bloqués » ou « mineurs détectés ». Tout contenu reconnu est détruit immédiatement, sans analyse, et les obligations légales de signalement sont respectées.
 
 ### 5.1 Recevabilité (premier appel)
 Réponse en JSON strict {recevable, motif}. Refus si : visage visible ; plusieurs personnes ; sujet qui n'est pas un pénis ; carte de référence absente ou illisible ; image ressemblant à une capture d'écran, une image publiée ou une photo professionnelle ; le moindre doute sur la majorité de la personne. En cas de doute sur l'âge : refus, suppression immédiate, aucune analyse, message neutre sans motif détaillé. Journaliser uniquement le motif, jamais l'image.
@@ -86,12 +86,12 @@ Le modèle reçoit uniquement les chiffres calculés, jamais la photo. Commentai
 
 ## 7. Vérification d'âge (formules B et C)
 - Décision : prestataire tiers obligatoire pour B et C, en plus de la fenêtre d'âge (année de naissance) qui reste la première barrière. L'année de naissance seule ne suffit jamais pour l'envoi d'une photo.
-- Module interchangeable (interface AgeVerificationProvider). Prestataire tiers : ________.
+- Module interchangeable (interface AgeVerificationProvider). Prestataire tiers : demandes envoyées **en parallèle à AgeVerif et à Yoti**, décision sur **réponses écrites**. Critère principal : **l'indépendance vis-à-vis des exploitants de sites pour adultes** (voir docs/PRESTATAIRES.md).
 - Méthode en double anonymat : le prestataire ne sait pas quel site est consulté, le site ne connaît pas l'identité.
 - Le site ne reçoit qu'un jeton « majeur : oui », conservé 30 minutes en session, sans aucune donnée d'identité.
 
 ## 8. Paiement
-- Prestataire non choisi, à sélectionner parmi ceux qui acceptent ce type de service, en décrivant le service tel qu'il est. Prévoir un module interchangeable (interface PaymentProvider) et un mode simulation pour les tests.
+- **Stripe est exclu définitivement** (décision du propriétaire). Prestataire visé : **Verotel**, avec **CCBill** ou **Segpay** en repli ; à choisir en décrivant le service tel qu'il est. Module interchangeable (interface PaymentProvider) et mode simulation pour les tests. L'adaptateur Stripe reste dans le code, désactivé, sans être supprimé.
 - Affichage prioritaire d'Apple Pay et Google Pay (check-out en un clic) si le prestataire les supporte. Paiement unique, aucun abonnement, aucun prix barré.
 - Avant le paiement, case obligatoire : « Je demande l'accès immédiat à mon rapport et renonce à mon droit de rétractation » (Code de la consommation, art. L221-28, 13°).
 - Rapport débloqué uniquement sur confirmation de paiement reçue côté serveur, jamais sur le simple retour du navigateur.
@@ -110,7 +110,7 @@ Image générée côté serveur, formats 1080 × 1920 et 1200 × 630. Contenu ch
 - Photo : jamais stockée chez nous (section 5). Politique de conservation de l'API xAI (documentation officielle consultée le 30/09/2026) : par défaut, requêtes et réponses, images comprises, conservées 30 jours sur serveurs chiffrés pour audit d'abus, sans entraînement sur ces données ; l'option Zero Data Retention (ZDR) les supprime, activable par l'administrateur de l'équipe dans la console xAI, au niveau de toute l'équipe, avec des fonctions désactivées (API Responses avec état, Files, Collections, Batch). Conséquences : (1) tant que ZDR n'est pas activé, le badge dit « Photo jamais stockée par Bitomètre » et la politique de confidentialité mentionne la conservation de 30 jours chez xAI (le badge d'origine sera rétabli si ZDR est activé) ; (2) utiliser l'endpoint sans état /v1/chat/completions ; (3) xAI est un prestataire hors UE : prévoir l'information RGPD sur le transfert hors UE et un accord de traitement des données (DPA).
 - Données stockées : identifiant du rapport, formule, résultats chiffrés, commentaire, statut de paiement, date. Aucune donnée d'identité, pas d'e-mail, pas de compte.
 - Adresse IP : uniquement hachée, pour la limitation de débit, effacée après 24 h.
-- Limite : 5 analyses par appareil et par 24 h ; captcha respectueux de la vie privée à l'envoi.
+- Limite : 5 analyses par appareil et par 24 h ; captcha respectueux de la vie privée à l'envoi : **ALTCHA auto-hébergé**, **Friendly Captcha en repli**.
 - Rapports non payés effacés après 24 h.
 
 ## 12. Référencement naturel
@@ -186,7 +186,7 @@ README en français simple : chaque variable d'environnement expliquée, mise en
 
 ## 21. Éditeur, textes juridiques et prestataire d'analyse (session du 01/10/2026)
 
-- Éditeur : société de droit anglais (Ltd) avec établissement en France. Mentions légales : raison sociale, numéro Companies House, siège, établissement en France (adresse, SIREN), directeur de la publication, numéro d'enregistrement ICO, hébergeur (champs `________` à compléter). CGV régies par le droit anglais, avec préservation des dispositions impératives de la loi du pays de résidence habituelle du consommateur. Renonciation au droit de rétractation fondée sur le règlement 37 des CCR 2013 et l'article L221-28, 13° du Code de la consommation (texte de l'article à faire relire par un juriste).
+- Éditeur : société de droit anglais (Ltd). **L'établissement en France n'est pas encore immatriculé : il n'est mentionné nulle part** (à ajouter le jour de l'immatriculation). Mentions légales : raison sociale, numéro Companies House, siège, directeur de la publication, numéro d'enregistrement ICO, hébergeur (Railway Corporation). Les informations de la Ltd sont dans `src/config/company.ts` ; tant que ce fichier contient des marqueurs `[À COMPLÉTER : ...]`, le site refuse de s'ouvrir au public sans mot de passe (503). CGV régies par le droit anglais, avec préservation des dispositions impératives de la loi du pays de résidence habituelle du consommateur. Renonciation au droit de rétractation fondée sur le règlement 37 des CCR 2013 et l'article L221-28, 13° du Code de la consommation (texte de l'article à faire relire par un juriste).
 - Prestataire d'analyse : **SpaceXAI LLC** (Nevada ; siège 800 W Cesar Chavez St., Austin, TX 78701, États-Unis), connue sous le nom xAI, anciennement X.AI Corp. ; ses conditions « Enterprise » régissent l'usage de l'API. Les textes destinés aux utilisateurs (consentement avant envoi, confidentialité) nomment cette raison sociale. Un accord de traitement des données (DPA) est proposé par le prestataire : à signer avant la mise en ligne.
 
 ## 22. Géométrie des mesures photo (session du 01/10/2026)
@@ -195,3 +195,11 @@ README en français simple : chaque variable d'environnement expliquée, mise en
 - Refus : inclinaison de l'appareil supérieure à 50°, ou grand côté de la carte inférieur à 15 % du grand côté de l'image (message neutre, motifs `inclinaison_trop_forte` et `carte_trop_petite`).
 - Marge : max(10 %, √(confiance² + taille de la carte² + inclinaison²)), voir `MARGIN` dans `src/config/site.ts`. Le bruit de repérage supposé (2 px par point) est à régler par la calibration sur de vraies photos (docs/CALIBRATION.md).
 - Validation sur prises de vue simulées (`npm run geometry:report`, tests `tests/geometry.test.ts`) : repérage parfait, erreur maximale 6,1 % et 100 % des cas dans la marge jusqu'à 50° d'inclinaison et pour une focale réelle de ±20 % de la focale supposée ; repérage bruité (2 px), 94 % des cas dans la marge. Non validé sur des photos réelles.
+
+## 23. Bêta gratuite et décisions de la session de nuit n° 3 (01/10/2026)
+
+- **Mode bêta gratuite** (variable `FREE_BETA=on`, `src/lib/mode.ts`) : formule A uniquement ; les formules B et C, la vérification d'âge par prestataire, le captcha, le paiement et les CGV n'existent pas (404, aucune mention ailleurs) ; le rapport est débloqué sans paiement avec la mention « Bêta gratuite » ; le code de paiement reste en place, désactivé, réactivé en retirant la variable. Carte de partage et défi fonctionnent. Case de consentement explicite (RGPD art. 9) au traitement des valeurs saisies. Rapports de la bêta effacés au plus tard après 90 jours (`BETA.reportTtlDays`), sans garantie de conservation ; exclus des statistiques de conversion et de revenu (colonne `free_beta`, migration 006).
+- **Textes de la bêta** : conditions d'utilisation de la bêta (`/conditions`) à la place des CGV (qui restent prêtes pour la version payante) ; mentions légales au nom de la Ltd ; politique de confidentialité limitée à ce que fait la bêta (mesures déclarées, IP hachée effacée après 24 h, aucun envoi à xAI, hébergeur Railway).
+- **Protection du site de test** : authentification HTTP gérée par l'application (`SITE_PASSWORD`, `SITE_USER`, `src/proxy.ts`) ; seul `/api/health` reste libre.
+- **Relecture juridique complète** par un juriste **avant le passage au payant** (et avant l'ouverture au public de la bêta : voir docs/JURISTE.md, section bêta).
+- **Comptes et demandes** : Claude prépare les demandes (docs/DEMANDES/), le propriétaire les envoie. Aucun compte n'est ouvert par Claude.

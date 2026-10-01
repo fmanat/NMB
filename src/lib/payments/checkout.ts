@@ -1,3 +1,4 @@
+import { isFreeBeta } from "../mode";
 import { getReport, priceCents, recordPayment, setWaiverAccepted } from "../repo";
 import { getPaymentProvider } from "./index";
 
@@ -8,6 +9,7 @@ export class CheckoutError extends Error {}
  * (Code de la consommation, art. L221-28, 13°) et son horodatage est conservé.
  */
 export async function startCheckout(reportId: string, waiverAccepted: boolean): Promise<string> {
+  if (isFreeBeta()) throw new CheckoutError("Le paiement est désactivé : le service est gratuit pendant la bêta.");
   if (!waiverAccepted) throw new CheckoutError("Vous devez accepter l'accès immédiat et la renonciation au droit de rétractation.");
   const report = await getReport(reportId);
   if (!report) throw new CheckoutError("Rapport introuvable.");

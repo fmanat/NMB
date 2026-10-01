@@ -143,3 +143,32 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 | ALTCHA : protocole **v1** (SHA-256), auto-hébergé, sans dépendance, solveur écrit dans le dépôt ; usage unique des défis (table `captcha_used`, sans IP) ; difficulté 100000 par défaut. | La v2 utilise une dérivation de clé dont je n'ai pas pu lire la spécification ; la v1 reste prise en charge par la bibliothèque. Compatibilité avec le composant officiel non testée : à essayer avant la mise en ligne si on veut l'utiliser. |
 | CSP : `form-action` élargi à `checkout.stripe.com` et `api.ageverif.com`. | Les formulaires redirigent vers ces deux pages. |
 | `.env.example` : BOM supprimé ; variables des adaptateurs documentées. | Une marque d'ordre des octets ne doit jamais se retrouver dans un `.env`. |
+
+## Session de nuit n° 3 : décisions du propriétaire (inscrites au début de la session)
+
+| Décision | Détail |
+|---|---|
+| Hébergeur : **Railway** (région UE) | Remplace Clever Cloud. DNS de bitometre.com chez **Cloudflare**. Les fichiers `clevercloud/` et `docs/CLEVER-CLOUD.md` restent dans le dépôt comme solution de repli, marqués obsolètes. |
+| **Stripe exclu définitivement** | Adaptateur laissé dans le code, désactivé (aucune clé), non supprimé. Prestataire visé : **Verotel** ; repli **CCBill** ou **Segpay**. |
+| Vérification d'âge | Demandes envoyées **en parallèle à AgeVerif et à Yoti**, décision sur **réponses écrites** ; critère principal : **indépendance vis-à-vis des exploitants de sites pour adultes**. |
+| Filtrage d'empreintes | **Demande d'éligibilité à PhotoDNA** ; la question du signalement est **tranchée par le juriste**. |
+| Captcha | **ALTCHA auto-hébergé**, **Friendly Captcha** en repli. |
+| Juridique | **Relecture complète par un juriste avant le passage au payant.** |
+| Comptes | Claude **prépare** les demandes ; le propriétaire **les envoie**. |
+| Ltd | Raison sociale, numéro Companies House et siège **non communiqués** (champs vides dans la consigne) ; l'établissement en France n'est **pas** mentionné (pas encore immatriculé). |
+
+## Session de nuit n° 3, Bloc 1 : mode « bêta gratuite »
+
+| Décision | Raison |
+|---|---|
+| **Marqueurs `[À COMPLÉTER : ...]`** pour l'identité de la Ltd (`src/config/company.ts`) + garde-fou : en production, sans `SITE_PASSWORD`, tant qu'un marqueur existe, tout le site répond 503 (sauf `/api/health`). | Choix du propriétaire (consigne laissée vide, QCM d'ouverture). Le garde-fou empêche d'ouvrir au public avec des mentions légales vides ; il n'agit pas hors production ni sur le site protégé par mot de passe. Un test vérifie que les marqueurs sont bien détectés. |
+| Chemins masqués en bêta : 404 par `src/proxy.ts` (et pages gardées), liste dans `src/lib/mode.ts`. | « Routes en 404, aucune mention ailleurs ». Un test parcourt chaque chemin. |
+| Rapport de la bêta : `paid = true`, `free_beta = true`, `paid_at` vide, aucune ligne dans `payments`. Exclu de la conversion ; compté à part dans l'administration. | Ne pas fausser les statistiques ni la comptabilité. |
+| **Durée de conservation des rapports de la bêta : 90 jours** (purge horaire). | La consigne dit « sans garantie de conservation » ; une durée maximale limite les données sensibles conservées (RGPD, minimisation). Option la plus prudente, annoncée dans les conditions, l'accueil et le rapport. |
+| **Case de consentement explicite** (art. 9) ajoutée au questionnaire, **en bêta seulement**, par un champ `consent` vérifié côté serveur. | La politique de confidentialité de la bêta affirme un consentement explicite ; il faut qu'il existe. Les valeurs déclarées de taille sont des données relatives à la vie sexuelle ou à la santé selon l'interprétation. |
+| Un rapport non payé créé avant la bêta n'est pas proposé en bêta (404). | Ne jamais débloquer un rapport existant sans décision ; il est purgé après 24 h de toute façon. |
+| `/cgv` : 404 en bêta ; `/conditions` : 404 hors bêta. Pied de page et sitemap suivent le mode. | « Conditions de la bêta à la place des CGV ». |
+| `DB_POOL_MAX` (défaut 10) borne les connexions à la base. | « Limite le nombre de connexions simultanées… valeur prudente ». |
+| Hébergeur dans les mentions légales : « Railway Corporation (États-Unis) » (nom lu sur railway.com/legal/acceptable-use) ; adresse en marqueur. | Adresse non lisible dans les pages consultées : à compléter. Je n'invente rien. |
+| Le `.env` local ne contenait **pas** `ADMIN_PASSWORD_HASH` (la consigne disait « réutilise l'empreinte déjà présente »). | Voir Bloc 3 : mot de passe d'administration généré aléatoirement pour le site de test. |
+| Hors périmètre (note) : les guides de `content/seo/` (rédigés par le propriétaire) peuvent citer des prix ; ils ne sont pas publiés (`SEO_PUBLISH` vide), donc absents du site de test. À relire avant publication en mode bêta. | Règle : je ne réécris pas ces textes. |

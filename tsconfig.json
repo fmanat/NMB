@@ -40,7 +40,9 @@
     ".next-e2e-low/types/**/*.ts",
     ".next-e2e-low/dev/types/**/*.ts",
     ".next-e2e-altcha/types/**/*.ts",
-    ".next-e2e-altcha/dev/types/**/*.ts"
+    ".next-e2e-altcha/dev/types/**/*.ts",
+    ".next-e2e-beta/types/**/*.ts",
+    ".next-e2e-beta/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
