@@ -1,6 +1,6 @@
 /**
- * Vérification d'âge par prestataire tiers, en double anonymat : le prestataire ne sait pas quel site est
- * consulté, le site ne reçoit qu'un « majeur : oui », sans aucune donnée d'identité (cahier des charges, section 7).
+ * Vérification d'âge par prestataire tiers : le site ne reçoit qu'un « majeur : oui », sans aucune donnée d'identité (cahier des charges,
+ * section 7). Ne pas écrire « double anonymat » sans preuve écrite du prestataire : AgeVerif connaît le site qui le sollicite (client_id), voir docs/PRESTATAIRES.md.
  */
 export interface AgeVerificationProvider {
   id: string;

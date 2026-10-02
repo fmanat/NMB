@@ -22,7 +22,7 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 | 5 | Animations | FAIT |
 | 6 | Formule photo en bêta, réponse standardisée (PHOTO_BETA, désactivée) | FAIT (désactivée par défaut, rien déployé) |
 | 7 | Kit de test photo (`docs/TEST-PHOTO.md`) | FAIT (mode réel jamais lancé par l'assistant) |
-| 8 | Vérification d'âge branchée (`docs/ACTIVATION-PHOTO.md`) | à faire |
+| 8 | Vérification d'âge branchée (`docs/ACTIVATION-PHOTO.md`) | FAIT (AgeVerif conforme à la doc, Yoti NON écrit et non prêt) |
 | 9 | Déploiement, test de fumée, captures, Lighthouse | à faire |
 
 ## Bloc 0 : limite par IP derrière Cloudflare : FAIT
@@ -189,3 +189,22 @@ Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste
 - Le script lit le fichier tel quel (pas de réencodage navigateur) : limite de 8 Mo de `UPLOAD.maxBytes` ; HEIC non accepté (`sips` indiqué).
 - Le cumul du jour du kit est local et indépendant de la base du site (pas de lien avec `xai_daily_spend`).
 - Aucun essai sur le Mac du propriétaire (macOS : `sips`, Terminal).
+
+## Bloc 8 : vérification d'âge, activation de la formule photo : FAIT (aucun adaptateur Yoti, aucune variable Railway touchée, rien déployé)
+
+**Ce qui est fait**
+- **AgeVerif** : adaptateur relu et confronté à la documentation publique (<https://docs.ageverif.com/oauth2.html>, lue le 03/10/2026) : adresse d'autorisation et paramètres, `state`, retour `code` (10 minutes), échange du code (Basic, `grant_type`, `code`, `redirect_uri`), jeton d'une heure, `GET /v1/oauth2/resources` (`verified`, `age_threshold`). **Aucun écart certain : aucune correction du code de l'adaptateur.** Non couvert par la documentation (donc non vérifiable) : paramètre d'erreur au retour, enregistrement de l'adresse de retour, mode test, emplacement des identifiants dans le tableau de bord. Rien n'a été essayé avec le vrai prestataire.
+- **Yoti** : documentation publique lue (Onboarding, Create a session, Launch the user view, Results, Notifications, spécification de l'API). **Adaptateur NON écrit** : retour de la page hébergée non documenté, structure détaillée du résultat et représentation du succès d'un type `OVER` non montrées, aucun exemple de réponse, sandbox non lu et aucun compte pour valider ; une erreur ferait accepter un mineur. Détail et liste de ce qu'il faudrait obtenir de Yoti : `docs/ACTIVATION-PHOTO.md`, chapitre 1.2. Constat utile : le produit Age Verification s'authentifie par **clé d'API (Bearer) + en-tête `Yoti-SDK-Id`**, sans clé PEM : le nom réservé `YOTI_KEY_PEM` du bloc 6 est remplacé par `YOTI_API_KEY` (noms réservés, non lus par le code : `YOTI_CLIENT_SDK_ID`, `YOTI_API_KEY`).
+- **Garde-fou plus prudent** (`src/lib/photoBeta.ts`) : `AGE_PROVIDER_REQUIRED_VARS` ne contient plus que `ageverif` ; nouvelle liste `NOT_READY_AGE_PROVIDERS` (`yoti`) : en production, `AGE_PROVIDER=yoti` est refusé **même avec toutes les variables** (raison journalisée au démarrage) ; hors production, rien ne change. Correction au passage : les recherches par nom utilisent `Object.hasOwn` (un `AGE_PROVIDER=constructor` ne provoque plus d'erreur). Cela **remplace** ce que disait le bloc 6 (« yoti : garde-fou prêt »).
+- **Variables documentées** pour chaque fournisseur dans `.env.example` (rôle, où la trouver, obligatoire ou non, forme sans valeur réelle) et `README.md` (tableau) : `AGEVERIF_CLIENT_ID`, `AGEVERIF_CLIENT_SECRET`, `AGEVERIF_CHALLENGES` (valeurs documentées), `YOTI_CLIENT_SDK_ID`, `YOTI_API_KEY`. Constante unique `AGE_PROVIDER_VARS`.
+- **`docs/ACTIVATION-PHOTO.md`** : (1) informations à récupérer, prestataire par prestataire (AgeVerif, Yoti, xAI, ALTCHA et jeton d'âge), avec où les trouver et ce que la documentation ne dit pas ; (2) variables Railway à poser, dans l'ordre (`PHOTO_BETA` en dernier ; `XAI_EFFORT` jamais vide ; plafond) ; (3) procédure par étapes (`railway up -s web --ci`, test de fumée **sans** le test qui exige les chemins photo introuvables, essai avec une image neutre qui doit donner un refus neutre, plan de retour arrière en quatre niveaux) ; (4) risques et décisions de conformité à confirmer (renvois `docs/JURISTE.md`, `docs/PRESTATAIRES.md`) ; (5) ce qui reste non fait.
+- **Texte corrigé** : `/verification-age` affirmait un « double anonymat : le prestataire ne sait pas quel site vous consultez » : non établi (AgeVerif connaît le site par `client_id`). Remplacé par un texte vrai (le prestataire peut savoir que la demande vient du site, la procédure n'est pas anonyme au sens du RGPD ; le site ne reçoit que « majeur : oui »). Commentaire de `types.ts` aligné.
+
+**`npm run verify`** : vert (lint, types, 637 tests unitaires dans 37 fichiers, contrôle SEO, 163 tests de bout en bout ; exécuté étape par étape en premier plan, car un processus détaché ne joint pas PostgreSQL dans ce contexte).
+
+**Fichiers** : `src/lib/photoBeta.ts`, `src/lib/providers/index.ts`, `src/lib/providers/types.ts`, `src/app/verification-age/page.tsx`, `.env.example`, `README.md`, `docs/SPEC.md` (section 25), `docs/ACTIVATION-PHOTO.md`, `docs/DECISIONS.md`, `tests/photo-beta.test.ts` (table de vérité mise à jour : yoti non prêt, y compris toutes variables posées, majuscules, nom hérité de l'objet), `tests/age-provider-docs.test.ts` (7 tests : variables documentées = variables du code, pas de nom périmé, variables lues par l'adaptateur AgeVerif, noms Yoti non lus, tableau du chapitre 2 cohérent avec `.env.example` et le code, adresse de retour, texte de la page).
+
+**Limites / à savoir**
+- Aucune vérification d'âge n'a été essayée avec un vrai prestataire. La documentation d'AgeVerif ne décrit ni mode test, ni emplacement des identifiants, ni déclaration de l'adresse de retour.
+- Le test de fumée distant existant échouera sur le test « formules photo, paiement, CGV introuvables » une fois la bêta photo active (comportement voulu à exclure, indiqué dans le document) ; aucun test distant de la formule photo n'existe encore.
+- La section « bêta » de `docs/JURISTE.md` ne couvre pas la photo (non modifiée ici).

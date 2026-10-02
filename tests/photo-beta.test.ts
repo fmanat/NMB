@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { isHiddenInBeta, isPhotoBeta } from "@/lib/mode";
 import {
   AGE_PROVIDER_REQUIRED_VARS,
+  NOT_READY_AGE_PROVIDERS,
   REAL_AGE_PROVIDERS,
   SCREENING_ABSENT_WARNING,
   isPhotoBetaActive,
@@ -66,18 +67,26 @@ describe("garde-fou de production : table de vérité prod / non-prod × fournis
   const required = (provider: string) => AGE_PROVIDER_REQUIRED_VARS[provider];
 
   it("prestataires réels reconnus et leurs variables obligatoires (documentées)", () => {
-    expect(REAL_AGE_PROVIDERS).toEqual(["ageverif", "yoti"]);
+    // Bloc 8 : yoti n'a pas d'adaptateur validé en réel, il ne compte PAS comme prestataire prêt.
+    expect(REAL_AGE_PROVIDERS).toEqual(["ageverif"]);
     expect(required("ageverif")).toEqual(["AGEVERIF_CLIENT_ID", "AGEVERIF_CLIENT_SECRET", "AGE_TOKEN_SECRET", "SITE_URL"]);
-    expect(required("yoti")).toEqual(["YOTI_CLIENT_SDK_ID", "YOTI_KEY_PEM", "AGE_TOKEN_SECRET", "SITE_URL"]);
+    expect(required("yoti")).toBeUndefined();
+    expect(Object.keys(NOT_READY_AGE_PROVIDERS)).toEqual(["yoti"]);
+    // Aucun prestataire n'est à la fois « prêt » et « non prêt ».
+    for (const p of Object.keys(NOT_READY_AGE_PROVIDERS)) expect(REAL_AGE_PROVIDERS).not.toContain(p);
   });
 
   const cases: { label: string; env: Record<string, string | undefined>; active: boolean; reason?: RegExp }[] = [
     { label: "prod · ageverif complet", env: PROD_OK, active: true },
     {
-      label: "prod · yoti complet",
-      env: { ...PROD_OK, AGE_PROVIDER: "yoti", AGEVERIF_CLIENT_ID: "", AGEVERIF_CLIENT_SECRET: "", YOTI_CLIENT_SDK_ID: "sdk-fictif", YOTI_KEY_PEM: "pem-fictif" },
-      active: true,
+      label: "prod · yoti, toutes les variables posées (ancienne et nouvelle liste) : NON prêt, refusé",
+      env: { ...PROD_OK, AGE_PROVIDER: "yoti", AGEVERIF_CLIENT_ID: "", AGEVERIF_CLIENT_SECRET: "", YOTI_CLIENT_SDK_ID: "sdk-fictif", YOTI_API_KEY: "cle-fictive", YOTI_KEY_PEM: "pem-fictif" },
+      active: false,
+      reason: /yoti.*adaptateur Yoti non écrit.*ne compte pas comme prestataire réel prêt/,
     },
+    { label: "prod · yoti sans aucune variable : refusé", env: { ...PROD_OK, AGE_PROVIDER: "yoti" }, active: false, reason: /adaptateur Yoti non écrit/ },
+    { label: "prod · nom hérité de l'objet (constructor) : inconnu, refusé sans erreur", env: { ...PROD_OK, AGE_PROVIDER: "constructor" }, active: false, reason: /prestataire réel de vérification d'âge prêt/ },
+    { label: "prod · yoti, majuscules : inconnu, refusé", env: { ...PROD_OK, AGE_PROVIDER: "YOTI" }, active: false, reason: /prestataire réel de vérification d'âge prêt/ },
     { label: "prod · simulation", env: { ...PROD_OK, AGE_PROVIDER: "simulation" }, active: false, reason: /prestataire réel/ },
     { label: "prod · AGE_PROVIDER vide", env: { ...PROD_OK, AGE_PROVIDER: "" }, active: false, reason: /\(vide\)/ },
     { label: "prod · AGE_PROVIDER absente", env: { ...PROD_OK, AGE_PROVIDER: undefined }, active: false, reason: /prestataire réel/ },
@@ -86,7 +95,6 @@ describe("garde-fou de production : table de vérité prod / non-prod × fournis
     { label: "prod · ageverif sans identifiant (espaces)", env: { ...PROD_OK, AGEVERIF_CLIENT_ID: "   " }, active: false, reason: /AGEVERIF_CLIENT_ID/ },
     { label: "prod · ageverif sans SITE_URL", env: { ...PROD_OK, SITE_URL: undefined }, active: false, reason: /SITE_URL/ },
     { label: "prod · ageverif sans AGE_TOKEN_SECRET", env: { ...PROD_OK, AGE_TOKEN_SECRET: "" }, active: false, reason: /AGE_TOKEN_SECRET/ },
-    { label: "prod · yoti sans PEM", env: { ...PROD_OK, AGE_PROVIDER: "yoti", YOTI_CLIENT_SDK_ID: "x" }, active: false, reason: /YOTI_KEY_PEM/ },
     { label: "prod · vision simulée", env: { ...PROD_OK, VISION_PROVIDER: "simulation" }, active: false, reason: /VISION_PROVIDER/ },
     { label: "prod · xai sans clé", env: { ...PROD_OK, XAI_API_KEY: "" }, active: false, reason: /XAI_API_KEY/ },
     { label: "prod · captcha simulé", env: { ...PROD_OK, CAPTCHA_PROVIDER: "simulation" }, active: false, reason: /CAPTCHA_PROVIDER/ },
@@ -95,6 +103,7 @@ describe("garde-fou de production : table de vérité prod / non-prod × fournis
     { label: "prod · filtrage off", env: { ...PROD_OK, SCREENING_PROVIDER: "off" }, active: false, reason: /SCREENING_PROVIDER/ },
     { label: "prod · filtrage absent (variable manquante)", env: { ...PROD_OK, SCREENING_PROVIDER: undefined }, active: true },
     { label: "non-prod · simulation partout", env: DEV, active: true },
+    { label: "non-prod · yoti : le garde-fou de production ne s'applique pas", env: { ...DEV, AGE_PROVIDER: "yoti" }, active: true },
     { label: "non-prod · ageverif sans variables", env: { ...DEV, AGE_PROVIDER: "ageverif" }, active: true },
   ];
   for (const c of cases) {

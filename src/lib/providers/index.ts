@@ -21,8 +21,9 @@ export function getAgeProvider(): AgeVerificationProvider {
   const id = process.env.AGE_PROVIDER ?? "simulation";
   if (id === "simulation") return simulatedAge;
   if (id === "ageverif") return ageVerifProvider;
-  // Second candidat du propriétaire (docs/PRESTATAIRES.md) : reconnu par le garde-fou de la bêta photo, adaptateur à écrire (bloc 8).
-  if (id === "yoti") throw new Error("Prestataire de vérification d'âge « yoti » : adaptateur pas encore écrit (voir docs/SESSION-NUIT-4.md, bloc 8).");
+  // Second candidat du propriétaire (docs/PRESTATAIRES.md) : adaptateur NON écrit (documentation publique insuffisante, voir
+  // docs/ACTIVATION-PHOTO.md) ; le garde-fou de la bêta photo ne le compte pas comme prestataire prêt.
+  if (id === "yoti") throw new Error("Prestataire de vérification d'âge « yoti » : adaptateur pas encore écrit (voir docs/ACTIVATION-PHOTO.md).");
   throw new Error(`Prestataire de vérification d'âge inconnu : ${id}`);
 }
 

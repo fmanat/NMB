@@ -4,18 +4,39 @@
 // Règles :
 //  - PHOTO_BETA n'a d'effet qu'en bêta gratuite (FREE_BETA=on) : formule B seule, gratuite ; C, paiement et CGV restent masqués ;
 //  - GARDE-FOU DE PRODUCTION : en NODE_ENV=production, la formule photo refuse de s'activer tant qu'un prestataire RÉEL de vérification
-//    d'âge n'est pas configuré (AGE_PROVIDER = ageverif ou yoti, avec ses variables obligatoires), ni tant qu'un fournisseur simulé
+//    d'âge PRÊT n'est configuré (AGE_PROVIDER = ageverif avec ses variables obligatoires ; « yoti » ne compte PAS tant que son adaptateur
+//    n'est pas écrit et validé en réel : bloc 8), ni tant qu'un fournisseur simulé
 //    (vision, captcha, filtrage) est réglé ; PHOTO_BETA est alors traitée comme désactivée et un avertissement est journalisé au démarrage ;
 //  - hors production (développement, tests), les fournisseurs simulés restent utilisables.
 
 export type Env = Record<string, string | undefined>;
 
-/** Variables obligatoires par prestataire réel de vérification d'âge. Yoti : adaptateur à écrire (bloc 8) ; noms réservés dès maintenant. */
+/**
+ * Prestataires RÉELS DE VÉRIFICATION D'ÂGE PRÊTS (adaptateur écrit, testé avec des réponses simulées) et leurs variables obligatoires.
+ * Seuls ceux-là comptent pour activer la bêta photo en production.
+ */
 export const AGE_PROVIDER_REQUIRED_VARS: Readonly<Record<string, readonly string[]>> = {
   ageverif: ["AGEVERIF_CLIENT_ID", "AGEVERIF_CLIENT_SECRET", "AGE_TOKEN_SECRET", "SITE_URL"],
-  yoti: ["YOTI_CLIENT_SDK_ID", "YOTI_KEY_PEM", "AGE_TOKEN_SECRET", "SITE_URL"],
 };
 export const REAL_AGE_PROVIDERS: readonly string[] = Object.keys(AGE_PROVIDER_REQUIRED_VARS);
+
+/**
+ * Prestataires connus mais NON PRÊTS : jamais comptés comme « prestataire réel prêt », même avec toutes leurs variables.
+ * Yoti : adaptateur non écrit (la documentation publique lue au bloc 8 ne suffit pas à l'écrire sans deviner : voir docs/ACTIVATION-PHOTO.md).
+ * Retirer une entrée d'ici seulement quand l'adaptateur existe ET a été validé sur le mode test du prestataire.
+ */
+export const NOT_READY_AGE_PROVIDERS: Readonly<Record<string, string>> = {
+  yoti: "adaptateur Yoti non écrit (documentation insuffisante : retour de la page hébergée et structure du résultat non précisés) : il ne compte pas comme prestataire réel prêt",
+};
+
+/**
+ * Toutes les variables propres à un prestataire de vérification d'âge, documentées dans .env.example, README.md et docs/ACTIVATION-PHOTO.md
+ * (un test compare cette liste aux trois documents). `reserved` = noms réservés, que le code ne lit pas encore.
+ */
+export const AGE_PROVIDER_VARS: Readonly<Record<string, { required: readonly string[]; optional: readonly string[]; reserved: boolean }>> = {
+  ageverif: { required: ["AGEVERIF_CLIENT_ID", "AGEVERIF_CLIENT_SECRET"], optional: ["AGEVERIF_CHALLENGES"], reserved: false },
+  yoti: { required: ["YOTI_CLIENT_SDK_ID", "YOTI_API_KEY"], optional: [], reserved: true },
+};
 
 /** PHOTO_BETA demandée (valeur exactement « on »). Ne dit pas si elle est effectivement active : voir photoBetaDecision. */
 export const isPhotoBetaRequested = (env: Env = process.env): boolean => env.PHOTO_BETA === "on";
@@ -39,9 +60,14 @@ export function photoBetaDecision(env: Env = process.env): PhotoBetaDecision {
   if (env.FREE_BETA !== "on") reasons.push("FREE_BETA n'est pas « on » : la bêta de la formule photo n'existe que dans la bêta gratuite.");
   if (env.NODE_ENV === "production") {
     const provider = env.AGE_PROVIDER ?? "";
-    const required = AGE_PROVIDER_REQUIRED_VARS[provider];
+    const required = Object.hasOwn(AGE_PROVIDER_REQUIRED_VARS, provider) ? AGE_PROVIDER_REQUIRED_VARS[provider] : undefined;
     if (!required) {
-      reasons.push(`AGE_PROVIDER=« ${provider || "(vide)"} » : un prestataire réel de vérification d'âge est exigé en production (${REAL_AGE_PROVIDERS.join(", ")}).`);
+      const notReady = Object.hasOwn(NOT_READY_AGE_PROVIDERS, provider) ? NOT_READY_AGE_PROVIDERS[provider] : undefined;
+      reasons.push(
+        notReady
+          ? `AGE_PROVIDER=${provider} : ${notReady} (prestataires prêts : ${REAL_AGE_PROVIDERS.join(", ")}).`
+          : `AGE_PROVIDER=« ${provider || "(vide)"} » : un prestataire réel de vérification d'âge prêt est exigé en production (${REAL_AGE_PROVIDERS.join(", ")}).`,
+      );
     } else {
       const missing = required.filter((v) => !filled(env, v));
       if (missing.length) reasons.push(`AGE_PROVIDER=${provider} : variables manquantes : ${missing.join(", ")}.`);
