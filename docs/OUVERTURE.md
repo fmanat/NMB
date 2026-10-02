@@ -114,3 +114,13 @@ Toute anomalie : refermez le site (remettre `SITE_PASSWORD`) et revenez me voir.
 - **Adresse de test Railway** (`…up.railway.app`) : elle reste active après la liaison du domaine. Une fois le mot de passe retiré, elle devient publique aussi, avec le même contenu. Si vous ne voulez qu'une adresse, supprimez le domaine Railway dans Settings → Networking.
 - **Limitation par adresse IP** (5 analyses par 24 h) : le site lit la première adresse de l'en-tête `x-forwarded-for`. Derrière Cloudflare, vérifiez que cette adresse est bien celle du visiteur (sinon la limite s'applique à Cloudflare, ou peut être contournée). Point technique à contrôler après ouverture ; me le signaler.
 - **Aucune action chez Cloudflare** n'a été faite pendant la nuit, ni aucune liaison du domaine.
+
+## 10. Déployer une nouvelle version
+
+Le service **web** de Railway n'est relié à aucun dépôt GitHub : un `git push` ne déploie rien. Pour publier le code actuel, depuis le dossier du projet (CLI Railway connectée et projet `bitometre-test` lié) :
+
+```bash
+railway up -s web --ci
+```
+
+`railway redeploy` ne fait que relancer l'ancien déploiement (utile uniquement après un changement de variable). Le `.env` n'est pas envoyé (il est dans `.gitignore`).

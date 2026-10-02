@@ -36,7 +36,7 @@ test.describe("Site de test Railway", () => {
     }
   });
 
-  test("en-têtes de sécurité, HTTPS, noindex", async ({ request }) => {
+  test("en-têtes de sécurité, HTTPS", async ({ request }) => {
     expect(URL_.startsWith("https://")).toBe(true);
     const r = await request.get("/");
     expect(r.status()).toBe(200);
@@ -49,7 +49,9 @@ test.describe("Site de test Railway", () => {
     expect(h["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(h["permissions-policy"]).toContain("camera=()");
     expect(h["cross-origin-opener-policy"]).toBe("same-origin");
-    expect(h["x-robots-tag"]).toContain("noindex");
+    // Site public : pas de noindex global (il n'existait que sous protection par mot de passe) ; les pages privées sont exclues par robots.txt.
+    const robots = await (await request.get("/robots.txt")).text();
+    for (const d of ["/r/", "/admin/", "/api/", "/analyse/"]) expect(robots).toContain(`Disallow: ${d}`);
     expect(h["x-powered-by"]).toBeUndefined();
   });
 
@@ -100,7 +102,8 @@ test.describe("Site de test Railway", () => {
       await p.goto(`/r/${rid}`);
       p.once("dialog", (d) => d.accept());
       await p.getByRole("button", { name: "Supprimer mon rapport" }).click();
-      expect((await p.request.get(`/r/${rid}`, { failOnStatusCode: false })).status()).toBe(404);
+      // La suppression est asynchrone par rapport au clic : on attend le 404 au lieu de le exiger instantanément.
+      await expect.poll(async () => (await p.request.get(`/r/${rid}`, { failOnStatusCode: false })).status(), { timeout: 15_000 }).toBe(404);
     }
     await friend.close();
   });
