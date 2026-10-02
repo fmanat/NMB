@@ -16,7 +16,7 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 |---|---|---|
 | 0 | Limite par IP derrière Cloudflare | FAIT (avant la session, avec le propriétaire) |
 | 1 | Bandeau scanner 3D | FAIT |
-| 2 | Curseur interactif « Essayez » | à faire |
+| 2 | Curseur interactif « Essayez » | FAIT |
 | 3 | Bandeau défilant d'informations vraies | à faire |
 | 4 | Profils morphologiques (grille 3 × 3) | à faire |
 | 5 | Animations | à faire |
@@ -52,3 +52,23 @@ Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste
 - Le repli SVG n'est pas à l'échelle exacte du canevas sur mobile (le SVG se met à la hauteur du bandeau ; le canevas tient compte des colonnes de valeurs) : léger saut à la bascule.
 - Le glissement au doigt ne fait tourner qu'horizontalement (choix : ne pas bloquer le défilement vertical de la page).
 - Aucun essai sur un vrai téléphone ni un vrai lecteur d'écran (Chromium de Playwright et axe-core seulement).
+
+## Bloc 2 : section « Essayez » (curseurs) : FAIT
+**Ce qui est fait**
+- Section `#essayez` juste sous le hero : curseurs natifs (`input type=range`, libellés « Longueur (cm) » et « Circonférence (cm) », valeur affichée et lue par `aria-valuetext`, bornes du questionnaire 2 à 30 cm et 3 à 25 cm, pas de 0,1 cm), choix « Au repos » / « En érection » (références du site), bouton « Revenir à l'exemple ». Valeurs de départ = rapport d'exemple (13,8 cm, 11,9 cm, en érection), badge « Exemple · valeurs fictives » tant qu'on n'y touche pas.
+- Mise à jour en direct, dans le navigateur uniquement : encadrés « Au-dessus de X % », barres de percentile, courbes de distribution, repères de taille (objets du quotidien et monuments), tous produits par les vraies fonctions (`buildQuestionnaireReport`) et affichés par les composants du rapport. Mention « Simulation locale : rien n'est enregistré ni envoyé. » et bouton vers le vrai questionnaire. Valeur hors plage plausible : aucun résultat, message du questionnaire.
+- Aucune requête, aucun WebSocket, aucun cookie ni stockage (vérifié par test e2e et par un test d'analyse des imports : seule dépendance, React).
+- Mouvement réduit : aucune animation ni transition dans la section (règle globale, testée).
+
+**Refactorisation sans changement de résultat** : `src/lib/reportCore.ts` (calculs, types, `OUT_OF_RANGE_MESSAGE`, sans zod) ; `report.ts` (schéma zod + ré-export) ; `src/components/report/ReportParts.tsx` (extrait de `ReportDashboard`) ; `choiceStyles.ts` (style des choix radio partagé avec le questionnaire) ; `globals.css` : les champs `range` sont exclus du style de champ de texte. Contrôle : HTML du tableau de bord et objets de résultat de 36 rapports (2 états, 6 couples, 3 courbures, avec et sans « exemple ») identiques octet pour octet avant et après.
+
+**Fichiers** : `src/lib/tryIt.ts` (bornes, valeurs de départ, `simulate`), `src/components/try/TrySection.tsx` (serveur), `TryItLoader.tsx` (client, chargement différé), `TryIt.tsx` (client, interactif), `src/app/page.tsx`, `tests/try-it.test.ts` (34 tests : équivalence avec la chaîne du questionnaire pour 22 couples repos/érection, bornes, extrêmes, `snap`, composants identiques à ceux du rapport, aucune requête ni stockage ni dépendance serveur dans la fermeture des imports, import dynamique), `e2e/essayez.spec.ts` (13 tests : contenu et mention, clavier, repos/érection, plusieurs couples comparés aux fonctions du site, extrémités, aucune requête/WebSocket/cookie/stockage, chargement différé, mouvement réduit, 320/375/390 px avec détecteur de mise en page et axe-core dans quatre états, axe sur l'accueil entière).
+
+**Lighthouse mobile** (accueil, site compilé, 5 passages) : performance **92, 95, 95, 95, 95** (identique au bloc 1) ; accessibilité 100 ; bonnes pratiques 100 ; CLS 0 ; TBT 70 à 190 ms. La simulation (13,6 Ko non compressés) n'est demandée qu'au défilement : vérifié, absente du chargement initial à 412 × 823.
+
+**Limites / à savoir**
+- La simulation exige JavaScript (mention `noscript`) ; le questionnaire, lui, fonctionne sans.
+- Sur ordinateur, la zone reste vide (« Chargement… ») tant qu'elle n'est pas à 15 % dans l'écran : bref message, hauteur réservée.
+- Curseur à la souris : la plage 2 à 30 cm est large (la plage plausible est plus étroite) ; hors plage, le message remplace les résultats (la page se raccourcit alors).
+- Aucun essai sur un vrai téléphone ni lecteur d'écran. L'annonce vocale (percentiles) est différée de 0,6 s pour ne pas parler à chaque cran.
+

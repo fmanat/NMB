@@ -243,3 +243,18 @@ Constat sans correction nécessaire : contrastes (axe : aucune violation), langu
 | Mouvement réduit | Image fixe ; le glissement redessine seulement pendant le geste (pas d'inertie, pas de boucle). |
 | Tactile | `touch-action: pan-y` : le glissement vertical fait défiler la page, seul le glissement horizontal fait tourner. |
 | Couleurs du bandeau | Jetons sombres existants (`--bm-dark-*`, `--bm-blue-400`) ; badge « Exemple » en ambre sur fond sombre (contraste vérifié par axe-core). |
+
+## Session de nuit 4, bloc 2 : section « Essayez » (décisions prises seul, option la plus prudente)
+
+| Question | Décision |
+|---|---|
+| Où placer la section ? | Juste après le hero (donc sous le bandeau scanner), avant les garanties. Le hero et son bouton principal ne sont pas modifiés. |
+| Comment réutiliser les calculs sans embarquer zod dans le navigateur ? | `src/lib/reportCore.ts` (pur, sans zod) reçoit les calculs du rapport sans en changer une ligne ; `report.ts` garde le schéma de validation et ré-exporte tout (les imports existants ne changent pas). Un type de garde fait échouer la compilation si le schéma et le type partagé divergent. Vérifié : HTML du tableau de bord et résultats identiques avant et après (36 rapports). |
+| Comment réutiliser l'affichage ? | Les cartes de longueur et de circonférence, les encadrés « Au-dessus de X % » et les repères de taille sont extraits de `ReportDashboard` dans `ReportParts.tsx` (sortie identique) ; la simulation les appelle telles quelles : aucun libellé nouveau pour les chiffres. |
+| Bornes des curseurs | Celles du questionnaire (`LIMITS` : 2 à 30 cm et 3 à 25 cm), pas de 0,1 cm. |
+| Valeur hors plage plausible (au-delà de 4 écarts-types) | Comme le questionnaire : aucun résultat, même message (`OUT_OF_RANGE_MESSAGE`, désormais partagé avec l'action serveur). On n'affiche jamais un chiffre que le vrai flux refuserait. |
+| Courbure | Non proposée (non demandée) ; la courbure de l'exemple sert seulement à construire l'objet rapport, sans influence sur ce qui est affiché. |
+| Chargement | La section est rendue par le serveur (titre, mention, bouton) ; la simulation est un import dynamique déclenché quand 15 % de la zone entrent à l'écran (jamais au premier affichage d'un téléphone). Zone à hauteur réservée. |
+| Cartes en double sur la page | Les cartes sont déjà présentes dans le rapport d'exemple plus bas : la simulation les rend sans repère de région (`landmark={false}`) pour éviter deux régions de même nom (axe-core `landmark-unique`). |
+| Lien vers le questionnaire | Le bouton `ScanButton` habituel (contrôle d'âge puis `/analyse`), libellé « Remplir le vrai questionnaire ». |
+

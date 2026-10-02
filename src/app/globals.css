@@ -285,7 +285,7 @@ a.panel:hover {
 .badge-warning { background: var(--bm-warning-soft); color: var(--bm-warning-text); }
 
 /* ---------- Champs ---------- */
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
 select,
 textarea {
   min-height: 52px;
@@ -296,7 +296,7 @@ textarea {
   transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 @media (min-width: 768px) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
   select,
   textarea { min-height: 48px; }
 }
@@ -307,6 +307,8 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(23, 105, 255, 0.15);
 }
 input[aria-invalid="true"] { border-color: var(--bm-error); }
+/* Curseur (simulation « Essayez » de l'accueil) : contrôle natif, accessible au clavier, zone tactile d'au moins 44 px. */
+input[type="range"].bm-range { display: block; width: 100%; min-height: 44px; margin: 0; padding: 0; background: transparent; border: 0; accent-color: var(--accent); cursor: pointer; }
 input[type="checkbox"],
 input[type="radio"] { width: 20px; height: 20px; flex: none; }
 

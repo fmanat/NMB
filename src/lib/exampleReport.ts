@@ -1,4 +1,4 @@
-import { buildQuestionnaireReport, type QuestionnaireInput, type ReportResults } from "./report";
+import { buildQuestionnaireReport, type QuestionnaireInput, type ReportResults } from "./reportCore";
 
 /**
  * Rapport d'EXEMPLE FICTIF de l'accueil : des mesures inventées pour illustrer, passées dans les vraies fonctions de calcul du site

@@ -7,7 +7,7 @@ import { RATE_LIMIT } from "@/config/site";
 import { recordEvent } from "@/lib/funnel";
 import { isFreeBeta } from "@/lib/mode";
 import { attachFriend, CHALLENGE_COOKIE } from "@/lib/challenge";
-import { buildQuestionnaireReport, isOutOfReferenceRange, questionnaireSchema } from "@/lib/report";
+import { buildQuestionnaireReport, isOutOfReferenceRange, OUT_OF_RANGE_MESSAGE, questionnaireSchema } from "@/lib/report";
 import { countRecentByIp, createReport, hashIp } from "@/lib/repo";
 
 export type FormState = { error?: string; values?: Record<string, string> };
@@ -33,10 +33,7 @@ export async function submitQuestionnaire(_prev: FormState, fd: FormData): Promi
   }
 
   if (isOutOfReferenceRange(parsed.data)) {
-    return {
-      error: "Une des valeurs saisies sort de la plage que ce protocole peut traiter. Vérifiez votre mesure (en centimètres, état correctement indiqué) et réessayez.",
-      values,
-    };
+    return { error: OUT_OF_RANGE_MESSAGE, values };
   }
 
   const h = await headers();

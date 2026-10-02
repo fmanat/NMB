@@ -1,11 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { choiceClass as choice } from "@/components/ui/choiceStyles";
 import { Icon } from "@/components/ui/Icon";
 import { submitQuestionnaire, type FormState } from "./actions";
-
-const choice =
-  "flex items-center gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] px-4 min-h-[52px] cursor-pointer font-medium transition-colors has-[:checked]:border-accent has-[:checked]:bg-[var(--bm-blue-050)] hover:border-[var(--bm-blue-400)]";
 
 /** Champ numérique avec unité séparée visuellement : [ 15,2            cm ]. L'étiquette est toujours visible. */
 function NumberField({ name, label, unit, placeholder, defaultValue, helper }: { name: string; label: string; unit: string; placeholder: string; defaultValue?: string; helper: string }) {

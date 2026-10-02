@@ -5,6 +5,7 @@ import { exampleReport } from "@/lib/exampleReport";
 import { ScanButton } from "@/components/ScanButton";
 import { ScannerBand } from "@/components/scanner/ScannerBand";
 import { TrackView } from "@/components/TrackView";
+import { TrySection } from "@/components/try/TrySection";
 import { Accordion } from "@/components/ui/Accordion";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -66,6 +67,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Essayez : simulation locale (curseurs), mêmes calculs que le rapport, chargée en différé */}
+      <TrySection />
 
       {/* Preuves de confiance : uniquement des affirmations vraies */}
       <section aria-label="Garanties" className="border-y border-[var(--bm-gray-200)] bg-white">

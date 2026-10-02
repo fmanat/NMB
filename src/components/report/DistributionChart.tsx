@@ -1,4 +1,4 @@
-import { clampPercentile } from "@/lib/report";
+import { clampPercentile } from "@/lib/reportCore";
 import { f1 } from "@/lib/format";
 import { percentile } from "@/lib/stats";
 
