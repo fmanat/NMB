@@ -79,7 +79,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <aside className="panel p-5 mt-10 text-center space-y-3">
         <p className="font-semibold">Situer vos propres mesures</p>
         <p className="text-sm text-muted">Obtenez un rapport chiffré avec percentiles et marges d&apos;erreur. Paiement unique, aucun compte.</p>
-        <Link href="/analyse" className="btn-primary">Faire mon analyse</Link>
+        <Link href="/analyse" className="btn btn-primary btn-block-mobile">Faire mon analyse</Link>
       </aside>
 
       {page.sources.length > 0 && (

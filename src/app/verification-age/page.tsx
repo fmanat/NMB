@@ -13,9 +13,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         anonymat : le prestataire ne sait pas quel site vous consultez, et ce site ne reçoit qu&apos;une réponse « majeur : oui »,
         sans aucune donnée d&apos;identité. Cette réponse reste valable 30 minutes.
       </p>
-      {refus && <p className="mt-4 text-accent-2" role="alert">La vérification n&apos;a pas abouti. Vous ne pouvez pas envoyer de photo.</p>}
+      {refus && <p className="mt-4 text-[var(--bm-error-text)]" role="alert">La vérification n&apos;a pas abouti. Vous ne pouvez pas envoyer de photo.</p>}
       <form action={startAgeVerification.bind(null, formula)} className="mt-6">
-        <button type="submit" className="btn-primary">Vérifier mon âge</button>
+        <button type="submit" className="btn btn-primary btn-block-mobile">Vérifier mon âge</button>
       </form>
     </Doc>
   );

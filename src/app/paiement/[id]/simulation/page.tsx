@@ -21,7 +21,7 @@ export default async function Page({
         Mode simulation : aucun argent réel n&apos;est débité. Cette page remplace la page du prestataire de paiement.
       </p>
       <form action={simulatePaymentSuccess.bind(null, id, ref)} className="mt-6">
-        <button type="submit" className="btn-primary">Simuler un paiement réussi</button>
+        <button type="submit" className="btn btn-primary btn-block-mobile">Simuler un paiement réussi</button>
       </form>
     </Doc>
   );

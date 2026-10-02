@@ -40,7 +40,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   return (
     <Doc title="Défier un ami">
-      {erreur && <p className="mt-4 text-accent-2" role="alert">{erreur}</p>}
+      {erreur && <p className="mt-4 text-[var(--bm-error-text)]" role="alert">{erreur}</p>}
 
       {state.status === "none" && (
         <>
@@ -52,7 +52,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             scores et percentiles côte à côte, sans aucune image.
           </p>
           <form action={startChallenge.bind(null, id)} className="mt-6">
-            <button type="submit" className="btn-primary">Créer mon lien de défi</button>
+            <button type="submit" className="btn btn-primary btn-block-mobile">Créer mon lien de défi</button>
           </form>
         </>
       )}

@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             Chacun peut retirer son rapport de la comparaison à tout moment. Aucune image n&apos;est jamais partagée.
           </p>
           <form action={acceptChallenge.bind(null, id)} className="mt-6">
-            <button type="submit" className="btn-primary">Relever le défi</button>
+            <button type="submit" className="btn btn-primary btn-block-mobile">Relever le défi</button>
           </form>
         </>
       ) : (

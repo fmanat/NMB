@@ -7,7 +7,8 @@ export const CARD_SIZES = {
   story: { width: 1080, height: 1920 },
 } as const;
 
-const C = { bg: "#07090d", surface: "#0e131b", border: "#223043", fg: "#e6edf6", muted: "#8a9bb0", accent: "#19a7ff", warm: "#ffb020" };
+// Palette de la charte (clair) : fond blanc, navy, bleu Bitomètre. Aucune image, aucune silhouette.
+const C = { bg: "#ffffff", surface: "#f6f9ff", border: "#dce4ed", fg: "#10213f", muted: "#425778", accent: "#1769ff", warm: "#1769ff" };
 
 /** Image d'une carte de partage : texte et chiffres uniquement. Jamais d'image du corps, jamais de silhouette. */
 export function cardImage(content: CardContent, kind: keyof typeof CARD_SIZES): ImageResponse {
@@ -36,8 +37,6 @@ export function cardImage(content: CardContent, kind: keyof typeof CARD_SIZES): 
           flexDirection: "column",
           justifyContent: "space-between",
           background: C.bg,
-          backgroundImage: `linear-gradient(${C.border} 1px, transparent 1px), linear-gradient(90deg, ${C.border} 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
           color: C.fg,
           padding: pad,
           fontFamily: "sans-serif",

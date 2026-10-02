@@ -172,7 +172,7 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
       </div>
 
       {message && (
-        <p role="alert" className={`text-sm ${message.kind === "refused" ? "text-foreground panel p-4" : "text-accent-2"}`}>
+        <p role="alert" className={`text-sm ${message.kind === "refused" ? "text-foreground panel p-4" : "text-[var(--bm-error-text)]"}`}>
           {message.text}
           {message.kind === "refused" && <span className="block text-muted mt-1">Aucun paiement n&apos;est demandé. Vous pouvez reprendre la photo et réessayer.</span>}
         </p>
@@ -189,7 +189,7 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
         </ol>
       )}
 
-      <button type="submit" className="btn-primary" disabled={busy || (captchaMode === "simulation" && !captchaOk)}>
+      <button type="submit" className="btn btn-primary btn-block-mobile" disabled={busy || (captchaMode === "simulation" && !captchaOk)}>
         {busy ? "Analyse en cours…" : "Lancer l'analyse"}
       </button>
       {busy && <p className="text-xs text-muted">L&apos;analyse dure en général de 15 à 45 secondes. Ne fermez pas cette page.</p>}

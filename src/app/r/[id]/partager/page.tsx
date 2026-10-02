@@ -23,7 +23,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         La carte publique ne montre que ce que vous choisissez ici. Par défaut : le score seul. Aucune image de vous, aucune
         silhouette. Le score est une note de présentation, pas un percentile.
       </p>
-      {erreur && <p className="mt-4 text-accent-2" role="alert">{erreur}</p>}
+      {erreur && <p className="mt-4 text-[var(--bm-error-text)]" role="alert">{erreur}</p>}
 
       <form action={createShareCard.bind(null, id)} className="panel p-5 mt-6 space-y-4">
         <label className="flex items-start gap-2 text-sm">
@@ -51,7 +51,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             ))}
           </select>
         </div>
-        <button type="submit" className="btn-primary">Créer la carte</button>
+        <button type="submit" className="btn btn-primary btn-block-mobile">Créer la carte</button>
       </form>
 
       {cards.length > 0 && (

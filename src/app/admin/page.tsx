@@ -93,7 +93,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
           <p className="text-xs text-muted">Chiffres réels, agrégés et anonymes. Période : {period.label.toLowerCase()}.</p>
         </div>
         <form action={logout}>
-          <button type="submit" className="panel px-4 py-2 text-sm hover:border-accent">Se déconnecter</button>
+          <button type="submit" className="btn btn-secondary btn-sm">Se déconnecter</button>
         </form>
       </header>
 

@@ -125,7 +125,24 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       {/* Détail des valeurs (tableau de données) */}
       <section aria-labelledby="detail" className="space-y-3">
         <h2 id="detail" className="t-h3">Détail des valeurs</h2>
-        <div className="card !p-0 overflow-x-auto">
+        {/* Mobile : le tableau devient une liste de cartes (charte, section 34) */}
+        <ul className="md:hidden space-y-3">
+          {[
+            { l: "Longueur", v: `${f1(r.length.value)} cm`, m: r.length.marginPct ? `± ${r.length.marginPct} %` : "déclarée", p: f1(r.length.percentile), med: `${f1(r.length.referenceMedian)} cm` },
+            { l: "Circonférence", v: `${f1(r.girth.value)} cm`, m: r.girth.marginPct ? `± ${r.girth.marginPct} %` : "déclarée", p: f1(r.girth.percentile), med: `${f1(r.girth.referenceMedian)} cm` },
+          ].map((x) => (
+            <li key={x.l} className="card !p-4">
+              <p className="font-semibold">{x.l}</p>
+              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 t-small">
+                <dt className="text-muted">Valeur</dt><dd className="num text-right font-semibold">{x.v}</dd>
+                <dt className="text-muted">Marge</dt><dd className="num text-right">{x.m}</dd>
+                <dt className="text-muted">Percentile</dt><dd className="num text-right font-semibold text-accent">{x.p}</dd>
+                <dt className="text-muted">Médiane de référence</dt><dd className="num text-right">{x.med}</dd>
+              </dl>
+            </li>
+          ))}
+        </ul>
+        <div className="card !p-0 overflow-x-auto hidden md:block">
           <table className="data-table">
             <thead>
               <tr>

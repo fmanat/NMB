@@ -14,7 +14,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ r
         Mode simulation : aucune vérification réelle n&apos;est effectuée. Cette page remplace la page du prestataire.
       </p>
       <form action={simulateAgeSuccess.bind(null, retour ?? "")} className="mt-6">
-        <button type="submit" className="btn-primary">Simuler une vérification réussie</button>
+        <button type="submit" className="btn btn-primary btn-block-mobile">Simuler une vérification réussie</button>
       </form>
     </Doc>
   );

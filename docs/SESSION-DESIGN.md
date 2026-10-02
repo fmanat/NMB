@@ -31,3 +31,13 @@ Règles : sources de vérité visuelle = `docs/design/Bitometre_Charte_Graphique
 - Tests du navigateur adaptés (libellés, URL, composants) ; détecteur de mise en page amélioré (accordéons fermés et éléments épinglés ignorés, car non affichés ou non superposés).
 
 Note : `npm run verify` a été lancé une fois pour l'ensemble des blocs 1 à 3 (62 tests navigateur, 359 unitaires : vert), puis un seul commit les regroupe, car l'accueil, le rapport et les composants partagés ne sont pas séparables sans casser les tests du navigateur.
+
+## Bloc 4 : reste du site : FAIT (par les composants et les tokens)
+- Boutons, champs, cartes, accordéons, tableaux et titres des pages restantes (carte de partage, défi, vérification d'âge, paiement, connexion d'administration, pages de textes, méthode, guides, FAQ) passent par les mêmes classes et tokens : `btn`, `btn-primary / secondary / destructive`, `card`, `accordion`, `data-table`, `prose-lab`, `Doc`. Erreurs en rouge de la charte (texte `#B42F2F`), avertissements en orange foncé.
+- **Image de partage** (OG 1200 × 630 et story) : fond blanc, navy et bleu Bitomètre, sans grille ; texte « Rapport clinique n° … » conservé (SPEC §9) ; aucune image ni silhouette.
+- Rapport : sur mobile, le tableau « Détail des valeurs » devient une liste de cartes (charte, section 34) ; le tableau reste sur ordinateur.
+- Non refait en profondeur : écran d'envoi de photo (`PhotoFlow`, formules photo masquées en bêta) et administration : restylés par les tokens seulement.
+
+## Bloc 5 : contrôle et mise en ligne de test
+- Captures : `docs/design/captures/avant/` (site de test avant la refonte) et `docs/design/captures/apres/` (accueil, analyse, rapport à 390 et 1 440 px, plus partage, carte, défi, méthode et pli de l'accueil mobile) ; PNG ignorés par git.
+- Check-list de la section 47 du DS-01 : Inter chargée (next/font) ; palette, rayons et ombres par variables ; espacement de la grille de 4 px ; une action principale par écran (CTA du hero, « Calculer mon rapport », boutons du rapport) ; CTA visible sans défilement sur mobile (390 px) ; états chargement/erreur/succès ; formulaires à 52 px sur mobile ; score dominant ; percentiles lisibles ; **unités toujours visibles** (cm, °, axes des courbes) ; partage sans donnée privée ; composants et tokens centralisés ; calculs hors des composants ; responsive contrôlé à 320, 375 et 390 px (détecteur automatique) et à 1 440 px (captures) ; mouvement réduit ; clavier ; contrastes (axe-core sans violation). Écarts connus : voir « perfectible » dans le rapport final.

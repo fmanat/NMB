@@ -9,7 +9,7 @@ export function CopyLink({ url }: { url: string }) {
       <input readOnly aria-label="Lien du défi à envoyer à votre ami" value={url} onFocus={(e) => e.currentTarget.select()} className="num flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm" />
       <button
         type="button"
-        className="panel px-4 py-2 text-sm hover:border-accent"
+        className="btn btn-secondary btn-sm"
         onClick={async () => {
           try {
             await navigator.clipboard.writeText(url);

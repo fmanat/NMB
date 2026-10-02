@@ -17,8 +17,8 @@ export function LoginForm() {
           className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-lg outline-none focus:border-accent"
         />
       </label>
-      {state.error && <p className="text-sm text-accent-2" role="alert">{state.error}</p>}
-      <button type="submit" className="btn-primary" disabled={pending}>
+      {state.error && <p className="text-sm text-[var(--bm-error-text)]" role="alert">{state.error}</p>}
+      <button type="submit" className="btn btn-primary btn-block-mobile" disabled={pending}>
         {pending ? "Vérification…" : "Se connecter"}
       </button>
     </form>

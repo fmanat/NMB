@@ -40,13 +40,13 @@ export default async function Page({ params }: Props) {
             {card.percentiles.map((p) => (
               <li key={p.label} className="flex justify-between gap-8">
                 <span className="text-muted">{p.label}</span>
-                <span className="num text-accent-2">top {p.topPct} %</span>
+                <span className="num font-semibold text-accent">top {p.topPct} %</span>
               </li>
             ))}
             {card.landmark && (
               <li className="flex justify-between gap-8">
                 <span className="text-muted">{card.landmark.label}</span>
-                <span className="num text-accent-2">{card.landmark.times.toLocaleString("fr-FR")} × moi</span>
+                <span className="num font-semibold text-accent">{card.landmark.times.toLocaleString("fr-FR")} × moi</span>
               </li>
             )}
           </ul>
@@ -60,9 +60,9 @@ export default async function Page({ params }: Props) {
       </p>
 
       <div className="flex flex-wrap gap-3">
-        <Link href="/analyse" className="btn-primary">Faire ma propre analyse</Link>
-        <a href={`/c/${id}/story`} download={`bitometre-${card.dossier}-story.png`} className="panel px-4 py-2 text-sm hover:border-accent">Image 1080 × 1920</a>
-        <a href={`/c/${id}/og`} download={`bitometre-${card.dossier}.png`} className="panel px-4 py-2 text-sm hover:border-accent">Image 1200 × 630</a>
+        <Link href="/analyse" className="btn btn-primary btn-block-mobile">Faire ma propre analyse</Link>
+        <a href={`/c/${id}/story`} download={`bitometre-${card.dossier}-story.png`} className="btn btn-secondary btn-sm">Image 1080 × 1920</a>
+        <a href={`/c/${id}/og`} download={`bitometre-${card.dossier}.png`} className="btn btn-secondary btn-sm">Image 1200 × 630</a>
       </div>
     </div>
   );
