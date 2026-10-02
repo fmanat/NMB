@@ -59,7 +59,7 @@ function Table({ head, rows }: { head: string[]; rows: (string | number)[][] }) 
     <div className="overflow-x-auto">
       <table className="w-full text-sm num">
         <thead className="text-left text-muted font-sans">
-          <tr>{head.map((h) => <th key={h} scope="col" className="py-2 pr-4 font-normal">{h}</th>)}</tr>
+          <tr>{head.map((h, i) => <th key={i} scope="col" className="py-2 pr-4 font-normal">{h}</th>)}</tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
