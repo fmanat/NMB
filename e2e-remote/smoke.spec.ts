@@ -126,10 +126,11 @@ test.describe("Site de test Railway", () => {
     }
   });
 
-  test("mentions légales : marqueurs à compléter visibles (identité de la Ltd non renseignée)", async ({ page }) => {
+  test("mentions légales : contact seul, aucune identité de société", async ({ page }) => {
     await page.goto("/mentions-legales");
     const t = await page.locator("main").innerText();
-    expect(t).toContain("[À COMPLÉTER : raison sociale de la Ltd]");
+    expect(t).toContain("contact@bitometre.com");
+    expect(t).not.toMatch(/À COMPLÉTER|Ltd|Companies House|Brouillon/i);
     expect(t).toContain("Railway Corporation");
   });
 });

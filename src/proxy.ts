@@ -10,8 +10,6 @@ export function proxy(request: NextRequest) {
         status: 401,
         headers: { "WWW-Authenticate": 'Basic realm="Bitometre (test)", charset="UTF-8"', "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" },
       });
-    case "closed":
-      return new NextResponse("Site momentanément indisponible.", { status: 503, headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" } });
     case "not_found":
       // Réécriture vers une page inexistante : même 404 que n'importe quelle adresse inconnue.
       return NextResponse.rewrite(new URL("/_introuvable", request.url), { status: 404 });

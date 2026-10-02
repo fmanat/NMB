@@ -97,7 +97,7 @@ test.describe("Petits écrans : le détecteur voit les vrais problèmes", () => 
     await page.addStyleTag({ content: "h1{position:relative;top:56px}" }); // le titre descend sur le paragraphe suivant
     expect((await layoutProblems(page)).some((p) => p.startsWith("recouvrement"))).toBe(true);
     await page.reload();
-    await page.addStyleTag({ content: "main p{margin-left:300px}" }); // texte qui sort de l'écran
+    await page.addStyleTag({ content: "main p{margin-left:200px;white-space:nowrap}" }); // texte qui sort de l'écran
     const p = await layoutProblems(page);
     expect(p.some((x) => x.startsWith("texte coupé à droite"))).toBe(true);
     expect(p.some((x) => x.startsWith("défilement horizontal"))).toBe(true);

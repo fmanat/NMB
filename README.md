@@ -48,7 +48,7 @@ Un secret = une longue chaîne de caractères aléatoires (au moins 32), différ
 | `IP_HASH_SECRET` | Secret pour brouiller les adresses IP (limite de 5 essais par 24 h). Les IP ne sont jamais gardées en clair. | Oui |
 | `AGE_TOKEN_SECRET` | Secret qui signe le jeton « majeur : oui » (valable 30 minutes). | Oui |
 | `FREE_BETA` | `on` = **bêta gratuite** : formule A seule, rapport débloqué sans paiement, formules B et C / paiement / CGV introuvables (404). Vide = version payante. À changer, puis redéployer. | Non |
-| `SITE_PASSWORD`, `SITE_USER` | Protège **tout** le site par mot de passe (fenêtre d'identifiants du navigateur). Vide = site public. En production, **sans mot de passe**, le site répond 503 tant que `src/config/company.ts` contient des `[À COMPLÉTER]`. | Non |
+| `SITE_PASSWORD`, `SITE_USER` | Protège **tout** le site par mot de passe (fenêtre d'identifiants du navigateur). Vide = site public. **Sans mot de passe, le site est public** (plus de blocage automatique). | Non |
 | `DB_POOL_MAX` | Nombre maximal de connexions simultanées à la base (défaut 10 ; 5 sur Railway). | Non |
 | `PAYMENT_PROVIDER` | `simulation` en local. En production payante : `verotel` (adaptateur prévu, bloc 4 de la nuit 3). `stripe` est **exclu définitivement** (adaptateur laissé, désactivé). | Oui |
 | `PAYMENT_WEBHOOK_SECRET` | Secret qui signe les notifications de paiement. Seule une notification signée débloque un rapport. | Oui |

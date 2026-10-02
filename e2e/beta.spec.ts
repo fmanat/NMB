@@ -161,11 +161,11 @@ test.describe("Bêta gratuite : formule A seule", () => {
     await friend.close();
   });
 
-  test("mentions légales : marqueurs à compléter visibles, pas d'établissement en France ; confidentialité limitée à la bêta", async ({ page }) => {
+  test("mentions légales : seule l'adresse de contact, aucune identité de société, aucun brouillon ; confidentialité limitée à la bêta", async ({ page }) => {
     await page.goto("/mentions-legales");
     const legal = await page.locator("main").innerText();
-    expect(legal).toContain("[À COMPLÉTER : raison sociale de la Ltd]");
-    expect(legal).toContain("[À COMPLÉTER : numéro Companies House]");
+    expect(legal).toContain("contact@bitometre.com");
+    expect(legal).not.toMatch(/À COMPLÉTER|Ltd|Companies House|Brouillon/i);
     expect(legal).toContain("Railway Corporation");
     expect(legal).not.toMatch(/établissement en France|SIREN|Clever/i);
     await page.goto("/confidentialite");

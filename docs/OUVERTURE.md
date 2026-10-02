@@ -8,7 +8,7 @@ Temps prévu : 30 minutes de manipulations, plus l'attente de la propagation (de
 
 | À vérifier | Pourquoi |
 |---|---|
-| **Les informations de la Ltd sont renseignées** dans `src/config/company.ts` (raison sociale, numéro Companies House, siège, directeur de la publication, numéro ICO, e-mail de contact, adresse de l'hébergeur). | Tant qu'il reste un `[À COMPLÉTER : …]`, le site **refuse de s'ouvrir** : il répond « 503 » dès que vous retirez le mot de passe. C'est voulu. Me demander de remplir le fichier en me donnant les informations, puis redéployer (voir 3). |
+| **L'adresse de contact est `contact@bitometre.com`** (`src/config/company.ts`) et le routage d'e-mails est actif (voir étape 1bis). | Aucune autre information sur l'éditeur n'est publiée : il n'y a plus de garde-fou 503. |
 | **Une limite d'usage est définie dans Railway** (Settings → Usage → limite dure, par exemple 20 $). | Aucune limite n'était définie au 01/10/2026 : une erreur ou un pic de trafic ferait monter la facture sans plafond. |
 | **Le nom de domaine est bien à vous** (acheté chez Cloudflare ou ailleurs). | Voir le cas A ou B ci-dessous. |
 
@@ -86,7 +86,7 @@ npm run e2e:remote
 
 1. Railway → service **web** → **Variables** → supprimez `SITE_PASSWORD` (et `SITE_USER`).
 2. Attendez la fin du redéploiement (statut « Active » du service).
-3. Si le site répond **503 « Site momentanément indisponible »**, c'est le garde-fou : il reste un `[À COMPLÉTER : …]` dans `src/config/company.ts`. Remettez `SITE_PASSWORD` le temps de compléter, redéployez, puis recommencez.
+3. Il n'y a plus de garde-fou 503 : sans `SITE_PASSWORD`, le site est public tout de suite. Pour refermer, remettez `SITE_PASSWORD`.
 
 Pour **refermer** le site en urgence : remettez simplement `SITE_PASSWORD` (variable ajoutée, redéploiement automatique, 1 à 2 minutes).
 

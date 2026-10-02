@@ -7,7 +7,7 @@ export const SITE = {
   name: "Bitomètre",
   domain: "bitometre.com",
   tagline: "Laboratoire d'analyse biométrique",
-  contactEmail: COMPANY.contactEmail, // marqueur tant que COMPANY n'est pas complétée (src/config/company.ts)
+  contactEmail: COMPANY.contactEmail,
 } as const;
 
 // Durée minimale pendant laquelle un rapport payé reste accessible (en années). Reportée dans les CGV, le paiement et la FAQ.

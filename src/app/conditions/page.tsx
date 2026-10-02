@@ -9,7 +9,7 @@ export const metadata = { title: "Conditions d'utilisation (bêta)" };
 export default function Page() {
   if (!isFreeBeta()) notFound();
   return (
-    <Doc title="Conditions d'utilisation de la bêta" draft>
+    <Doc title="Conditions d'utilisation de la bêta">
       <h2>Service en bêta, gratuit</h2>
       <p>
         Bitomètre est en phase de test (« bêta »). Le questionnaire et le rapport qui en découle sont gratuits : aucun paiement

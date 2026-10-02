@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COMPANY, HOST, hasCompanyPlaceholders, missingCompanyFields } from "@/config/company";
+import { COMPANY, HOST } from "@/config/company";
 import { isBetaOnly, isFreeBeta, isHiddenInBeta } from "@/lib/mode";
 import { decideAccess, parseBasicAuth, safeEqual } from "@/lib/siteGate";
 
@@ -24,22 +24,22 @@ describe("analyse de l'en-tête Basic", () => {
 describe("protection par mot de passe", () => {
   const env = { ...prod, SITE_PASSWORD: "s3cret-de-test" };
   it("sans identifiants ou avec de mauvais identifiants : 401", () => {
-    expect(decideAccess("/", null, env, false).action).toBe("unauthorized");
-    expect(decideAccess("/", basic("bitometre", "faux"), env, false).action).toBe("unauthorized");
-    expect(decideAccess("/", basic("autre", "s3cret-de-test"), env, false).action).toBe("unauthorized");
-    expect(decideAccess("/admin", "Bearer s3cret-de-test", env, false).action).toBe("unauthorized");
+    expect(decideAccess("/", null, env).action).toBe("unauthorized");
+    expect(decideAccess("/", basic("bitometre", "faux"), env).action).toBe("unauthorized");
+    expect(decideAccess("/", basic("autre", "s3cret-de-test"), env).action).toBe("unauthorized");
+    expect(decideAccess("/admin", "Bearer s3cret-de-test", env).action).toBe("unauthorized");
   });
   it("avec les bons identifiants : accès, site marqué protégé", () => {
-    expect(decideAccess("/", basic("bitometre", "s3cret-de-test"), env, false)).toEqual({ action: "next", protectedSite: true });
+    expect(decideAccess("/", basic("bitometre", "s3cret-de-test"), env)).toEqual({ action: "next", protectedSite: true });
   });
   it("nom d'utilisateur configurable", () => {
     const e = { ...env, SITE_USER: "testeur" };
-    expect(decideAccess("/", basic("testeur", "s3cret-de-test"), e, false).action).toBe("next");
-    expect(decideAccess("/", basic("bitometre", "s3cret-de-test"), e, false).action).toBe("unauthorized");
+    expect(decideAccess("/", basic("testeur", "s3cret-de-test"), e).action).toBe("next");
+    expect(decideAccess("/", basic("bitometre", "s3cret-de-test"), e).action).toBe("unauthorized");
   });
   it("tout est protégé, y compris l'API et les pages privées ; seul /api/health est libre", () => {
-    for (const p of ["/api/analyse", "/api/payments/webhook", "/r/abc", "/admin", "/_next/static/x.js", "/robots.txt"]) expect(decideAccess(p, null, env, false).action).toBe("unauthorized");
-    expect(decideAccess("/api/health", null, env, false).action).toBe("next");
+    for (const p of ["/api/analyse", "/api/payments/webhook", "/r/abc", "/admin", "/_next/static/x.js", "/robots.txt"]) expect(decideAccess(p, null, env).action).toBe("unauthorized");
+    expect(decideAccess("/api/health", null, env).action).toBe("next");
   });
 });
 
@@ -47,38 +47,31 @@ describe("notifications du prestataire de paiement sur un site protégé", () =>
   const env = { ...prod, SITE_PASSWORD: "s3cret-de-test" };
   it("avec Verotel configuré : seul /api/payments/webhook est joignable sans identifiants (la signature protège)", () => {
     const v = { ...env, PAYMENT_PROVIDER: "verotel" };
-    expect(decideAccess("/api/payments/webhook", null, v, false)).toEqual({ action: "next", protectedSite: false });
-    for (const p of ["/api/payments/webhook/x", "/api/payments", "/paiement/retour", "/api/analyse", "/"]) expect(decideAccess(p, null, v, false).action, p).toBe("unauthorized");
+    expect(decideAccess("/api/payments/webhook", null, v)).toEqual({ action: "next", protectedSite: false });
+    for (const p of ["/api/payments/webhook/x", "/api/payments", "/paiement/retour", "/api/analyse", "/"]) expect(decideAccess(p, null, v).action, p).toBe("unauthorized");
   });
   it("avec un autre prestataire (ou aucun) : tout reste protégé", () => {
-    for (const provider of [undefined, "simulation", "stripe"]) expect(decideAccess("/api/payments/webhook", null, { ...env, PAYMENT_PROVIDER: provider }, false).action).toBe("unauthorized");
+    for (const provider of [undefined, "simulation", "stripe"]) expect(decideAccess("/api/payments/webhook", null, { ...env, PAYMENT_PROVIDER: provider }).action).toBe("unauthorized");
   });
   it("en bêta gratuite, ce chemin reste introuvable même avec Verotel configuré", () => {
-    expect(decideAccess("/api/payments/webhook", null, { ...env, PAYMENT_PROVIDER: "verotel", FREE_BETA: "on" }, false).action).toBe("not_found");
+    expect(decideAccess("/api/payments/webhook", null, { ...env, PAYMENT_PROVIDER: "verotel", FREE_BETA: "on" }).action).toBe("not_found");
   });
 });
 
-describe("garde-fou : identité de la Ltd non complétée", () => {
-  it("les marqueurs sont présents tant que rien n'est renseigné (état actuel du dépôt)", () => {
-    expect(hasCompanyPlaceholders()).toBe(true);
-    expect(missingCompanyFields()).toEqual(expect.arrayContaining(["legalName", "companiesHouseNumber", "registeredOffice", "publicationDirector", "contactEmail"]));
-    expect(COMPANY.legalName).toContain("[À COMPLÉTER");
+describe("site ouvert : plus de blocage sur l'identité de l'éditeur", () => {
+  it("production, sans mot de passe : le site s'ouvre (plus de 503)", () => {
+    expect(decideAccess("/", null, prod)).toEqual({ action: "next", protectedSite: false });
+    expect(decideAccess("/mentions-legales", null, prod).action).toBe("next");
+  });
+  it("seule information publique sur l'éditeur : l'adresse de contact ; l'hébergeur reste indiqué", () => {
+    expect(Object.keys(COMPANY)).toEqual(["contactEmail"]);
+    expect(COMPANY.contactEmail).toBe("contact@bitometre.com");
     expect(HOST.address).toContain("548 Market St");
-    expect(missingCompanyFields()).not.toContain("hostAddress");
     expect(HOST.legalName).toBe("Railway Corporation (États-Unis)");
   });
-  it("une valeur renseignée n'est plus signalée", () => {
-    expect(missingCompanyFields({ a: "Exemple Ltd", b: "[À COMPLÉTER : x]" })).toEqual(["b"]);
-  });
-  it("production, sans mot de passe, marqueurs présents : 503 partout sauf /api/health", () => {
-    expect(decideAccess("/", null, prod, true).action).toBe("closed");
-    expect(decideAccess("/mentions-legales", null, prod, true).action).toBe("closed");
-    expect(decideAccess("/api/health", null, prod, true).action).toBe("next");
-  });
-  it("avec mot de passe : le site de test reste utilisable ; sans marqueurs : le site s'ouvre ; hors production : libre", () => {
-    expect(decideAccess("/", basic("bitometre", "x"), { ...prod, SITE_PASSWORD: "x" }, true).action).toBe("next");
-    expect(decideAccess("/", null, prod, false)).toEqual({ action: "next", protectedSite: false });
-    expect(decideAccess("/", null, { NODE_ENV: "development" }, true).action).toBe("next");
+  it("avec mot de passe : le site de test reste protégé", () => {
+    expect(decideAccess("/", null, { ...prod, SITE_PASSWORD: "x" }).action).toBe("unauthorized");
+    expect(decideAccess("/", basic("bitometre", "x"), { ...prod, SITE_PASSWORD: "x" }).action).toBe("next");
   });
 });
 
@@ -91,16 +84,16 @@ describe("bêta gratuite : chemins", () => {
     const beta = { FREE_BETA: "on" };
     for (const p of ["/analyse/photo", "/verification-age", "/verification-age/simulation", "/api/analyse", "/api/age/callback", "/api/captcha/challenge", "/paiement/abc", "/paiement/abc/simulation", "/api/payments/webhook", "/cgv"]) {
       expect(isHiddenInBeta(p), p).toBe(true);
-      expect(decideAccess(p, null, beta, false).action, p).toBe("not_found");
+      expect(decideAccess(p, null, beta).action, p).toBe("not_found");
     }
     for (const p of ["/", "/analyse", "/analyse/questionnaire", "/r/abc", "/r/abc/defi", "/r/abc/partager", "/defi/abc", "/c/abc", "/c/abc/og", "/methode", "/mentions-legales", "/confidentialite", "/contact", "/conditions", "/admin", "/api/stats", "/analysephoto"]) {
       expect(isHiddenInBeta(p), p).toBe(false);
-      expect(decideAccess(p, null, beta, false).action, p).toBe("next");
+      expect(decideAccess(p, null, beta).action, p).toBe("next");
     }
-    expect(decideAccess("/conditions", null, {}, false).action).toBe("not_found");
+    expect(decideAccess("/conditions", null, {}).action).toBe("not_found");
     expect(isBetaOnly("/conditions")).toBe(true);
   });
   it("hors bêta : tout existe comme avant", () => {
-    for (const p of ["/analyse/photo", "/paiement/abc", "/cgv", "/api/payments/webhook"]) expect(decideAccess(p, null, {}, false).action).toBe("next");
+    for (const p of ["/analyse/photo", "/paiement/abc", "/cgv", "/api/payments/webhook"]) expect(decideAccess(p, null, {}).action).toBe("next");
   });
 });

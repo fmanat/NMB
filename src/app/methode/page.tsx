@@ -9,7 +9,7 @@ export default function Page() {
   const w = SCORE.weights;
   const beta = isFreeBeta(); // bêta gratuite : questionnaire seulement, rien sur les protocoles photo
   return (
-    <Doc title="Précision et méthode" draft>
+    <Doc title="Précision et méthode">
       <h2>Ce que le service mesure</h2>
       <p>
         Les valeurs sont des estimations statistiques. Elles ne constituent ni un diagnostic ni un avis médical. La

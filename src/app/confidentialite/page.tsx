@@ -7,7 +7,7 @@ export const metadata = { title: "Politique de confidentialité" };
 export default function Page() {
   if (isFreeBeta()) return <BetaPolicy />;
   return (
-    <Doc title="Politique de confidentialité" draft>
+    <Doc title="Politique de confidentialité">
       <h2>Données que nous conservons</h2>
       <p>
         Identifiant du rapport, formule, résultats chiffrés, commentaire, statut de paiement et date. Aucun e-mail, aucun
@@ -85,9 +85,9 @@ export default function Page() {
 // Version limitée à ce que fait la bêta gratuite : questionnaire déclaratif, aucune photo, aucun envoi à un prestataire d'analyse.
 function BetaPolicy() {
   return (
-    <Doc title="Politique de confidentialité (bêta)" draft>
+    <Doc title="Politique de confidentialité (bêta)">
       <p>
-        Responsable du traitement : {COMPANY.legalName}, société de droit anglais (voir les mentions légales). Pendant la bêta, le
+        Responsable du traitement : l&apos;éditeur du site (contact : {COMPANY.contactEmail}). Pendant la bêta, le
         service ne demande aucune photo, aucun compte, aucun e-mail et aucune donnée de paiement.
       </p>
 
@@ -139,9 +139,8 @@ function BetaPolicy() {
       <h2>Vos droits</h2>
       <p>
         Vous pouvez supprimer votre rapport à tout moment depuis sa page, et demander l&apos;accès, la rectification ou l&apos;effacement
-        de vos données en nous écrivant : {COMPANY.contactEmail}. Autorité de contrôle : Information Commissioner&apos;s Office (ICO,
-        Royaume-Uni) ; si vous résidez dans l&apos;Union européenne, vous pouvez aussi saisir l&apos;autorité de votre pays (en France, la CNIL).
-        Numéro d&apos;enregistrement ICO : {COMPANY.icoNumber}.
+        de vos données en nous écrivant : {COMPANY.contactEmail}. Si vous résidez dans l&apos;Union européenne, vous pouvez aussi saisir l&apos;autorité de protection des données de votre pays
+        (en France, la CNIL).
       </p>
     </Doc>
   );

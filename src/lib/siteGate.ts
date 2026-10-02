@@ -1,13 +1,10 @@
 // Contrôle d'accès global du site, appelé par src/proxy.ts (une fonction pure, testée sans serveur).
 //  1. /api/health : toujours accessible (point de contrôle de santé de l'hébergeur), sans donnée.
-//  2. Site non ouvert : en production, sans mot de passe de protection et tant que l'identité de la Ltd contient des marqueurs
-//     « [À COMPLÉTER : ...] », le site répond 503. C'est le garde-fou qui empêche d'ouvrir au public avec des mentions légales vides.
-//  3. Protection par mot de passe (authentification HTTP « Basic ») si SITE_PASSWORD est défini : tout le reste exige les identifiants.
-//  4. Bêta gratuite : les chemins des formules photo, du paiement et des CGV n'existent pas (404) ; /conditions n'existe qu'en bêta.
-import { hasCompanyPlaceholders } from "@/config/company";
+//  2. Protection par mot de passe (authentification HTTP « Basic ») si SITE_PASSWORD est défini : tout le reste exige les identifiants.
+//  3. Bêta gratuite : les chemins des formules photo, du paiement et des CGV n'existent pas (404) ; /conditions n'existe qu'en bêta.
 import { isBetaOnly, isFreeBeta, isHiddenInBeta } from "./mode";
 
-export type GateDecision = { action: "next"; protectedSite: boolean } | { action: "unauthorized" } | { action: "closed" } | { action: "not_found" };
+export type GateDecision = { action: "next"; protectedSite: boolean } | { action: "unauthorized" } | { action: "not_found" };
 
 type Env = Record<string, string | undefined>;
 
@@ -39,12 +36,10 @@ export function parseBasicAuth(header: string | null | undefined): { user: strin
   }
 }
 
-export function decideAccess(pathname: string, authorization: string | null, env: Env = process.env, placeholders = hasCompanyPlaceholders()): GateDecision {
+export function decideAccess(pathname: string, authorization: string | null, env: Env = process.env): GateDecision {
   if (pathname === HEALTH_PATH) return { action: "next", protectedSite: false };
 
   const password = env.SITE_PASSWORD ?? "";
-  if (!password && env.NODE_ENV === "production" && placeholders) return { action: "closed" };
-
   // Notifications du prestataire de paiement (Verotel) : elles ne portent pas d'identifiants du site et sont authentifiées par leur propre
   // signature (vérifiée avant tout accès à la base). Exception limitée à ce chemin, et seulement si ce prestataire est configuré :
   // sans elle, un site de test protégé ne recevrait jamais les notifications de paiement.
