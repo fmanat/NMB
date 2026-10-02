@@ -50,7 +50,7 @@ test.describe("Bêta gratuite : formule A seule", () => {
     await page.goto("/");
     await expect(page.getByText("Gratuit pendant la bêta", { exact: false }).first()).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Votre profil morphologique en données.");
-    await expect(page.getByText("Exemple · valeurs fictives").first()).toBeVisible();
+    await expect(page.locator("text=Exemple · valeurs fictives >> visible=true").first()).toBeVisible();
     const text = await page.locator("body").innerText();
     expect(text).not.toMatch(/€|PROTOCOLE [BC]|Trois protocoles|paiement unique|Photo jamais stockée/i);
     expect(text).not.toMatch(/\bphoto/i);

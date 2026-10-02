@@ -41,26 +41,21 @@ export default function Home() {
 
       {/* Hero : le sujet est dit dans le titre et le sous-titre ; un rapport rempli est visible avant de se lancer */}
       <section className="bg-gradient-to-b from-[var(--bm-blue-050)] to-white">
-        <div className="container-bm pt-10 pb-12 md:pt-16 md:pb-20 grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-14">
-          <div>
+        {/* Mobile : texte, rapport d'exemple compact, puis boutons (le bouton principal reste visible sans défilement à 390 px).
+            Ordinateur : texte et boutons à gauche, rapport d'exemple complet à droite. */}
+        <div className="container-bm pt-6 pb-10 md:pt-16 md:pb-20 grid gap-5 lg:grid-cols-[1.05fr_1fr] lg:gap-x-14 lg:gap-y-0 lg:content-center">
+          <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
             <p className="t-eyebrow">Science · Données · Statistiques</p>
-            <h1 className="t-display mt-4">Votre profil morphologique en données.</h1>
-            <p className="t-lead text-muted mt-5 max-w-[34rem]">
-              Longueur, circonférence, courbure : un rapport statistique chiffré, comparé à une étude de référence.{" "}
-              {beta ? "Gratuit pendant la bêta, sans compte, en une minute." : "Sans compte, paiement unique."}
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <ScanButton fullOnMobile />
-              <Button href="#exemple" variant="secondary" fullOnMobile>Voir un exemple de rapport</Button>
-            </div>
-            <p className="t-small text-muted mt-4">
-              Service réservé aux adultes. Résultats statistiques, pas un avis médical.
+            <h1 className="t-display mt-3 md:mt-4">Votre profil morphologique en données.</h1>
+            <p className="t-lead text-muted mt-3 md:mt-5 max-w-[34rem]">
+              Longueur, circonférence, courbure : un rapport statistique chiffré, comparé à une étude de référence.
+              <span className="hidden sm:inline">{" "}{beta ? "Gratuit pendant la bêta, sans compte, en une minute." : "Sans compte, paiement unique."}</span>
             </p>
           </div>
 
-          {/* Rapport d'exemple fictif, marqué « Exemple » */}
-          <div className="relative" aria-label="Aperçu d'un rapport d'exemple">
-            <Card className="!p-5 md:!p-6 shadow-[var(--shadow-elevated)]">
+          {/* Rapport d'exemple fictif, marqué « Exemple » : version complète (ordinateur) */}
+          <div className="relative hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-center" aria-label="Aperçu d'un rapport d'exemple">
+            <Card className="!p-6 shadow-[var(--shadow-elevated)]">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <p className="t-caption uppercase tracking-[0.08em] text-muted">Rapport morphologique</p>
                 <Badge tone="warning">Exemple · valeurs fictives</Badge>
@@ -84,6 +79,39 @@ export default function Home() {
                 <DistributionChart label="Longueur" value={ex.length.value} mean={lenRef.mean} sd={lenRef.sd} />
               </div>
             </Card>
+          </div>
+
+          {/* Version compacte (mobile et tablette) : anneau de score et deux percentiles ; la version complète est plus bas (#exemple) */}
+          <div className="lg:hidden" aria-label="Aperçu compact d'un rapport d'exemple">
+            <Card className="!p-4">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <p className="t-caption uppercase tracking-[0.08em] text-muted">Rapport morphologique</p>
+                <Badge tone="warning">Exemple · valeurs fictives</Badge>
+              </div>
+              <div className="flex items-center gap-4">
+                <ScoreRing score={ex.score} size="sm" />
+                <div className="flex-1 min-w-0 space-y-3">
+                  <div>
+                    <p className="num t-caption mb-1"><span className="font-semibold">Longueur</span> <span className="text-muted">{f1(ex.length.value)} cm</span></p>
+                    <PercentileBar percentile={ex.length.percentile} label="Percentile de longueur" compact />
+                  </div>
+                  <div>
+                    <p className="num t-caption mb-1.5"><span className="font-semibold">Circonférence</span> <span className="text-muted">{f1(ex.girth.value)} cm</span></p>
+                    <PercentileBar percentile={ex.girth.percentile} label="Percentile de circonférence" compact />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="lg:col-start-1 lg:row-start-2 lg:self-start lg:mt-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <ScanButton fullOnMobile />
+              <Button href="#exemple" variant="secondary" fullOnMobile>Voir un exemple de rapport</Button>
+            </div>
+            <p className="t-small text-muted mt-4">
+              Service réservé aux adultes. Résultats statistiques, pas un avis médical.
+            </p>
           </div>
         </div>
       </section>

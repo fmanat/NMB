@@ -103,3 +103,29 @@ test.describe("Petits écrans : le détecteur voit les vrais problèmes", () => 
     expect(p.some((x) => x.startsWith("défilement horizontal"))).toBe(true);
   });
 });
+
+// Premier écran mobile : le rapport d'exemple compact précède le bouton principal, et le bouton reste visible sans défilement.
+for (const [w, h] of [[390, 844], [375, 700], [360, 740]] as const) {
+  test.describe(`Premier écran de l'accueil : ${w} × ${h} px`, () => {
+    test.use({ viewport: { width: w, height: h } });
+    test("l'exemple compact (anneau et deux percentiles) est avant le bouton, qui est entièrement visible", async ({ page }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      const cta = page.locator("main").getByRole("button", { name: "Démarrer mon analyse" }).first();
+      const compact = page.getByLabel("Aperçu compact d'un rapport d'exemple");
+      await expect(compact).toBeVisible();
+      await expect(compact.getByText("Exemple · valeurs fictives")).toBeVisible();
+      await expect(compact.getByRole("img", { name: /Score global/ })).toBeVisible();
+      await expect(compact.getByRole("img", { name: /Percentile de longueur/ })).toBeVisible();
+      await expect(compact.getByRole("img", { name: /Percentile de circonférence/ })).toBeVisible();
+      const c = (await compact.boundingBox())!;
+      const b = (await cta.boundingBox())!;
+      expect(c.y + c.height, "l'exemple est au-dessus du bouton").toBeLessThanOrEqual(b.y + 1);
+      expect(b.y + b.height, "le bouton est dans le premier écran").toBeLessThanOrEqual(h);
+      expect(b.height).toBeGreaterThanOrEqual(44);
+      // La version complète de l'exemple reste plus bas dans la page.
+      await expect(page.locator("#exemple")).toBeAttached();
+      await expect(page.getByLabel("Aperçu d'un rapport d'exemple")).toBeHidden(); // version large : ordinateur seulement
+    });
+  });
+}
