@@ -67,7 +67,7 @@ test.describe("Site de test Railway", () => {
 
   test("parcours A, carte de partage, défi et comparaison", async ({ page, browser }) => {
     const id = await report(page, "14,2", "12,1");
-    await expect(page.getByRole("heading", { name: "Rapport d'analyse" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Rapport morphologique" })).toBeVisible();
     await expect(page.getByText("BÊTA GRATUITE", { exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "14,2 cm" })).toBeVisible();
     expect(await page.locator("body").innerText()).not.toMatch(/€|paiement|payer/i);

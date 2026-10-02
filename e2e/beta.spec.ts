@@ -49,7 +49,8 @@ test.describe("Bêta gratuite : formule A seule", () => {
   test("l'accueil ne parle ni de prix, ni de photo, ni des protocoles B et C", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByText("Gratuit pendant la bêta", { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Le questionnaire" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Votre profil morphologique en données.");
+    await expect(page.getByText("Exemple · valeurs fictives").first()).toBeVisible();
     const text = await page.locator("body").innerText();
     expect(text).not.toMatch(/€|PROTOCOLE [BC]|Trois protocoles|paiement unique|Photo jamais stockée/i);
     expect(text).not.toMatch(/\bphoto/i);
@@ -74,10 +75,12 @@ test.describe("Bêta gratuite : formule A seule", () => {
     expect(sitemap).not.toContain("/cgv");
   });
 
-  test("le choix de protocole mène directement au questionnaire", async ({ page }) => {
-    await page.goto("/analyse");
-    await expect(page).toHaveURL(/\/analyse\/questionnaire$/);
-    await expect(page.getByText("Bêta gratuite : le rapport est affiché immédiatement, sans paiement.")).toBeVisible();
+  test("en bêta, /analyse est directement le questionnaire (un seul protocole), /analyse/questionnaire y renvoie", async ({ page }) => {
+    await page.goto("/analyse/questionnaire");
+    await expect(page).toHaveURL(/\/analyse$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Vos mesures");
+    await expect(page.getByRole("navigation", { name: "Étapes du parcours" })).toBeVisible();
+    await expect(page.getByText("Bêta gratuite : le rapport s'affiche immédiatement, sans paiement.")).toBeVisible();
   });
 
   test("sans consentement, pas de rapport ; avec, le rapport est débloqué sans paiement, avec la mention Bêta gratuite", async ({ page, request, baseURL }) => {
@@ -87,10 +90,10 @@ test.describe("Bêta gratuite : formule A seule", () => {
     await page.getByLabel("J'ai 18 ans ou plus.").check();
     await page.getByRole("button", { name: "Calculer mon rapport" }).click();
     await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText("consentir au traitement");
-    await expect(page).toHaveURL(/\/analyse\/questionnaire/);
+    await expect(page).toHaveURL(/\/analyse$/);
 
     const id = await betaReport(page);
-    await expect(page.getByRole("heading", { name: "Rapport d'analyse" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Rapport morphologique" })).toBeVisible();
     await expect(page.getByText("BÊTA GRATUITE", { exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "14,2 cm" })).toBeVisible();
     await expect(page.getByText(/Bêta gratuite : ce rapport est conservé 90 jours au plus/)).toBeVisible();
@@ -147,7 +150,7 @@ test.describe("Bêta gratuite : formule A seule", () => {
     await expect(fp.getByRole("heading", { name: "Un ami vous défie" })).toBeVisible();
     expect(await fp.locator("body").innerText()).not.toMatch(/protocoles photo|vérification d'âge|payez/i);
     await fp.getByRole("button", { name: "Relever le défi" }).click();
-    await expect(fp).toHaveURL(/\/analyse\/questionnaire$/);
+    await expect(fp).toHaveURL(/\/analyse$/);
     const friendId = await betaReport(fp, { length: "10", girth: "9,5" });
 
     await page.goto(`/r/${myId}/defi`);
@@ -214,7 +217,7 @@ test.describe("Entonnoir de conversion (événements anonymes)", () => {
     const fp = await friend.newPage();
     await fp.goto(path);
     await fp.getByRole("button", { name: "Relever le défi" }).click();
-    await expect(fp).toHaveURL(/\/analyse\/questionnaire$/);
+    await expect(fp).toHaveURL(/\/analyse$/);
     await betaReport(fp); // le défi est « relevé » quand le rapport de l'ami est créé
     await friend.close();
 

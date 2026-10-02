@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Sora, Geist_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SITE } from "@/config/site";
 import { isFreeBeta } from "@/lib/mode";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { Header } from "@/components/navigation/Header";
+import { Footer } from "@/components/navigation/Footer";
 
-const sans = Sora({ variable: "--font-sans-geo", subsets: ["latin"] });
-const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const sans = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+const mono = IBM_Plex_Mono({ variable: "--font-plex", subsets: ["latin"], weight: ["400", "500"], display: "swap" });
 
 const beta = isFreeBeta();
 
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className={`${sans.variable} ${mono.variable} h-full antialiased`}>
+    <html lang="fr" className={`${sans.variable} ${mono.variable} h-full`}>
       <body className="min-h-full flex flex-col">
         <a href="#contenu" className="skip-link">Aller au contenu</a>
         <Header />

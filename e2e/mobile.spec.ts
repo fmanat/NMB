@@ -58,7 +58,7 @@ for (const width of WIDTHS) {
       await fp.goto(path);
       for (const p of await layoutProblems(fp)) report.push(`invitation : ${p}`);
       await fp.getByRole("button", { name: "Relever le défi" }).click();
-      await fp.waitForURL(/\/analyse\/questionnaire$/);
+      await fp.waitForURL(/\/analyse$/);
       await betaReport(fp);
       await page.goto(`/r/${id}/defi`);
       await expect(page.getByRole("columnheader", { name: "Votre ami" })).toBeVisible();
@@ -70,7 +70,7 @@ for (const width of WIDTHS) {
     test("états : fenêtre d'âge ouverte, message d'erreur du questionnaire", async ({ page }) => {
       const report: string[] = [];
       await page.goto("/");
-      await page.getByRole("button", { name: "Lancer l'analyse" }).click();
+      await page.getByRole("button", { name: "Démarrer mon analyse" }).first().click();
       await expect(page.getByRole("dialog")).toBeVisible();
       await page.getByLabel("Année de naissance").fill("2030");
       await page.getByLabel(/J'ai 18 ans ou plus/).check();
@@ -94,7 +94,7 @@ test.describe("Petits écrans : le détecteur voit les vrais problèmes", () => 
   test("recouvrement, texte coupé, défilement horizontal", async ({ page }) => {
     await page.goto("/contact");
     expect(await layoutProblems(page)).toEqual([]);
-    await page.addStyleTag({ content: "h1{position:relative;top:34px}" }); // le titre descend sur le paragraphe suivant
+    await page.addStyleTag({ content: "h1{position:relative;top:56px}" }); // le titre descend sur le paragraphe suivant
     expect((await layoutProblems(page)).some((p) => p.startsWith("recouvrement"))).toBe(true);
     await page.reload();
     await page.addStyleTag({ content: "main p{margin-left:300px}" }); // texte qui sort de l'écran

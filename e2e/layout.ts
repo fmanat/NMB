@@ -9,7 +9,15 @@ export async function layoutProblems(page: Page): Promise<string[]> {
     const vw = window.innerWidth;
     if (document.documentElement.scrollWidth > vw + 1) problems.push(`défilement horizontal : la page fait ${document.documentElement.scrollWidth}px pour ${vw}px`);
 
-    type Item = { l: number; t: number; r: number; b: number; text: string; el: Element };
+    type Item = { l: number; t: number; r: number; b: number; text: string; el: Element; pinned: boolean };
+    // Élément épinglé (en-tête collant, bandeau fixe) : il passe par-dessus le contenu qui défile, ce n'est pas un recouvrement de mise en page.
+    const isPinned = (el: Element) => {
+      for (let e: Element | null = el; e; e = e.parentElement) {
+        const p = getComputedStyle(e).position;
+        if (p === "fixed" || p === "sticky") return true;
+      }
+      return false;
+    };
     const items: Item[] = [];
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const hiddenAncestor = (el: Element) => !!el.closest('[aria-hidden="true"], script, style, noscript, template, dialog:not([open]), nextjs-portal');
@@ -25,6 +33,7 @@ export async function layoutProblems(page: Page): Promise<string[]> {
       const text = (node.textContent ?? "").trim();
       const el = node.parentElement;
       if (!text || !el || hiddenAncestor(el)) continue;
+      if (el.closest("details:not([open])") && !el.closest("summary")) continue; // contenu d'un accordéon fermé : non affiché
       const cs = getComputedStyle(el);
       if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity) === 0) continue;
       const box = el.getBoundingClientRect();
@@ -41,7 +50,7 @@ export async function layoutProblems(page: Page): Promise<string[]> {
         // sans que les caractères se touchent. On le ramène à la hauteur de la ligne, centré.
         const h = Number.isFinite(lh) && lh < r.height ? lh : r.height;
         const top = r.top + (r.height - h) / 2;
-        items.push({ l: r.left, t: top, r: r.right, b: top + h, text: text.slice(0, 28), el });
+        items.push({ l: r.left, t: top, r: r.right, b: top + h, text: text.slice(0, 28), el, pinned: isPinned(el) });
         if (r.right > vw + 1 && !scrollableX(el)) problems.push(`texte coupé à droite (dépasse de ${Math.round(r.right - vw)}px) : « ${text.slice(0, 40)} »`);
         if (r.left < -1 && !scrollableX(el)) problems.push(`texte coupé à gauche : « ${text.slice(0, 40)} »`);
       }
@@ -56,7 +65,7 @@ export async function layoutProblems(page: Page): Promise<string[]> {
       for (let j = i + 1; j < items.length; j++) {
         const a = items[i];
         const b = items[j];
-        if (a.el === b.el) continue;
+        if (a.el === b.el || a.pinned !== b.pinned) continue;
         const ix = Math.min(a.r, b.r) - Math.max(a.l, b.l);
         const iy = Math.min(a.b, b.b) - Math.max(a.t, b.t);
         if (ix <= 2 || iy <= 2) continue;

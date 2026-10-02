@@ -1,17 +1,11 @@
-import { Doc } from "@/components/Doc";
-import { TrackView } from "@/components/TrackView";
+import { redirect } from "next/navigation";
 import { isFreeBeta } from "@/lib/mode";
-import { QuestionnaireForm } from "../QuestionnaireForm";
+import { QuestionnairePage } from "../QuestionnairePage";
 
 export const metadata = { title: "Questionnaire", robots: { index: false } };
 
+// Bêta gratuite : le questionnaire est directement sur /analyse. Version payante : protocole A après le choix du protocole.
 export default function Page() {
-  return (
-    <Doc title="Protocole A : questionnaire">
-      <TrackView event="questionnaire_start" />
-      <div className="mt-6">
-        <QuestionnaireForm beta={isFreeBeta()} />
-      </div>
-    </Doc>
-  );
+  if (isFreeBeta()) redirect("/analyse");
+  return <QuestionnairePage />;
 }

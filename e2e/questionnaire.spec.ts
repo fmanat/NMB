@@ -8,7 +8,7 @@ test.describe("Formule A (questionnaire)", () => {
     // Aperçu verrouillé : rien de ce qui est payant n'est présent dans le HTML reçu par le navigateur.
     await expect(page.getByRole("heading", { name: "Votre rapport est prêt" })).toBeVisible();
     const html = await (await request.get(`${baseURL}/r/${id}`)).text();
-    for (const secret of ["14,2", "12,1", "Rapport d'analyse", "Commentaire simulé", "Dossier "]) {
+    for (const secret of ["14,2", "12,1", "Rapport morphologique", "Commentaire simulé", "Dossier "]) {
       expect(html, `le HTML du rapport verrouillé ne doit pas contenir « ${secret} »`).not.toContain(secret);
     }
     // Image de partage neutre sur la page privée.
@@ -108,6 +108,6 @@ test.describe("Formule A (questionnaire)", () => {
     expect(after.pay[0].status).toBe("succeeded");
 
     await page.reload();
-    await expect(page.getByRole("heading", { name: "Rapport d'analyse" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Rapport morphologique" })).toBeVisible();
   });
 });

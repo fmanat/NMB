@@ -29,11 +29,11 @@ export function Ticker() {
     ["Meilleur score de la semaine", String(stats.bestScoreThisWeek)],
   ];
   return (
-    <div className="border-b border-border bg-surface text-xs">
-      <div className="mx-auto max-w-5xl px-4 h-8 flex items-center justify-between gap-4 overflow-x-auto whitespace-nowrap">
+    <div className="border-b border-border bg-[var(--bm-blue-050)] text-xs">
+      <div className="container-bm h-9 flex items-center justify-between gap-4 overflow-x-auto whitespace-nowrap">
         {items.map(([label, value]) => (
           <span key={label} className="text-muted">
-            {label} <span className="num text-accent-2 ml-1">{value}</span>
+            {label} <span className="num text-accent font-semibold ml-1">{value}</span>
           </span>
         ))}
       </div>

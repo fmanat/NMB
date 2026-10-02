@@ -64,7 +64,7 @@ test.describe("Accessibilité : contrôle automatique axe-core", () => {
     await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toBeVisible();
     await scan(page, "formulaire avec erreur");
     await page.goto("/");
-    await page.getByRole("button", { name: "Lancer l'analyse" }).click();
+    await page.getByRole("button", { name: "Démarrer mon analyse" }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByLabel("Année de naissance").fill("2030");
     await page.getByLabel(/J'ai 18 ans ou plus/).check();
@@ -88,7 +88,7 @@ test.describe("Accessibilité : clavier et focus", () => {
 
   test("la fenêtre d'âge se manipule entièrement au clavier : ouverture, focus piégé, Échap, retour du focus", async ({ page }) => {
     await page.goto("/");
-    const open = page.getByRole("button", { name: "Lancer l'analyse" });
+    const open = page.getByRole("button", { name: "Démarrer mon analyse" }).first();
     await open.focus();
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("dialog");
@@ -172,9 +172,10 @@ test.describe("Accessibilité : structure pour lecteurs d'écran", () => {
     expect(await heads.count()).toBeGreaterThanOrEqual(5);
     for (const th of await heads.all()) expect(await th.getAttribute("scope")).toBe("col");
     for (const svg of await page.locator("figure svg").all()) expect(await svg.getAttribute("aria-label")).toMatch(/percentile/);
-    // Les jauges décoratives de l'accueil ne sont pas des images à lire.
+    // Accueil : chaque graphique de l'exemple de rapport porte un nom ; les icônes décoratives sont masquées aux lecteurs d'écran.
     await page.goto("/");
-    expect(await page.locator('svg[role="img"]').count()).toBe(0);
+    for (const svg of await page.locator('svg[role="img"]').all()) expect((await svg.getAttribute("aria-label"))?.length ?? 0).toBeGreaterThan(5);
+    expect(await page.locator('body > header svg:not([role="img"]):not([aria-hidden="true"]), main svg:not([role="img"]):not([aria-hidden="true"]), footer svg:not([role="img"]):not([aria-hidden="true"])').count()).toBe(0);
   });
 });
 

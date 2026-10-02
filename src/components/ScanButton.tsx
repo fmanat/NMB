@@ -3,23 +3,46 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AGE_GATE } from "@/config/site";
+import { buttonClass, type ButtonVariant } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 
 // Première barrière d'âge. L'année reste sur cet appareil (localStorage) et n'est jamais envoyée.
 // Elle ne remplace pas la vérification par prestataire exigée pour les formules photo (étape 3).
-export function ScanButton({ label = "Lancer l'analyse" }: { label?: string }) {
+export function ScanButton({
+  label = "Démarrer mon analyse",
+  variant = "primary",
+  fullOnMobile = false,
+  small = false,
+  className = "",
+}: {
+  label?: string;
+  variant?: ButtonVariant;
+  fullOnMobile?: boolean;
+  small?: boolean;
+  className?: string;
+}) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [year, setYear] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState("");
+  // Le contenu de la fenêtre n'existe dans la page que lorsqu'elle est ouverte (une seule fenêtre à la fois, pas de champs cachés dans chaque page).
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const d = dialogRef.current;
     if (!d) return;
-    const onClose = () => setError("");
+    const onClose = () => {
+      setError("");
+      setIsOpen(false);
+    };
     d.addEventListener("close", onClose);
     return () => d.removeEventListener("close", onClose);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && !dialogRef.current?.open) dialogRef.current?.showModal();
+  }, [isOpen]);
 
   function start() {
     try {
@@ -30,7 +53,7 @@ export function ScanButton({ label = "Lancer l'analyse" }: { label?: string }) {
     } catch {
       // stockage indisponible : on affiche la fenêtre
     }
-    dialogRef.current?.showModal();
+    setIsOpen(true);
   }
 
   function submit(e: React.FormEvent) {
@@ -56,57 +79,53 @@ export function ScanButton({ label = "Lancer l'analyse" }: { label?: string }) {
 
   return (
     <>
-      <button type="button" className="btn-primary" onClick={start}>
-        {label}
+      <button type="button" className={buttonClass({ variant, fullOnMobile, small, className })} onClick={start}>
+        <span>{label}</span>
+        <Icon name="arrowRight" size={18} />
       </button>
 
       <dialog
         ref={dialogRef}
         aria-labelledby="age-gate-title"
-        className="m-auto w-[min(92vw,26rem)] rounded-xl border border-border bg-surface text-foreground p-6 backdrop:bg-black/70"
+        className="m-auto w-[min(92vw,26rem)] rounded-[18px] border border-border bg-surface text-foreground p-6 shadow-[var(--shadow-modal)] backdrop:bg-[rgba(16,33,63,0.45)]"
       >
+        {isOpen && (
         <form onSubmit={submit} className="space-y-4">
-          <h2 id="age-gate-title" className="text-lg font-semibold">Contrôle d&apos;accès</h2>
+          <div className="flex items-start justify-between gap-3">
+            <h2 id="age-gate-title" className="t-h4">Contrôle d&apos;accès</h2>
+            <button type="button" aria-label="Fermer" onClick={() => dialogRef.current?.close()} className="grid place-items-center size-11 -m-2 rounded-[10px] text-muted hover:bg-[var(--bm-gray-100)]">
+              <Icon name="close" size={20} />
+            </button>
+          </div>
           <label className="block text-sm">
-            <span className="text-muted">Année de naissance</span>
+            <span className="font-medium">Année de naissance</span>
             <input
               inputMode="numeric"
               maxLength={4}
               placeholder="AAAA"
               value={year}
               onChange={(e) => setYear(e.target.value.replace(/\D/g, ""))}
-              className="num mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-lg outline-none focus:border-accent"
+              className="num mt-1.5 w-full px-3.5 text-lg"
             />
           </label>
-          <p className="text-xs text-muted">
-            Votre année est stockée localement sur cet appareil et n&apos;est jamais transmise.
-          </p>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-              className="mt-1 accent-[var(--accent)]"
-            />
+          <p className="t-small text-muted">Votre année est stockée localement sur cet appareil et n&apos;est jamais transmise.</p>
+          <label className="flex items-start gap-3 text-sm">
+            <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 accent-[var(--accent)]" />
             <span>
-              J&apos;ai 18 ans ou plus. Je comprends que l&apos;envoi de contenus impliquant des mineurs est un
-              délit pénal.
+              J&apos;ai 18 ans ou plus. Je comprends que l&apos;envoi de contenus impliquant des mineurs est un délit pénal.
             </span>
           </label>
-          {error && <p className="text-sm text-accent-2" role="alert">{error}</p>}
+          {error && <p className="text-sm font-medium" style={{ color: "var(--bm-error-text)" }} role="alert">{error}</p>}
           <div className="flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={() => dialogRef.current?.close()}
-              className="px-4 py-2 text-sm text-muted hover:text-foreground"
-            >
+            <button type="button" onClick={() => dialogRef.current?.close()} className={buttonClass({ variant: "secondary", small: true })}>
               Annuler
             </button>
-            <button type="submit" className="btn-primary" disabled={!confirmed || year.length !== 4}>
+            <button type="submit" className={buttonClass({ small: true })} disabled={!confirmed || year.length !== 4}>
               Continuer
             </button>
           </div>
         </form>
+        )}
       </dialog>
     </>
   );
