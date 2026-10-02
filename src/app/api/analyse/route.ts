@@ -1,3 +1,4 @@
+import { clientIp } from "@/lib/clientIp";
 import { cookies } from "next/headers";
 import { UPLOAD } from "@/config/site";
 import { AGE_COOKIE, isAgeTokenValid } from "@/lib/age/token";
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     consents: { adult: checked(fd.get("consent_adult")), mine: checked(fd.get("consent_mine")), sensitive: checked(fd.get("consent_sensitive")) },
     ageTokenValid: isAgeTokenValid(store.get(AGE_COOKIE)?.value),
     captchaToken: typeof fd.get("captcha") === "string" ? (fd.get("captcha") as string) : null,
-    ip: req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "inconnue",
+    ip: clientIp(req.headers),
     photo: file instanceof File && file.size > 0 && file.size <= UPLOAD.maxBytes ? Buffer.from(await file.arrayBuffer()) : null,
     declared:
       formula === "C"

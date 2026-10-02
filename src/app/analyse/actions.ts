@@ -1,5 +1,6 @@
 "use server";
 
+import { clientIp } from "@/lib/clientIp";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { RATE_LIMIT } from "@/config/site";
@@ -39,7 +40,7 @@ export async function submitQuestionnaire(_prev: FormState, fd: FormData): Promi
   }
 
   const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || "inconnue";
+  const ip = clientIp(h);
   const ipHash = hashIp(ip);
   if ((await countRecentByIp(ipHash)) >= RATE_LIMIT.maxPerWindow) {
     return { error: `Limite atteinte : ${RATE_LIMIT.maxPerWindow} analyses par période de ${RATE_LIMIT.windowHours} h.`, values };

@@ -1,5 +1,6 @@
 "use server";
 
+import { clientIp } from "@/lib/clientIp";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN } from "@/config/site";
@@ -14,7 +15,7 @@ export async function login(_prev: LoginState, fd: FormData): Promise<LoginState
   if (!adminConfigured()) return { error: "L'administration n'est pas configurée (voir .env.example : ADMIN_PASSWORD_HASH et ADMIN_SESSION_SECRET)." };
 
   const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || "inconnue";
+  const ip = clientIp(h);
   const key = hashIp(ip);
   if (loginLimiter.isBlocked(key)) return { error: `Trop de tentatives. Réessayez dans ${ADMIN.windowMinutes} minutes.` };
 
