@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Doc } from "@/components/Doc";
+import { ProfileTable } from "@/components/report/ProfileTable";
 import { REFERENCES, SCORE } from "@/config/site";
 import { isFreeBeta } from "@/lib/mode";
+import { HIGH_FROM, LOW_BELOW } from "@/lib/profiles";
 
 export const metadata = { title: "Précision et méthode" };
 
@@ -39,6 +41,21 @@ export default function Page() {
         Cette formule est volontairement indulgente : un profil médian obtient environ 72/100. Le score ne doit donc pas
         être lu comme un classement. Pour situer une mesure dans la population, reportez-vous aux percentiles.
       </p>
+      <h2 id="profils">Profils morphologiques</h2>
+      <p>
+        Chaque rapport est rangé dans l&apos;une des neuf cases d&apos;une grille de trois lignes sur trois colonnes, d&apos;après deux nombres
+        seulement : le percentile de longueur et le percentile de circonférence du rapport. Rien d&apos;autre n&apos;entre en compte (ni le score, ni
+        la courbure). Le seuil bas est {LOW_BELOW} et le seuil haut est {HIGH_FROM}, appliqués de la même façon aux deux mesures : un percentile
+        inférieur à {LOW_BELOW} est dans la première classe, de {LOW_BELOW} (inclus) à {HIGH_FROM} (exclu) dans la classe centrale, et {HIGH_FROM} ou
+        plus dans la dernière. Le percentile est d&apos;abord arrondi à une décimale, comme dans le rapport.
+      </p>
+      <p>
+        Ces profils sont un clin d&apos;œil, pas une classification médicale : aucune case n&apos;est meilleure ou moins bonne qu&apos;une autre, et le
+        site ne dit pas à quelle fréquence chaque profil se rencontre. Sur la carte de partage, le profil n&apos;apparaît que si vous cochez l&apos;option.
+      </p>
+      <div className="mt-4">
+        <ProfileTable />
+      </div>
       {!beta && (
         <>
         <h2>Mesures estimées à partir d&apos;une photo</h2>

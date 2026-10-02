@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { CurvatureIndicator } from "./CurvatureIndicator";
 import { MetricCard } from "./MetricCard";
 import { PercentileBar } from "./PercentileBar";
+import { ProfileCard } from "./ProfileCard";
 import { DimensionMetrics, PercentilePositions, SizeReferences } from "./ReportParts";
 import { ScoreRing } from "./ScoreRing";
 
@@ -41,7 +42,10 @@ export function ReportDashboard({ results: r, example = false }: { results: Repo
         </div>
       </Card>
 
-      {/* 2. Indicateurs */}
+      {/* 2. Profil morphologique (case de la grille 3 × 3, d'après les deux percentiles) */}
+      <ProfileCard results={r} example={example} />
+
+      {/* 3. Indicateurs */}
       <div>
         <h2 className="t-h3 mb-4">Indicateurs</h2>
         <div className="grid gap-4 md:grid-cols-2 md:gap-6">
@@ -63,7 +67,7 @@ export function ReportDashboard({ results: r, example = false }: { results: Repo
         </div>
       </div>
 
-      {/* 3. Repères de taille */}
+      {/* 4. Repères de taille */}
       <SizeReferences results={r} />
     </div>
   );

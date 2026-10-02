@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SITE } from "@/config/site";
+import { profileById } from "@/lib/profiles";
 import { getCard } from "@/lib/share";
 
 type Props = { params: Promise<{ id: string }> };
@@ -25,6 +26,7 @@ export default async function Page({ params }: Props) {
   const { id } = await params;
   const card = await getCard(id);
   if (!card) notFound();
+  const profile = profileById(card.profile); // présent seulement si l'utilisateur l'a choisi
   return (
     <div className="mx-auto max-w-xl px-4 py-12 space-y-6">
       <div className="panel p-6 text-center space-y-3">
@@ -35,7 +37,7 @@ export default async function Page({ params }: Props) {
           {card.score}
           <span className="text-2xl text-muted"> / 100</span>
         </p>
-        {(card.percentiles.length > 0 || card.landmark) && (
+        {(card.percentiles.length > 0 || card.landmark || profile) && (
           <ul className="inline-block text-left text-sm space-y-1 pt-2">
             {card.percentiles.map((p) => (
               <li key={p.label} className="flex justify-between gap-8">
@@ -47,6 +49,12 @@ export default async function Page({ params }: Props) {
               <li className="flex justify-between gap-8">
                 <span className="text-muted">{card.landmark.label}</span>
                 <span className="num font-semibold text-accent">{card.landmark.times.toLocaleString("fr-FR")} × moi</span>
+              </li>
+            )}
+            {profile && (
+              <li className="flex justify-between gap-8" data-card-profile={profile.id}>
+                <span className="text-muted">Profil</span>
+                <span className="font-semibold text-accent">{profile.name}</span>
               </li>
             )}
           </ul>

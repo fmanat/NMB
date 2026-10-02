@@ -13,6 +13,7 @@ export async function createShareCard(reportId: string, fd: FormData): Promise<v
     mode: mode === "percentiles" || mode === "landmark" ? mode : "score",
     percentiles: (["length", "girth"] as const).filter((k) => fd.get(`p_${k}`) === "on"),
     landmark: String(fd.get("landmark") ?? ""),
+    profile: fd.get("profile") === "on",
   };
   let cardId: string;
   try {

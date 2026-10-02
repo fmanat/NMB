@@ -18,7 +18,7 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 | 1 | Bandeau scanner 3D | FAIT |
 | 2 | Curseur interactif « Essayez » | FAIT |
 | 3 | Bandeau défilant d'informations vraies | FAIT |
-| 4 | Profils morphologiques (grille 3 × 3) | à faire |
+| 4 | Profils morphologiques (grille 3 × 3) | FAIT |
 | 5 | Animations | à faire |
 | 6 | Formule photo en bêta, réponse standardisée (PHOTO_BETA, désactivée) | à faire |
 | 7 | Kit de test photo (`docs/TEST-PHOTO.md`) | à faire |
@@ -100,3 +100,24 @@ Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste
 - La médiane affichée est la moyenne de référence de Veale et al. (le site suppose une loi normale, donc médiane = moyenne) ; le commentaire de `REFERENCES` dit toujours « à vérifier sur l'article avant mise en ligne » : cette vérification reste à faire par le propriétaire.
 - Dans ce contexte d'exécution, un processus détaché (`nohup`) n'arrive pas à joindre PostgreSQL (la connexion pend) : c'est ce qui a servi, par hasard, à vérifier que la page se construit et se régénère quand la base ne répond pas. Les serveurs lancés par Playwright, eux, joignent la base.
 - Aucun essai sur un vrai téléphone ni lecteur d'écran.
+
+## Bloc 4 : profils morphologiques (grille 3 × 3) : FAIT
+**Ce qui est fait**
+- **Module unique** `src/lib/profiles.ts` (pur, sans zod ni serveur, réutilisable par les rapports photo du bloc 6) : seuils nommés (`LOW_BELOW = 33`, `HIGH_FROM = 67`), `classOf`, les neuf `PROFILES` (identifiant stable `l<rang longueur>c<rang circonférence>`, nom, une phrase), `profileFor(percentileLongueur, percentileCirconférence)`, `profileById`. Règle unique aux deux axes : chaque classe contient sa borne basse (moins de 33 / de 33 inclus à 67 exclu / 67 ou plus) ; le percentile est d'abord arrondi à une décimale comme dans le rapport, donc le profil correspond à ce qui est affiché. Valeur non finie : erreur (jamais un profil au hasard).
+- **Les neuf profils** (longueur en lignes, circonférence en colonnes) : L'Épuré, Le Compact, Le Concentré / L'Élancé, Le Centré, L'Ample / Le Longiligne, L'Étendu, Le Panoramique. Ton de laboratoire pince-sans-rire, aucune case n'est présentée comme meilleure ou moins bonne, aucun chiffre, aucune promesse, aucune fréquence annoncée. Texte complet dans `docs/DECISIONS.md` et dans le module.
+- **Rapport** (`/r/[id]`) et **exemple de l'accueil** (marqué « Exemple fictif ») : carte « Profil morphologique » (`ProfileCard`) insérée dans `ReportDashboard` après la carte du score : nom, phrase, repère géométrique de la case (neuf carrés, un plein, `aria-hidden`), lien vers la méthode. Rien dans l'aperçu verrouillé de la version payante. L'exemple (13,8 cm × 11,9 cm en érection) tombe dans « Le Centré ». Pas ajouté à la simulation « Essayez » (non demandé).
+- **Carte de partage** : case « Ajouter mon profil morphologique » sur la page de partage, **décochée par défaut** ; la carte ne contient le champ `profile` (identifiant seul) que si elle est cochée ; la page publique et les deux images (1200 × 630, 1080 × 1920) montrent alors une ligne « Profil : <nom> » ; jamais dans les métadonnées Open Graph/Twitter ni dans le titre. **Rétrocompatibilité** : la colonne `cards.content` est déjà du jsonb, le champ est facultatif, aucune migration (la prochaine migration reste 009) ; les cartes déjà créées et un identifiant inconnu s'affichent comme avant (rien).
+- **Page méthode** : section « Profils morphologiques » (`#profils`) avec l'explication des seuils (valeurs lues dans les constantes) et la grille complète : tableau accessible (légende, en-têtes de colonne et de ligne) sur écran large, liste groupée par classe de longueur sur mobile.
+
+**Fichiers** : `src/lib/profiles.ts`, `src/lib/share.ts`, `src/lib/cardImage.tsx`, `src/components/report/ProfileCard.tsx`, `ProfileTable.tsx`, `ReportDashboard.tsx`, `src/app/c/[id]/page.tsx`, `src/app/r/[id]/partager/page.tsx`, `src/app/r/[id]/actions.ts`, `src/app/methode/page.tsx`, `tests/profiles.test.ts` (66 tests), `tests/share.test.ts` (+1), `e2e/profils-beta.spec.ts` (11 tests), `e2e/profils.spec.ts` (2 tests).
+
+**Tests** : unitaires (bornes exactes 32,9 / 33 / 66,9 / 67 et arrondi à une décimale, neuf cases uniques et atteignables par des percentiles possibles et par de vrais rapports au repos et en érection, monotonie, ni chiffre ni nombre en lettres ni mot de la liste de termes vulgaires, dénigrants, médicaux ou anatomiques, une seule phrase, noms uniques, test de sensibilité de la liste, indépendance vis-à-vis de la courbure, profil de l'exemple, contenu de la carte avec et sans option) ; e2e (neuf couples de valeurs donnent les neuf profils attendus ; exemple de l'accueil ; carte sans option identique d'une création à l'autre et sans trace du profil, avec option : nom visible, description et métadonnées sans profil, images à la bonne taille et différentes ; anciennes cartes et identifiant inconnu ; page méthode en tableau et en liste ; 320/375/390 px avec le détecteur de mise en page et axe-core ; axe-core sur écran large ; version payante : aucun profil avant paiement).
+
+**`npm run verify`** : vert (523 tests unitaires, 145 tests de bout en bout).
+
+**Constaté pendant les tests** : la liste de mots interdits a signalé « bonne » dans une première phrase (« une bonne note de synthèse ») : réécrite. axe-core a signalé un contraste insuffisant du lien « Voir les neuf profils » sur fond bleuté : couleur du lien assombrie (`--bm-blue-700`).
+
+**Limites / à savoir**
+- Les noms et phrases ont été relus pour un lecteur aux percentiles bas, mais restent un jugement éditorial à faire valider par le propriétaire.
+- Les seuils 33 et 67 découpent la population en classes de taille inégale (un peu moins d'un tiers, un peu plus d'un tiers, un tiers) ; le site n'affiche aucune statistique sur la fréquence des profils.
+- Un rapport de la formule photo (désactivée) afficherait aussi un profil, calculé de la même façon sur ses percentiles estimés.

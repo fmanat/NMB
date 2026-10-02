@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { SITE } from "@/config/site";
+import { profileById } from "./profiles";
 import type { CardContent } from "./share";
 
 export const CARD_SIZES = {
@@ -24,6 +25,8 @@ export function cardImage(content: CardContent, kind: keyof typeof CARD_SIZES): 
   const lines: { label: string; value: string }[] = [
     ...content.percentiles.map((p) => ({ label: p.label, value: `top ${p.topPct} %` })),
     ...(content.landmark ? [{ label: content.landmark.label, value: `${content.landmark.times.toLocaleString("fr-FR")} × moi` }] : []),
+    // Profil morphologique : seulement si l'utilisateur l'a choisi (champ absent des cartes plus anciennes ; identifiant inconnu : rien).
+    ...(profileById(content.profile) ? [{ label: "Profil", value: profileById(content.profile)!.name }] : []),
   ];
   const basis = content.basis === "declared" ? "Valeurs déclarées" : "Analyse de photo";
 

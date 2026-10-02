@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { LANDMARKS } from "@/config/site";
 import { pool } from "./db";
+import { profileFor, type ProfileId } from "./profiles";
 import { getReport } from "./repo";
 import type { ReportResults } from "./report";
 
@@ -13,12 +14,19 @@ export type CardContent = {
   basis: "declared" | "photo";
   percentiles: { label: "Longueur" | "Circonférence"; topPct: number }[];
   landmark: { label: string; times: number } | null;
+  /**
+   * Profil morphologique (identifiant stable), présent UNIQUEMENT si l'utilisateur l'a coché à la création de la carte.
+   * Champ facultatif : les cartes créées avant ce choix n'ont pas la clé et s'affichent comme avant (aucune migration nécessaire, la colonne est en jsonb).
+   */
+  profile?: ProfileId;
 };
 
 export type CardOptions = {
   mode: "score" | "percentiles" | "landmark";
   percentiles?: ("length" | "girth")[];
   landmark?: string;
+  /** Afficher le profil morphologique sur la carte (choix explicite, désactivé par défaut). Se combine avec n'importe quel mode. */
+  profile?: boolean;
 };
 
 export const MAX_CARDS_PER_REPORT = 10;
@@ -36,7 +44,8 @@ export function dossierNumber(reportId: string): number {
 
 /**
  * Construit le contenu d'une carte : score seul par défaut ; en option jusqu'à deux percentiles
- * OU une mesure de référence, jamais les deux. Rien d'autre du rapport n'est copié.
+ * OU une mesure de référence, jamais les deux, et le profil morphologique si (et seulement si) `options.profile` est vrai.
+ * Rien d'autre du rapport n'est copié.
  */
 export function buildCardContent(results: ReportResults, reportId: string, options: CardOptions): CardContent {
   const content: CardContent = {
@@ -61,6 +70,7 @@ export function buildCardContent(results: ReportResults, reportId: string, optio
   } else if (options.mode !== "score") {
     throw new ShareError("Option inconnue.");
   }
+  if (options.profile === true) content.profile = profileFor(results.length.percentile, results.girth.percentile).id;
   return content;
 }
 

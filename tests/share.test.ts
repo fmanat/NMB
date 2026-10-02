@@ -105,6 +105,20 @@ describe("cartes en base", () => {
     expect(await getCard(cardId)).not.toBeNull();
   });
 
+  it("profil morphologique : absent par défaut, enregistré (identifiant seul) si choisi, cartes plus anciennes toujours lisibles", async () => {
+    const id = await report();
+    const plain = await createCard(id, { mode: "score" });
+    const chosen = await createCard(id, { mode: "score", profile: true });
+    expect("profile" in (await getCard(plain))!).toBe(false);
+    expect((await getCard(chosen))!.profile).toMatch(/^l[123]c[123]$/);
+    // Carte créée avant l'existence du champ : contenu écrit à la main, sans la clé « profile ».
+    await pool().query("INSERT INTO cards (id, report_id, content) VALUES ($1, $2, $3)", ["a".repeat(16), id, { dossier: 1234, score: 70, basis: "declared", percentiles: [], landmark: null }]);
+    const legacy = await getCard("a".repeat(16));
+    expect(legacy?.score).toBe(70);
+    expect(legacy?.profile).toBeUndefined();
+    expect((await listCards(id)).map((c) => c.id)).toContain("a".repeat(16));
+  });
+
   it("nombre de cartes limité par rapport", async () => {
     const id = await report();
     for (let i = 0; i < MAX_CARDS_PER_REPORT; i++) await createCard(id, { mode: "score" });

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Doc } from "@/components/Doc";
 import { LANDMARKS } from "@/config/site";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
+import { profileById } from "@/lib/profiles";
 import { listCards } from "@/lib/share";
 import { getReportView } from "@/lib/view";
 import { createShareCard, removeShareCard } from "../actions";
@@ -51,6 +52,15 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             ))}
           </select>
         </div>
+        <div className="space-y-1 border-t border-border pt-4">
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" name="profile" className="mt-1 accent-[var(--accent)]" aria-describedby="profil-aide" />
+            <span className="text-foreground">Ajouter mon profil morphologique</span>
+          </label>
+          <p id="profil-aide" className="pl-6 t-small text-muted">
+            Le nom du profil (pas sa description) apparaît sur la carte publique et ses images. Désactivé par défaut : sans cette case, la carte ne le montre pas.
+          </p>
+        </div>
         <button type="submit" className="btn btn-primary btn-block-mobile">Créer la carte</button>
       </form>
 
@@ -64,6 +74,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
                   Carte n° {c.content.dossier} · score {c.content.score}
                   {c.content.percentiles.length > 0 && ` · ${c.content.percentiles.map((p) => p.label.toLowerCase()).join(", ")}`}
                   {c.content.landmark && ` · ${c.content.landmark.label}`}
+                  {profileById(c.content.profile) && ` · profil ${profileById(c.content.profile)!.name}`}
                 </Link>
                 <form action={removeShareCard.bind(null, id, c.id)}>
                   <button type="submit" className="text-accent-2 hover:underline">Retirer</button>
