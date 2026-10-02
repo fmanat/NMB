@@ -104,28 +104,29 @@ test.describe("Petits écrans : le détecteur voit les vrais problèmes", () => 
   });
 });
 
-// Premier écran mobile : le rapport d'exemple compact précède le bouton principal, et le bouton reste visible sans défilement.
+// Premier écran mobile : le bandeau « scanner » (cylindre abstrait et valeurs de l'exemple fictif) précède le bouton principal,
+// et le bouton reste entièrement visible sans défilement.
 for (const [w, h] of [[390, 844], [375, 700], [360, 740]] as const) {
   test.describe(`Premier écran de l'accueil : ${w} × ${h} px`, () => {
     test.use({ viewport: { width: w, height: h } });
-    test("l'exemple compact (anneau et deux percentiles) est avant le bouton, qui est entièrement visible", async ({ page }) => {
+    test("le bandeau scanner (valeurs de l'exemple) est avant le bouton, qui est entièrement visible", async ({ page }) => {
       await page.goto("/");
       await page.waitForLoadState("networkidle");
       const cta = page.locator("main").getByRole("button", { name: "Démarrer mon analyse" }).first();
-      const compact = page.getByLabel("Aperçu compact d'un rapport d'exemple");
-      await expect(compact).toBeVisible();
-      await expect(compact.getByText("Exemple · valeurs fictives")).toBeVisible();
-      await expect(compact.getByRole("img", { name: /Score global/ })).toBeVisible();
-      await expect(compact.getByRole("img", { name: /Percentile de longueur/ })).toBeVisible();
-      await expect(compact.getByRole("img", { name: /Percentile de circonférence/ })).toBeVisible();
-      const c = (await compact.boundingBox())!;
+      const band = page.getByLabel("Scanner : aperçu d'un rapport d'exemple");
+      await expect(band).toBeVisible();
+      await expect(band.getByText("Exemple · valeurs fictives")).toBeVisible();
+      await expect(band.getByText("13,8 cm")).toBeVisible();
+      await expect(band.getByText("11,9 cm")).toBeVisible();
+      await expect(band.getByText(/^\d+ \/ 100$/)).toBeVisible();
+      const c = (await band.boundingBox())!;
       const b = (await cta.boundingBox())!;
-      expect(c.y + c.height, "l'exemple est au-dessus du bouton").toBeLessThanOrEqual(b.y + 1);
+      expect(c.y + c.height, "le bandeau est au-dessus du bouton").toBeLessThanOrEqual(b.y + 1);
       expect(b.y + b.height, "le bouton est dans le premier écran").toBeLessThanOrEqual(h);
       expect(b.height).toBeGreaterThanOrEqual(44);
-      // La version complète de l'exemple reste plus bas dans la page.
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
+      // Le rapport d'exemple complet reste plus bas dans la page.
       await expect(page.locator("#exemple")).toBeAttached();
-      await expect(page.getByLabel("Aperçu d'un rapport d'exemple")).toBeHidden(); // version large : ordinateur seulement
     });
   });
 }

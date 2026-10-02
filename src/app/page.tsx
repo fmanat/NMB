@@ -2,9 +2,8 @@ import Link from "next/link";
 import { FORMULAS, REPORT_ACCESS, SITE, formatEur } from "@/config/site";
 import { BETA, isFreeBeta } from "@/lib/mode";
 import { exampleReport } from "@/lib/exampleReport";
-import { f1 } from "@/lib/format";
-import { referenceFor } from "@/lib/stats";
 import { ScanButton } from "@/components/ScanButton";
+import { ScannerBand } from "@/components/scanner/ScannerBand";
 import { TrackView } from "@/components/TrackView";
 import { Accordion } from "@/components/ui/Accordion";
 import { Badge } from "@/components/ui/Badge";
@@ -12,10 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { TrustBadge } from "@/components/ui/TrustBadge";
-import { DistributionChart } from "@/components/report/DistributionChart";
-import { PercentileBar } from "@/components/report/PercentileBar";
 import { ReportDashboard } from "@/components/report/ReportDashboard";
-import { ScoreRing } from "@/components/report/ScoreRing";
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
   { icon: "ruler", title: "Saisir", text: "Vous indiquez votre longueur et votre circonférence en centimètres, et la courbure approximative. Environ une minute." },
@@ -33,7 +29,6 @@ const MEASURES: { icon: IconName; title: string; text: string }[] = [
 export default function Home() {
   const beta = isFreeBeta();
   const ex = exampleReport();
-  const lenRef = referenceFor(ex.state, "length");
 
   return (
     <>
@@ -53,55 +48,11 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Rapport d'exemple fictif, marqué « Exemple » : version complète (ordinateur) */}
-          <div className="relative hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-center" aria-label="Aperçu d'un rapport d'exemple">
-            <Card className="!p-6 shadow-[var(--shadow-elevated)]">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <p className="t-caption uppercase tracking-[0.08em] text-muted">Rapport morphologique</p>
-                <Badge tone="warning">Exemple · valeurs fictives</Badge>
-              </div>
-              <div className="flex items-center gap-5">
-                <ScoreRing score={ex.score} size="md" />
-                <div className="min-w-0">
-                  <p className="t-small font-semibold">Score global</p>
-                  <p className="t-small text-muted mt-1">Note de présentation sur 100. Les percentiles ci-dessous sont les mesures exactes.</p>
-                </div>
-              </div>
-              <div className="mt-5 space-y-5">
-                <div>
-                  <p className="num t-small mb-2"><span className="font-semibold">Longueur</span> <span className="text-muted">{f1(ex.length.value)} cm</span></p>
-                  <PercentileBar percentile={ex.length.percentile} label="Percentile de longueur" />
-                </div>
-                <div>
-                  <p className="num t-small mb-2"><span className="font-semibold">Circonférence</span> <span className="text-muted">{f1(ex.girth.value)} cm</span></p>
-                  <PercentileBar percentile={ex.girth.percentile} label="Percentile de circonférence" />
-                </div>
-                <DistributionChart label="Longueur" value={ex.length.value} mean={lenRef.mean} sd={lenRef.sd} />
-              </div>
-            </Card>
-          </div>
-
-          {/* Version compacte (mobile et tablette) : anneau de score et deux percentiles ; la version complète est plus bas (#exemple) */}
-          <div className="lg:hidden" aria-label="Aperçu compact d'un rapport d'exemple">
-            <Card className="!p-4">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="t-caption uppercase tracking-[0.08em] text-muted">Rapport morphologique</p>
-                <Badge tone="warning">Exemple · valeurs fictives</Badge>
-              </div>
-              <div className="flex items-center gap-4">
-                <ScoreRing score={ex.score} size="sm" />
-                <div className="flex-1 min-w-0 space-y-3">
-                  <div>
-                    <p className="num t-caption mb-1"><span className="font-semibold">Longueur</span> <span className="text-muted">{f1(ex.length.value)} cm</span></p>
-                    <PercentileBar percentile={ex.length.percentile} label="Percentile de longueur" compact />
-                  </div>
-                  <div>
-                    <p className="num t-caption mb-1.5"><span className="font-semibold">Circonférence</span> <span className="text-muted">{f1(ex.girth.value)} cm</span></p>
-                    <PercentileBar percentile={ex.girth.percentile} label="Percentile de circonférence" compact />
-                  </div>
-                </div>
-              </div>
-            </Card>
+          {/* Bandeau « scanner » (dérogation de charte : 3D et fond sombre pour ce seul bandeau) : cylindre abstrait balayé par un plan,
+              entouré des valeurs du rapport d'exemple (fictives, marquées « Exemple »). Mobile : pleine largeur entre le texte et le bouton
+              (le bouton principal reste visible sans défilement à 390 px). Ordinateur : colonne de droite. Le rapport complet est plus bas (#exemple). */}
+          <div className="-mx-4 min-[390px]:-mx-5 md:mx-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-center">
+            <ScannerBand ex={ex} />
           </div>
 
           <div className="lg:col-start-1 lg:row-start-2 lg:self-start lg:mt-8">

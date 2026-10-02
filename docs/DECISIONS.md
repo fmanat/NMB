@@ -232,3 +232,14 @@ Constat sans correction nécessaire : contrastes (axe : aucune violation), langu
 | Remise à zéro | Faite sur confirmation écrite (base de test vidée, vérifiée vide). |
 | Commission provisoire | 15,5 % (`FINANCE.paymentFeeRate`). |
 | Ouverture de la bêta | Après une consultation juridique d'une heure limitée à B1-B5 et B13 : `docs/JURISTE-COURT.md`. |
+
+## Session de nuit 4, bloc 1 : bandeau « scanner » (décisions prises seul, option la plus prudente)
+
+| Question | Décision |
+|---|---|
+| Où placer le bandeau sans repousser le bouton hors du premier écran ? | Dans le hero, à la place de l'aperçu de rapport (mobile : entre le texte et les boutons, ordre du DS-01 section 31 ; ordinateur : colonne de droite). Le rapport complet reste dans `#exemple`. |
+| Forme de l'objet | Cylindre court à bases plates (diamètre supérieur à la hauteur), aucune forme allongée ni arrondie : rien qui puisse évoquer une anatomie. |
+| Technologie | Canvas 2D et projection maison, aucune dépendance (WebGL et bibliothèques écartés : poids et risque pour la note de performance). |
+| Mouvement réduit | Image fixe ; le glissement redessine seulement pendant le geste (pas d'inertie, pas de boucle). |
+| Tactile | `touch-action: pan-y` : le glissement vertical fait défiler la page, seul le glissement horizontal fait tourner. |
+| Couleurs du bandeau | Jetons sombres existants (`--bm-dark-*`, `--bm-blue-400`) ; badge « Exemple » en ambre sur fond sombre (contraste vérifié par axe-core). |
