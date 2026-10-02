@@ -6,7 +6,7 @@ import { pool, poolMax } from "@/lib/db";
 import { BETA } from "@/lib/mode";
 import { CheckoutError, startCheckout } from "@/lib/payments/checkout";
 import { buildQuestionnaireReport } from "@/lib/report";
-import { createReport, globalStats, purgeExpired, reportKey } from "@/lib/repo";
+import { completedAnalysisStats, createReport, purgeExpired, reportKey } from "@/lib/repo";
 import { getReportView } from "@/lib/view";
 
 const input = { state: "erect", length: 14, girth: 12, curvature: "none", direction: "none" } as const;
@@ -41,7 +41,7 @@ describe("bêta gratuite : rapport débloqué sans paiement", () => {
     expect(row).toMatchObject({ paid: false, free_beta: false });
   });
 
-  it("le journal anonyme garde le drapeau, sans date de paiement : ni conversion, ni bandeau, ni revenu", async () => {
+  it("le journal anonyme garde le drapeau, sans date de paiement : ni conversion ni revenu ; mais le rapport de la bêta compte comme analyse réalisée", async () => {
     const id = await make(true);
     const log = (await pool().query("SELECT free_beta, paid_at FROM report_log WHERE key = $1", [reportKey(id)])).rows[0];
     expect(log).toMatchObject({ free_beta: true, paid_at: null });
@@ -51,7 +51,7 @@ describe("bêta gratuite : rapport débloqué sans paiement", () => {
     expect(d.conversion.A).toEqual({ created: 1, paid: 0, rate: 0 }); // seul le rapport hors bêta compte
     expect(d.launched.A.launched).toBe(2); // mais les deux sont des analyses lancées
     expect(d.revenue.total.grossCents).toBe(0);
-    expect((await globalStats()).totalAnalyses).toBe(0);
+    expect((await completedAnalysisStats()).count).toBe(1); // le rapport de la bêta (débloqué) compte ; le rapport hors bêta, non débloqué, non
   });
 
   it("le paiement est refusé en mode bêta (FREE_BETA=on)", async () => {

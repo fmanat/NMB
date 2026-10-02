@@ -381,6 +381,103 @@ input[type="radio"] { width: 20px; height: 20px; flex: none; }
 .skip-link:focus { transform: translateY(0); }
 main:focus { outline: none !important; }
 
+/* ---------- Bandeau défilant d'informations (accueil) ---------- */
+/* Deux copies identiques côte à côte ; la piste glisse de la moitié de sa largeur puis recommence (boucle sans saut).
+   Chaque copie fait au moins la largeur de l'écran pour qu'il n'y ait jamais de vide à droite. */
+.ticker-viewport {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: bm-ticker 55s linear infinite;
+}
+.ticker-copy {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-around;
+  gap: 40px;
+  min-width: 100vw;
+  padding-inline: 20px;
+}
+@keyframes bm-ticker { to { transform: translateX(-50%); } }
+.ticker-item {
+  display: inline-block;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.ticker-item::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin: 0 10px 2px 0;
+  border-radius: 50%;
+  background: var(--bm-blue-400);
+  vertical-align: middle;
+}
+.ticker-pause-input { width: 24px; height: 24px; }
+.ticker-label { color: var(--bm-navy-700); }
+.ticker-value { color: var(--bm-navy-900); font-weight: 600; }
+/* Pause : survol, focus clavier dans le bandeau, case « Pause » cochée. */
+.ticker:hover .ticker-track,
+.ticker:focus-within .ticker-track,
+.ticker:has(.ticker-pause-input:checked) .ticker-track { animation-play-state: paused; }
+.ticker-pause {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-inline: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bm-navy-700);
+  cursor: pointer;
+}
+/* Liste réelle : lue par les lecteurs d'écran, masquée visuellement (technique « sr-only ») tant que le défilement est actif. */
+.ticker-list {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  list-style: none;
+}
+/* Mouvement réduit : plus de défilement ni de copie ni de case Pause ; la liste réelle devient visible, statique, sur plusieurs lignes. */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-viewport,
+  .ticker-pause { display: none; }
+  .ticker-track { animation: none; }
+  .ticker-list {
+    position: static;
+    flex: 1 1 0%;
+    min-width: 0;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 8px 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 24px;
+  }
+  /* Éléments de la liste statique : retour à la ligne permis (jamais plus larges que l'écran). */
+  .ticker-list .ticker-item { max-width: 100%; white-space: normal; }
+}
+
 /* Mouvement réduit : aucune animation ni transition, défilement instantané. */
 @media (prefers-reduced-motion: reduce) {
   *,

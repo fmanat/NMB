@@ -21,6 +21,16 @@ export async function layoutProblems(page: Page): Promise<string[]> {
     const items: Item[] = [];
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const hiddenAncestor = (el: Element) => !!el.closest('[aria-hidden="true"], script, style, noscript, template, dialog:not([open]), nextjs-portal');
+    // Contenu réservé aux lecteurs d'écran (technique « sr-only » : boîte de 1 px rognée) : le texte des éléments qu'elle contient déborde de la
+    // boîte mais ne s'affiche pas. Étend le test de 1 px de l'élément lui-même aux éléments imbriqués (liste, éléments, spans).
+    const clippedToNothing = (el: Element) => {
+      for (let e: Element | null = el; e && e !== document.body; e = e.parentElement) {
+        const r = e.getBoundingClientRect();
+        const cs = getComputedStyle(e);
+        if (r.width <= 1 && r.height <= 1 && cs.overflowX !== "visible") return true;
+      }
+      return false;
+    };
     const scrollableX = (el: Element | null) => {
       for (let e = el; e && e !== document.body; e = e.parentElement) {
         const ox = getComputedStyle(e).overflowX;
@@ -37,7 +47,7 @@ export async function layoutProblems(page: Page): Promise<string[]> {
       const cs = getComputedStyle(el);
       if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity) === 0) continue;
       const box = el.getBoundingClientRect();
-      if (box.width <= 1 || box.height <= 1) continue; // texte réservé aux lecteurs d'écran (1 px)
+      if (box.width <= 1 || box.height <= 1 || clippedToNothing(el)) continue; // texte réservé aux lecteurs d'écran (1 px)
       const range = document.createRange();
       range.selectNodeContents(node);
       // Une fenêtre modale ouverte recouvre volontairement la page : seul son contenu est contrôlé.

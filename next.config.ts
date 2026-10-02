@@ -27,7 +27,12 @@ const csp = [
   ...(!isDev && httpsSite ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
+// Date de construction du site, calculée au moment du build (ou au démarrage de `next dev`) : affichée « Version du <date> » dans le
+// bandeau défilant de l'accueil. Remplacée dans le code par sa valeur (clé `env` de Next.js), jamais écrite à la main.
+const buildDate = new Date().toISOString();
+
 const nextConfig: NextConfig = {
+  env: { BITOMETRE_BUILD_DATE: buildDate },
   // Tests de bout en bout : chaque copie du site de test a son propre dossier de travail (voir playwright.config.ts).
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false, // ne pas annoncer la technologie du serveur

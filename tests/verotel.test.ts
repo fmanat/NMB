@@ -9,7 +9,7 @@ import { getPaymentProvider } from "@/lib/payments";
 import { PAY_COOKIE, returnTarget } from "@/lib/payments/return";
 import { amountToCents, flexpaySignature, purchaseUrl, verifyPostback, VEROTEL_PROTOCOL_VERSION } from "@/lib/payments/verotel";
 import { buildQuestionnaireReport } from "@/lib/report";
-import { createReport, globalStats, purgeExpired, reportKey } from "@/lib/repo";
+import { completedAnalysisStats, createReport, purgeExpired, reportKey } from "@/lib/repo";
 import { getReportView } from "@/lib/view";
 
 const SHOP = "68849";
@@ -210,7 +210,7 @@ describe("Verotel : parcours de paiement", () => {
     expect(await post(qs(initial(ref)))).toEqual({ ok: true, alreadyConfirmed: false });
     expect(await view(id)).toBe("unlocked");
     expect((await pool().query("SELECT provider_sale_id FROM payments WHERE report_id = $1", [id])).rows[0].provider_sale_id).toBe("777001");
-    expect((await globalStats()).totalAnalyses).toBe(0); // formule A : jamais dans le bandeau
+    expect((await completedAnalysisStats()).count).toBe(1); // rapport débloqué par le paiement : compte comme analyse réalisée
   });
 
   it("notification rejouée : sans double effet", async () => {

@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes } from "node:crypto";
-import { FORMULAS, RATE_LIMIT, TICKER, UNPAID_TTL_HOURS, type FormulaId } from "@/config/site";
+import { FORMULAS, RATE_LIMIT, UNPAID_TTL_HOURS, type FormulaId } from "@/config/site";
 import { pool } from "./db";
 import { BETA } from "./mode";
 import type { QuestionnaireInput, ReportResults } from "./report";
@@ -130,20 +130,22 @@ export async function purgeExpired(): Promise<{ reports: number; ips: number }> 
   return { reports: del.rowCount ?? 0, ips: ips.rowCount ?? 0 };
 }
 
-export type GlobalStatsRow = { totalAnalyses: number; averageScore: number; bestScoreThisWeek: number };
+export type AnalysisStatsRow = { count: number; averageScore: number };
 
 /**
- * Statistiques réelles : uniquement les rapports payés issus d'une photo (B et C). Un record déclaré n'est pas un record.
- * Calculées depuis le journal anonyme : elles ne baissent pas quand un utilisateur supprime son rapport.
+ * Agrégats des analyses terminées, pour le bandeau défilant de l'accueil (aucune donnée individuelle : un nombre et une moyenne).
+ * Définition retenue (la plus prudente) : lignes du journal anonyme dont le rapport a été débloqué, c'est-à-dire délivré :
+ *  - bêta gratuite (`free_beta`), ou rapport payé (`paid_at` renseigné ; un remboursement le remet à vide) ;
+ *  - tous protocoles confondus ; un rapport créé mais jamais débloqué (non payé, purgé après 24 h) n'est PAS compté.
+ * Le journal survit à la suppression et à la purge des rapports : une analyse réalisée reste comptée, le chiffre ne baisse jamais
+ * parce qu'un visiteur efface son rapport.
  */
-export async function globalStats(): Promise<GlobalStatsRow> {
+export async function completedAnalysisStats(): Promise<AnalysisStatsRow> {
   const { rows } = await pool().query(
-    `SELECT count(*)::int AS total,
-            COALESCE(avg(score), 0)::float AS average,
-            COALESCE(max(score) FILTER (WHERE paid_at > now() - interval '7 days'), 0)::int AS best_week
-       FROM report_log WHERE paid_at IS NOT NULL AND formula IN ('B', 'C')`,
+    `SELECT count(*)::int AS n, COALESCE(avg(score), 0)::float AS average
+       FROM report_log WHERE free_beta OR paid_at IS NOT NULL`,
   );
-  return { totalAnalyses: rows[0].total, averageScore: rows[0].average, bestScoreThisWeek: rows[0].best_week };
+  return { count: rows[0].n, averageScore: rows[0].average };
 }
 
 
@@ -181,11 +183,4 @@ export async function addAttemptTokens(id: number, tokensIn: number, tokensOut: 
 
 export async function updateComment(reportId: string, comment: string): Promise<void> {
   await pool().query("UPDATE reports SET results = jsonb_set(results, '{comment}', to_jsonb($2::text)) WHERE id = $1", [reportId, comment]);
-}
-
-
-/** Statistiques du bandeau : aucun chiffre n'est exposé tant que le seuil de la configuration n'est pas atteint. */
-export async function publicStats(): Promise<{ show: false } | ({ show: true } & GlobalStatsRow)> {
-  const s = await globalStats();
-  return s.totalAnalyses >= TICKER.minAnalysesToShow ? { show: true, ...s } : { show: false };
 }

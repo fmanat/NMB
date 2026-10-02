@@ -102,6 +102,17 @@ test.describe("Petits écrans : le détecteur voit les vrais problèmes", () => 
     expect(p.some((x) => x.startsWith("texte coupé à droite"))).toBe(true);
     expect(p.some((x) => x.startsWith("défilement horizontal"))).toBe(true);
   });
+
+  test("texte réservé aux lecteurs d'écran (boîte de 1 px, contenu imbriqué) : ignoré ; le même texte visible : signalé", async ({ page }) => {
+    await page.goto("/contact");
+    await page.waitForLoadState("networkidle"); // hydratation terminée : React ne retire plus rien du document
+    const html = (style: string) => `<div id="sr-test" style="${style}"><ul><li><span style="white-space:nowrap">Texte réservé aux lecteurs d'écran, long et sans retour à la ligne possible, plus large que l'écran</span></li></ul></div>`;
+    await page.evaluate((h) => document.querySelector("main")!.insertAdjacentHTML("beforeend", h), html("position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)"));
+    await expect(page.locator("#sr-test")).toHaveCount(1);
+    expect(await layoutProblems(page)).toEqual([]);
+    await page.evaluate(() => document.getElementById("sr-test")!.setAttribute("style", "position:static;overflow:visible"));
+    expect((await layoutProblems(page)).some((x) => x.startsWith("texte coupé à droite"))).toBe(true);
+  });
 });
 
 // Premier écran mobile : le bandeau « scanner » (cylindre abstrait et valeurs de l'exemple fictif) précède le bouton principal,

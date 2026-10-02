@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { pool } from "@/lib/db";
 import { buildQuestionnaireReport } from "@/lib/report";
-import { createReport, getReport, hashIp, countRecentByIp, purgeExpired, globalStats, priceCents, reportKey } from "@/lib/repo";
+import { createReport, getReport, hashIp, countRecentByIp, purgeExpired, completedAnalysisStats, priceCents, reportKey } from "@/lib/repo";
 import { getReportView } from "@/lib/view";
 import { startCheckout, CheckoutError } from "@/lib/payments/checkout";
 import { handleWebhook } from "@/lib/payments/confirm";
@@ -146,21 +146,27 @@ describe("conservation et limites (section 11)", () => {
     expect(rows.length).toBe(1);
   });
 
-  it("statistiques globales : uniquement les rapports payés issus d'une photo (B, C)", async () => {
-    expect((await globalStats()).totalAnalyses).toBe(0);
-    const b = await newReport();
-    const c = await newReport();
-    const declared = await newReport(); // formule A payée : ne compte pas
-    const unpaid = await newReport(); // photo non payée : ne compte pas
-    const log = (id: string, formula: string, score: number, paid: boolean) =>
-      pool().query("UPDATE report_log SET formula = $2, score = $3, paid_at = $4 WHERE key = $1", [reportKey(id), formula, score, paid ? new Date() : null]);
-    await log(b, "B", 80, true);
-    await log(c, "C", 90, true);
-    await log(declared, "A", 98, true);
-    await log(unpaid, "B", 99, false);
-    const s = await globalStats();
-    expect(s.totalAnalyses).toBe(2);
+  it("analyses réalisées : rapports débloqués (bêta ou payés), tous protocoles ; jamais un rapport non débloqué ni remboursé", async () => {
+    expect(await completedAnalysisStats()).toEqual({ count: 0, averageScore: 0 });
+    const ids = [await newReport(), await newReport(), await newReport(), await newReport(), await newReport(), await newReport()];
+    const log = (id: string, formula: string, score: number, paidAt: Date | null, freeBeta = false) =>
+      pool().query("UPDATE report_log SET formula = $2, score = $3, paid_at = $4, free_beta = $5 WHERE key = $1", [reportKey(id), formula, score, paidAt, freeBeta]);
+    await log(ids[0], "B", 80, new Date()); // photo payée : compte
+    await log(ids[1], "C", 90, new Date()); // photo + mesures payée : compte
+    await log(ids[2], "A", 100, new Date()); // questionnaire payé : compte
+    await log(ids[3], "A", 70, null, true); // questionnaire de la bêta gratuite : compte
+    await log(ids[4], "B", 99, null); // non payé : ne compte pas
+    await log(ids[5], "A", 99, null); // non payé : ne compte pas
+    const s = await completedAnalysisStats();
+    expect(s.count).toBe(4);
     expect(s.averageScore).toBe(85);
-    expect(s.bestScoreThisWeek).toBe(90);
+  });
+
+  it("analyses réalisées : la suppression d'un rapport ne fait pas baisser le compteur (journal anonyme)", async () => {
+    const id = await newReport();
+    await pool().query("UPDATE report_log SET paid_at = now() WHERE key = $1", [reportKey(id)]);
+    expect((await completedAnalysisStats()).count).toBe(1);
+    await pool().query("DELETE FROM reports WHERE id = $1", [id]);
+    expect((await completedAnalysisStats()).count).toBe(1);
   });
 });

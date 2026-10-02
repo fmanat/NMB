@@ -39,9 +39,18 @@ export const REFERENCES = {
   erect: { length: { mean: 13.12, sd: 1.66 }, girth: { mean: 11.66, sd: 1.1 } },
 } as const;
 
+// Citation de la source des références ci-dessus, telle qu'elle apparaît dans le bandeau défilant de l'accueil.
+export const REFERENCE_SOURCE = "Veale et al., BJU Int., 2015";
+
 export const TICKER = {
-  // Le bandeau reste masqué tant que le total d'analyses est inférieur à ce seuil.
-  minAnalysesToShow: 500,
+  // Bandeau défilant de l'accueil : le compteur d'analyses et le score moyen n'apparaissent qu'AU-DELÀ de ce seuil
+  // (strictement plus : 500 analyses ne les affichent pas, 501 les affichent).
+  analysesThreshold: 500,
+  // Durée de conservation en mémoire des chiffres lus en base (millisecondes), et délai maximal d'attente de la base
+  // (au-delà, ou en cas d'erreur, le bandeau s'affiche sans ces deux éléments : il ne bloque jamais la page).
+  statsCacheMs: 60_000,
+  statsFailureCacheMs: 30_000,
+  statsTimeoutMs: 1_500,
 } as const;
 
 export const AGE_GATE = {

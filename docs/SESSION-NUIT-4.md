@@ -17,7 +17,7 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 | 0 | Limite par IP derrière Cloudflare | FAIT (avant la session, avec le propriétaire) |
 | 1 | Bandeau scanner 3D | FAIT |
 | 2 | Curseur interactif « Essayez » | FAIT |
-| 3 | Bandeau défilant d'informations vraies | à faire |
+| 3 | Bandeau défilant d'informations vraies | FAIT |
 | 4 | Profils morphologiques (grille 3 × 3) | à faire |
 | 5 | Animations | à faire |
 | 6 | Formule photo en bêta, réponse standardisée (PHOTO_BETA, désactivée) | à faire |
@@ -72,3 +72,31 @@ Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste
 - Curseur à la souris : la plage 2 à 30 cm est large (la plage plausible est plus étroite) ; hors plage, le message remplace les résultats (la page se raccourcit alors).
 - Aucun essai sur un vrai téléphone ni lecteur d'écran. L'annonce vocale (percentiles) est différée de 0,6 s pour ne pas parler à chaque cran.
 
+## Bloc 3 : bandeau défilant d'informations vraies : FAIT
+**Ce qui est fait**
+- Bandeau sobre (style clair, fond `--bm-blue-050`) **sous le hero**, avant la section « Essayez » ; le hero et le bouton principal ne bougent pas. Il remplace l'ancien bandeau de statistiques de l'en-tête (`Ticker.tsx`, qui interrogeait `/api/stats` depuis le navigateur sur toutes les pages) : composant, route `/api/stats`, `publicStats` et `globalStats` supprimés.
+- Éléments, tous dérivés d'une source (aucun chiffre écrit en dur) :
+  1. « Bêta gratuite » : seulement si `isFreeBeta()` ;
+  2. « Longueur médiane de référence, en érection 13,12 cm, Veale et al., BJU Int., 2015 » : valeur lue par `referenceFor("erect", "length")` (constantes `REFERENCES` de `site.ts`, via `stats.ts`), source = constante `REFERENCE_SOURCE`. Un test vérifie que c'est bien une médiane pour la loi du site (percentile 50 en ce point) ;
+  3. « Mesures dans chaque rapport 4 (longueur, circonférence, courbure, score) » : compte des clés `REPORT_MEASURES` (typées sur `keyof ReportResults`) présentes dans le rapport construit par le site ; un test e2e vérifie l'égalité avec le nombre de cartes de « Ce que mesure le rapport » ;
+  4. « Version du 2 octobre 2026 » : date de construction réelle, `next.config.ts` (clé `env`, `BITOMETRE_BUILD_DATE`) calculée au `next build` (au démarrage de `next dev`), formatée en français (fuseau Europe/Paris). Date absente ou invalide : l'élément disparaît ;
+  5. « Analyses réalisées N » et « Score moyen X sur 100 » : **seulement si N est strictement supérieur à `TICKER.analysesThreshold` (500)** : 500 n'affiche rien, 501 affiche. Base indisponible, lente (plus de 1,5 s) ou réponse incohérente : les deux éléments n'apparaissent pas, le reste du bandeau est intact.
+- **Définition du compteur (la plus prudente)** : lignes du journal anonyme `report_log` dont le rapport a été **débloqué** (bêta gratuite, ou payé et non remboursé), tous protocoles. Un rapport créé mais jamais débloqué n'est pas compté. Le journal survit à la suppression et à la purge : une analyse réalisée reste comptée, le chiffre ne baisse pas quand un visiteur efface son rapport. Aucune donnée personnelle : un entier et une moyenne. (L'ancienne définition, photo payée seulement, n'aurait jamais pu s'afficher pendant la bêta gratuite, qui ne produit que des rapports du questionnaire.)
+- **Fraîcheur du compteur sans appel réseau côté client** : l'accueil reste statique mais est **régénéré toutes les 5 minutes** (`export const revalidate = 300`, valeur littérale exigée par Next.js ; un test la borne entre 60 et 900). Le serveur lit la base à la construction puis à chaque régénération, avec mémoire de 60 s (30 s après un échec), délai maximal de 1,5 s et lectures simultanées partagées (`src/lib/tickerStats.ts`). Vérifié sur le site compilé : compteur de la construction (600), puis après le délai, la page servie en cache puis régénérée affiche 650 ; avec une base injoignable à la construction et à l'exécution, la page se construit et se régénère sans les deux éléments. Aucun JavaScript, aucune requête du navigateur pour le bandeau (test e2e).
+- **Défilement** : CSS pur (`translateX` sur une piste de deux copies identiques, 55 s la boucle, chaque copie au moins aussi large que l'écran, bords fondus par un masque). **Pause** au survol, au focus clavier dans le bandeau et par une case « Pause » réelle (WCAG 2.2.2, sans JavaScript). **Mouvement réduit** : plus de défilement, plus de copie, plus de case ; la liste réelle devient visible, statique, sur plusieurs lignes (éléments qui passent à la ligne). Lecteurs d'écran : **une seule liste réelle** (`ul`, masquée visuellement par la technique « sr-only » hors mouvement réduit) ; le défilement visuel, avec ses deux copies, est entièrement `aria-hidden`. Les règles de mouvement réduit sont dans `globals.css` (non dans des classes Tailwind : une règle hors couche l'emporte sur les utilitaires).
+- **Détecteur de mise en page (`e2e/layout.ts`)** : il traitait à tort comme visible le texte d'éléments imbriqués dans une boîte « sr-only » de 1 px. Corrigé dans le détecteur (contenu rogné à 1 px × 1 px ignoré) avec un test de sensibilité (`e2e/mobile.spec.ts`) : le même texte rendu visible reste signalé.
+
+**Fichiers** : `src/lib/ticker.ts` (construction de la liste, pure), `src/lib/tickerStats.ts` (lecture serveur non bloquante), `src/lib/repo.ts` (`completedAnalysisStats`), `src/components/ticker/TickerBand.tsx` (présentation) et `InfoTicker.tsx` (serveur), `src/app/page.tsx`, `src/app/globals.css`, `src/config/site.ts` (`REFERENCE_SOURCE`, `TICKER`), `next.config.ts`, `playwright.config.ts` (`TICKER_STATS_TTL_MS=0` pour les sites de test), `tests/ticker.test.ts` (42 tests), `e2e/bandeau-common.ts` + `bandeau.spec.ts` (version payante) + `bandeau-beta.spec.ts` (bêta) : 21 tests chacun.
+
+**Tests** : unitaires (chaque élément présent ou absent selon sa condition, seuil aux bornes 0, 499, 500, 501, base indisponible ou lente ou incohérente, valeurs identiques aux constantes, mémoire et échec, rendu HTML, choix de rendu de l'accueil) ; base de test remplie par SQL (500 puis 501 lignes, rapports non débloqués jamais comptés) ; e2e : contenu, bornes 500/501 sur une vraie base, date, nombre de mesures, rendu serveur sans requête, lecteurs d'écran (une liste, pas de doublon), défilement et pause (survol, focus, case), mouvement réduit, 320/375/390/1280 px dans les deux modes de mouvement (détecteur de mise en page, recouvrement des éléments défilants, axe-core sur le bandeau), axe-core sur l'accueil entière.
+
+**`npm run verify`** : vert (456 tests unitaires, 132 tests de bout en bout).
+
+**Lighthouse mobile** (accueil, site compilé avec une base joignable et 650 analyses de test, donc le bandeau complet à six éléments, 5 passages) : performance **93, 96, 96, 92, 94** ; accessibilité 100 ; bonnes pratiques 100 ; CLS 0 ; LCP 2,7 à 3,0 s (le titre) ; TBT 70 à 230 ms. Même plage que les blocs 1 et 2.
+
+**Limites / à savoir**
+- Le compteur apparaît au plus tard 5 minutes après avoir dépassé le seuil (et la première page servie après un déploiement est celle construite au `next build`, avec le compteur de ce moment-là si la base répond à la construction).
+- « Version du » est la date du dernier **build**, ce qui coïncide avec le déploiement par `railway up` (le build se fait au déploiement). Dans les tests et en développement, c'est la date de démarrage du serveur.
+- La médiane affichée est la moyenne de référence de Veale et al. (le site suppose une loi normale, donc médiane = moyenne) ; le commentaire de `REFERENCES` dit toujours « à vérifier sur l'article avant mise en ligne » : cette vérification reste à faire par le propriétaire.
+- Dans ce contexte d'exécution, un processus détaché (`nohup`) n'arrive pas à joindre PostgreSQL (la connexion pend) : c'est ce qui a servi, par hasard, à vérifier que la page se construit et se régénère quand la base ne répond pas. Les serveurs lancés par Playwright, eux, joignent la base.
+- Aucun essai sur un vrai téléphone ni lecteur d'écran.

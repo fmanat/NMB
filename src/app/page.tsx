@@ -5,6 +5,7 @@ import { exampleReport } from "@/lib/exampleReport";
 import { ScanButton } from "@/components/ScanButton";
 import { ScannerBand } from "@/components/scanner/ScannerBand";
 import { TrackView } from "@/components/TrackView";
+import { InfoTicker } from "@/components/ticker/InfoTicker";
 import { TrySection } from "@/components/try/TrySection";
 import { Accordion } from "@/components/ui/Accordion";
 import { Badge } from "@/components/ui/Badge";
@@ -27,7 +28,12 @@ const MEASURES: { icon: IconName; title: string; text: string }[] = [
   { icon: "barChart", title: "Score global", text: "Une note sur 100, volontairement indulgente. Ce n'est pas un classement : les percentiles, eux, sont exacts." },
 ];
 
-export default function Home() {
+// Accueil statique régénéré toutes les 5 minutes (Next.js sert la page en cache puis la reconstruit en arrière-plan) : le compteur
+// d'analyses du bandeau reste à jour sans aucun appel réseau dans le navigateur et sans rendre la page dynamique à chaque visite.
+// Valeur littérale obligatoire (Next.js ne lit pas une constante importée) : tests/ticker.test.ts la vérifie.
+export const revalidate = 300;
+
+export default async function Home() {
   const beta = isFreeBeta();
   const ex = exampleReport();
 
@@ -67,6 +73,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Bandeau défilant d'informations vraies (statut, référence, mesures, version, compteur au-delà du seuil) : rendu serveur */}
+      <InfoTicker />
 
       {/* Essayez : simulation locale (curseurs), mêmes calculs que le rapport, chargée en différé */}
       <TrySection />

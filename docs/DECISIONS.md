@@ -258,3 +258,18 @@ Constat sans correction nécessaire : contrastes (axe : aucune violation), langu
 | Cartes en double sur la page | Les cartes sont déjà présentes dans le rapport d'exemple plus bas : la simulation les rend sans repère de région (`landmark={false}`) pour éviter deux régions de même nom (axe-core `landmark-unique`). |
 | Lien vers le questionnaire | Le bouton `ScanButton` habituel (contrôle d'âge puis `/analyse`), libellé « Remplir le vrai questionnaire ». |
 
+## Session de nuit 4, bloc 3 : bandeau défilant d'informations vraies (décisions prises seul, option la plus prudente)
+
+| Question | Décision |
+|---|---|
+| Que devient l'ancien bandeau de statistiques de l'en-tête ? | Supprimé (composant, route `/api/stats`, `publicStats`, `globalStats`) : il interrogeait le serveur depuis le navigateur sur chaque page et son compteur ne pouvait pas s'afficher en bêta. Remplacé par le bandeau de l'accueil, rendu côté serveur. |
+| Définition de « analyses terminées » | Lignes du journal anonyme dont le rapport est **débloqué** (bêta gratuite, ou payé non remboursé), tous protocoles ; jamais un rapport simplement créé. Le journal survit aux suppressions : le compteur ne baisse pas quand un visiteur efface son rapport (une analyse réalisée reste réalisée). Libellé « Analyses réalisées », sans promesse sur la qualité des valeurs (déclarées ou estimées). |
+| Seuil | `TICKER.analysesThreshold = 500`, **strictement au-delà** (500 n'affiche rien, 501 affiche). Compteur et score moyen vont toujours ensemble, calculés sur la même requête. |
+| Fraîcheur du compteur | Accueil statique régénéré toutes les 5 minutes (`revalidate = 300`), plutôt qu'une page dynamique à chaque visite (performance) ou un appel du navigateur (interdit par la consigne). Lecture de la base avec mémoire courte, délai maximal 1,5 s, jamais bloquante. |
+| « Médiane de référence » | Longueur en érection (13,12 cm), lue dans les constantes ; c'est la moyenne de Veale et al. parce que le site suppose une loi normale (médiane = moyenne), ce qu'un test vérifie. Un seul élément (longueur), pour ne pas allonger le bandeau. |
+| « Nombre de mesures » | Compté sur les clés de `REPORT_MEASURES` présentes dans le rapport de formule A (longueur, circonférence, courbure, score) : celles que la page présente déjà sous « Quatre indicateurs ». La symétrie des formules photo n'est pas comptée (désactivées, absente du rapport du questionnaire). |
+| Date de version | Date de construction (pas de déploiement : le build a lieu au déploiement par `railway up`). Libellé « Version du <date> ». Absente ou invalide : l'élément disparaît, jamais une fausse date. |
+| Accessibilité du défilement | Une seule liste réelle pour les lecteurs d'écran ; le défilement (deux copies) en `aria-hidden` ; mouvement réduit : liste statique visible, sans copie ni case. Case « Pause » en plus du survol et du focus (critère WCAG 2.2.2, sans JavaScript). |
+| Détecteur `e2e/layout.ts` | Étendu aux contenus « sr-only » imbriqués (une boîte rognée à 1 px contient la liste), avec un test de sensibilité : on ne cache pas un défaut, on corrige une fausse alerte du détecteur, et le même texte rendu visible reste signalé. |
+| Réglage de test | `TICKER_STATS_TTL_MS` (0 pour les sites de test e2e) : sans mémoire, un test qui remplit la base voit le compteur tout de suite. Valeur par défaut inchangée (60 s) en production. |
+

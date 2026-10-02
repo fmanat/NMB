@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { SITE } from "@/config/site";
 import { ScanButton } from "@/components/ScanButton";
-import { Ticker } from "@/components/Ticker";
 import { MobileMenu } from "./MobileMenu";
 
 export const NAV_LINKS = [
@@ -29,7 +28,6 @@ export function Logo() {
 export function Header() {
   return (
     <header className="site-header sticky top-0 z-[100] bg-white/95 backdrop-blur border-b border-[var(--bm-gray-200)]">
-      <Ticker />
       <div className="container-bm h-[60px] md:h-[72px] flex items-center justify-between gap-6">
         <Logo />
         <nav aria-label="Principale" className="hidden lg:flex items-center gap-1">

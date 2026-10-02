@@ -35,6 +35,8 @@ const env = (scenario: string, dist: string, extra: Record<string, string> = {})
   SIM_VISION_SCENARIO: scenario,
   XAI_API_KEY: "",
   STATS_WEBHOOK_URL: "",
+  // Bandeau défilant de l'accueil : pas de mémoire des agrégats, pour qu'un test qui remplit la base voie le compteur tout de suite.
+  TICKER_STATS_TTL_MS: "0",
   SITE_URL: "http://localhost:3201",
   ...extra,
 });
