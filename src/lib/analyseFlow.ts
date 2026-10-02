@@ -41,7 +41,21 @@ export type FlowInput = {
   freeBeta?: boolean;
 };
 
-export type FlowDeps = { vision: VisionProvider; screening: ImageScreeningProvider; captcha: CaptchaProvider; spend?: SpendGate };
+/**
+ * Accès aux données du flux (limite par adresse, tentatives, création du rapport). Par défaut : la base du site.
+ * Injectable pour l'outil de test local (scripts/photo-test.mts, option « sans base ») : même chaîne, aucune écriture en base.
+ */
+export type FlowStore = {
+  hashIp(ip: string): string;
+  countAttemptsByIp(ipHash: string): Promise<number>;
+  startAttempt(ipHash: string | null, formula: "B" | "C"): Promise<number>;
+  finishAttempt: (id: number, r: { outcome: "ok" | "refused" | "blocked" | "error"; motif?: string; visionMs?: number; tokensIn?: number; tokensOut?: number }) => Promise<void>;
+  createReport: (args: Parameters<typeof createReport>[0]) => Promise<string>;
+};
+
+export const dbStore: FlowStore = { hashIp, countAttemptsByIp, startAttempt, finishAttempt, createReport };
+
+export type FlowDeps = { vision: VisionProvider; screening: ImageScreeningProvider; captcha: CaptchaProvider; spend?: SpendGate; store?: FlowStore };
 
 // Messages volontairement neutres : ils ne détaillent jamais le motif (en particulier un doute sur l'âge).
 export const NEUTRAL_REFUSAL =
@@ -134,8 +148,9 @@ async function* runAnalysisSteps(input: FlowInput, deps: FlowDeps): AsyncGenerat
     return;
   }
 
-  const ipHash = hashIp(input.ip);
-  if ((await countAttemptsByIp(ipHash)) >= RATE_LIMIT.maxPerWindow) {
+  const store = deps.store ?? dbStore;
+  const ipHash = store.hashIp(input.ip);
+  if ((await store.countAttemptsByIp(ipHash)) >= RATE_LIMIT.maxPerWindow) {
     yield { type: "error", code: "rate", message: `Limite atteinte : ${RATE_LIMIT.maxPerWindow} analyses par période de ${RATE_LIMIT.windowHours} h.` };
     return;
   }
@@ -150,7 +165,7 @@ async function* runAnalysisSteps(input: FlowInput, deps: FlowDeps): AsyncGenerat
   }
   const spent = { costMicros: 0, calls: 0 };
   try {
-    yield* analyseWithReservation(input, deps, ipHash, (u) => {
+    yield* analyseWithReservation(input, deps, store, ipHash, (u) => {
       spent.costMicros += usageCostMicros(u);
       spent.calls += u.calls;
     });
@@ -163,8 +178,9 @@ async function* runAnalysisSteps(input: FlowInput, deps: FlowDeps): AsyncGenerat
   }
 }
 
-async function* analyseWithReservation(input: FlowInput, deps: FlowDeps, ipHash: string, onUsage: (u: Usage) => void): AsyncGenerator<FlowEvent> {
-  const attemptId = await startAttempt(ipHash, input.formula);
+async function* analyseWithReservation(input: FlowInput, deps: FlowDeps, store: FlowStore, ipHash: string, onUsage: (u: Usage) => void): AsyncGenerator<FlowEvent> {
+  const { finishAttempt, createReport } = store;
+  const attemptId = await store.startAttempt(ipHash, input.formula);
   const versions = STANDARD_VERSIONS;
 
   let jpeg: Buffer;

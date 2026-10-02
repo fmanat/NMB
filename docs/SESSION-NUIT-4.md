@@ -21,7 +21,7 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 | 4 | Profils morphologiques (grille 3 × 3) | FAIT |
 | 5 | Animations | FAIT |
 | 6 | Formule photo en bêta, réponse standardisée (PHOTO_BETA, désactivée) | FAIT (désactivée par défaut, rien déployé) |
-| 7 | Kit de test photo (`docs/TEST-PHOTO.md`) | à faire |
+| 7 | Kit de test photo (`docs/TEST-PHOTO.md`) | FAIT (mode réel jamais lancé par l'assistant) |
 | 8 | Vérification d'âge branchée (`docs/ACTIVATION-PHOTO.md`) | à faire |
 | 9 | Déploiement, test de fumée, captures, Lighthouse | à faire |
 
@@ -168,3 +168,24 @@ Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste
 - `yoti` : garde-fou et variables prêts, adaptateur absent (bloc 8).
 - Le filtrage absent est accepté en production par décision de ce bloc ; c'est une décision de conformité à confirmer avec le juriste (docs/JURISTE.md, point 10).
 - Aucun essai sur un vrai téléphone ni lecteur d'écran.
+
+## Bloc 7 : kit de test photo pour le propriétaire : FAIT (aucun appel xAI, aucune photo réelle)
+
+**Ce qui est fait**
+- `npm run photo:test -- photos-test/ma-photo.jpg --etat erection --longueur 14,2 --circonference 12,1 [--supprimer]` : exécute la **chaîne réelle** de la formule B (`runAnalysis` de `src/lib/analyseFlow.ts` : réencodage, recevabilité, repérage, calculs par le code, rédaction `photo-report/1`, profil, validations, relance unique) avec le vrai moteur xAI (clé lue dans `.env` par le script, jamais affichée) et n'affiche que du **texte** : mesures calculées et marges, percentiles, profil, écart avec la règle (cm et %, « dans la marge affichée : oui/NON »), observations et verdict, motif d'un refus, nombre d'appels et relances, durée totale et par étape, jetons et **coût en dollars** (jetons × `XAI_PRICE_*`), **cumul du jour** par rapport à `XAI_DAILY_CAP_USD`.
+- `--simulation` : même circuit avec `createSimulatedVision` et une image neutre fabriquée en mémoire (ou la photo du dossier lue mais ignorée par le moteur simulé) ; aucun réseau, aucun coût. **Seul mode exécuté par l'assistant.**
+- Gardes : chemin obligatoirement dans `photos-test/` (refus d'un chemin extérieur, d'une remontée `..`, d'un dossier voisin au nom proche, d'un lien symbolique, d'un dossier, d'une extension autre que jpg/jpeg/png ; `photos-test/` lui-même ne doit pas être un lien) ; dossier **ignoré par git** vérifié au lancement (`git check-ignore`, repli sur `.gitignore`) ; les messages ne répètent jamais le nom du fichier ; mode réel : clé obligatoire et **refus de démarrer si dépensé aujourd'hui + 0,03 $ (réservation estimée) > `XAI_DAILY_CAP_USD`**, avant toute lecture de la photo, sans rien envoyer ni supprimer.
+- **Sans base** (décision : la seule option, par défaut) : `FlowDeps` reçoit un nouveau champ facultatif `store` (type `FlowStore`, défaut `dbStore` = les fonctions de `repo.ts`, donc **comportement du site inchangé**) ; le script lui passe un magasin en mémoire (aucune écriture, aucune connexion à la base : vérifié avec `DATABASE_URL` retirée). Le cumul du jour est tenu dans `.photo-test-depenses.json` (racine, ignoré par git, que des dollars).
+- Suppression : `--supprimer` (après l'analyse tentée, même refusée) ou `npm run photo:supprimer -- photos-test/ma-photo.jpg | --tout | --verifier` : écrasement (une passe aléatoire, une passe de zéros, `fsync`) puis suppression, confirmation et nombre d'entrées restantes ; un lien symbolique est retiré sans toucher à sa cible.
+- La photo est lue en mémoire (jamais réécrite ni copiée), l'exemplaire est vidé (`fill(0)`) après l'analyse ; la console est rendue après le flux ; aucun octet ni base64 dans la sortie (test).
+- `docs/TEST-PHOTO.md` (français simple, QCM, cases à cocher) : mesures à la règle (définitions du questionnaire, méthode, deux mesures), prise de vue (consignes du site et seuils du code), commandes copiables pas à pas (Terminal, `cp`, `sips` pour HEIC), lecture du résultat (aucun seuil d'écart inventé : marge affichée, simulation 6,1 % / 94 %, essai du 30/09 +6 % et −9 %, « l'écart de référence reste à établir avec plusieurs essais »), suppression et vérification, ce qu'il faut me renvoyer (texte seulement). **Point d'alerte écrit dans le document** : le projet est dans `Documents`, que iCloud Drive peut synchroniser (QCM de vérification avant le test) ; sauvegardes Time Machine ; l'écrasement n'efface pas physiquement sur un SSD.
+
+**Fichiers** : `scripts/lib/photoTest.ts` (logique), `scripts/photo-test.mts`, `scripts/photo-supprimer.mts`, `src/lib/analyseFlow.ts` (`FlowStore`, `dbStore`, `deps.store`), `package.json`, `.gitignore`, `docs/TEST-PHOTO.md`, `README.md`, `tests/photo-test.test.ts` (30 tests, sans réseau).
+
+**Tests** : contrôle que `photos-test/` et le fichier de cumul sont ignorés (git et `.gitignore`) et que le script refuse un projet où ce n'est pas le cas ; garde de chemin (relatif, absolu, remontée, dossier au nom proche, lien, dossier, extension, absent, nul, chemin ne contenant pas le nom du fichier) ; arguments (virgule décimale, bornes, état obligatoire) ; écart calculé (−1,2 cm / −8,5 %, +0,5 cm / +4,1 %, borne à 10 %) ; sortie texte sans octets, base64, nom de fichier ni chemin ; suppression (écrasement prouvé via un second lien physique, fichier extérieur intact, `--tout`, `--verifier`) ; aucune écriture en base (comptes avant/après) ; mode réel factice : clé vide, `.env` absent, plafond (bornes 0,03 $, cumul d'hier ignoré, refus avant tout appel, photo intacte), coût d'après jetons (19 258 micro-dollars = 0,0193 $), cumul additionné, relance comptée et coûtée, double invalidité, panne du moteur ; cohérence de `docs/TEST-PHOTO.md` (chaque commande acceptée par les scripts, motifs cités existants, sections demandées).
+
+**Limites / à savoir**
+- Le mode réel n'a **pas** été exécuté (interdit à cette session) : la mise en forme des valeurs réelles est testée avec un moteur factice qui rend les jetons mesurés le 02/10/2026. La durée de bout en bout avec le vrai moteur reste à mesurer par le propriétaire.
+- Le script lit le fichier tel quel (pas de réencodage navigateur) : limite de 8 Mo de `UPLOAD.maxBytes` ; HEIC non accepté (`sips` indiqué).
+- Le cumul du jour du kit est local et indépendant de la base du site (pas de lien avec `xai_daily_spend`).
+- Aucun essai sur le Mac du propriétaire (macOS : `sips`, Terminal).

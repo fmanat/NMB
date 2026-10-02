@@ -127,6 +127,7 @@ Les statistiques durables (journal anonyme, paiements) sont conservées même ap
 | `npm run geometry:report` | Rapport d'exactitude de la géométrie sur des prises de vue simulées. |
 | `npm run calibrate` | Calibration sur de vraies prises de vue : protocole dans [docs/CALIBRATION.md](docs/CALIBRATION.md). |
 | `npm run latency:bench`, `npm run xai:test` | Mesures et essais du moteur xAI. Coûtent quelques centimes ; n'utiliser qu'une image neutre. |
+| `npm run photo:test`, `npm run photo:supprimer` | Test de la formule photo sur **votre** photo, en local (photos-test/, ignoré par git), résultat en texte seulement, suppression propre : mode d'emploi pas à pas dans [docs/TEST-PHOTO.md](docs/TEST-PHOTO.md). `-- --simulation` : essai à blanc sans coût. Le mode réel appelle xAI (environ 2 centimes) ; il refuse de démarrer si `XAI_DAILY_CAP_USD` serait dépassé. |
 | `npm run xai:schema-check` | Vérifie avec la vraie API que le schéma JSON strict versionné des réponses (`photo-report/1`) est accepté et que les réponses se valident, avec une image neutre fabriquée par le script (environ 2 centimes ; `--comment-only` : la rédaction seule). |
 
 ## 7. Règles à ne jamais enfreindre

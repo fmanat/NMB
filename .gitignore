@@ -45,6 +45,8 @@ next-env.d.ts
 # photos de test personnelles : ne JAMAIS les versionner
 /photos-test/
 /scripts/photos-test/
+# cumul de dépense xAI du kit de test photo (texte seulement, local)
+/.photo-test-depenses.json
 *.jpg
 *.jpeg
 *.png

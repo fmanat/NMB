@@ -19,6 +19,8 @@
     "geometry:report": "tsx scripts/geometry-report.mts",
     "latency:bench": "tsx scripts/latency-bench.mts",
     "xai:schema-check": "tsx --env-file=.env scripts/xai-schema-check.mts",
+    "photo:test": "tsx scripts/photo-test.mts",
+    "photo:supprimer": "tsx scripts/photo-supprimer.mts",
     "e2e": "playwright test",
     "e2e:remote": "playwright test -c playwright.remote.config.ts"
   },
