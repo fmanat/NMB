@@ -5,6 +5,7 @@ import { SITE } from "@/config/site";
 import { isFreeBeta } from "@/lib/mode";
 import { Header } from "@/components/navigation/Header";
 import { Footer } from "@/components/navigation/Footer";
+import { RevealOnView } from "@/components/RevealOnView";
 
 const sans = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
 const mono = IBM_Plex_Mono({ variable: "--font-plex", subsets: ["latin"], weight: ["400", "500"], display: "swap" });
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Header />
         <main id="contenu" tabIndex={-1} className="flex-1">{children}</main>
         <Footer />
+        <RevealOnView />
       </body>
     </html>
   );

@@ -288,3 +288,14 @@ Constat sans correction nécessaire : contrastes (axe : aucune violation), langu
 | Carte de partage | Case à cocher « Ajouter mon profil morphologique », désactivée par défaut, indépendante du mode choisi (score, percentiles, mesure de référence). Seule la valeur `true` active l'option côté serveur. Le contenu enregistré ne reçoit le champ `profile` (identifiant seul, jamais le nom ni les percentiles) que si la case est cochée ; le nom apparaît sur la page publique et sur les deux images, jamais dans le titre ni dans les métadonnées de partage (Open Graph, Twitter). |
 | Rétrocompatibilité | `cards.content` est du jsonb et le champ est facultatif : aucune migration (la suivante reste 009). Les cartes déjà créées n'ont pas la clé et s'affichent comme avant ; un identifiant de profil inconnu est ignoré (rien n'est affiché). Les liens privés, les cartes et les défis ne changent pas. |
 | Page méthode | Tableau (légende, en-têtes de colonne et de ligne) sur écran large, liste groupée par classe de longueur sur mobile (un seul des deux est affiché). Les libellés de classe et l'explication des seuils sont lus dans les constantes : changer un seuil change la page. |
+
+## Nuit 4, bloc 5 : animations à l'apparition
+
+| Question | Décision |
+|---|---|
+| Déclencheur | `IntersectionObserver` minimal (un composant client dans la mise en page) posant un attribut `data-reveal`, plutôt que `animation-timeline: view()` : ce dernier lie l'animation au défilement (elle suivrait le doigt) et non à une durée, et n'existe pas partout. |
+| Sans JavaScript / échec | Les animations ne sont déclarées que sous `[data-reveal="run"]`, posé par le script : sans lui, valeur finale visible. Aucune règle ne masque un texte. |
+| Mouvement réduit | Le script ne s'active pas ; la CSS neutralise toute animation et transition de ces éléments. |
+| Une seule fois | L'élément n'est plus observé après son déclenchement. Pas de rejeu au retour dans l'écran ni quand un curseur bouge ; le changement de valeur utilise une transition de 200 ms. |
+| Éléments déjà visibles au chargement | Rejeu bref après hydratation accepté, plutôt que de masquer du contenu avant le script (plus prudent pour la lisibilité et le LCP). |
+| Valeurs | Aucune valeur ni durée inventée : durées = variables de la section 37 ; les animations ne révèlent que les valeurs calculées. |

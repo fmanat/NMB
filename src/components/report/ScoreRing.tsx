@@ -5,7 +5,7 @@ export function ScoreRing({ score, size = "lg" }: { score: number; size?: "sm" |
   const pct = Math.min(1, Math.max(0, score / 100));
   const dim = size === "lg" ? "w-[160px] h-[160px] md:w-[200px] md:h-[200px]" : size === "md" ? "w-[120px] h-[120px]" : "w-[96px] h-[96px]";
   return (
-    <div className={`relative ${dim} flex-none`} role="img" aria-label={`Score global : ${Math.round(score)} sur 100`}>
+    <div data-reveal-on-view className={`relative ${dim} flex-none`} role="img" aria-label={`Score global : ${Math.round(score)} sur 100`}>
       <svg viewBox="0 0 180 180" className="absolute inset-0 size-full" aria-hidden="true">
         <circle cx="90" cy="90" r={r} fill="none" stroke="var(--bm-gray-200)" strokeWidth="12" />
         <circle

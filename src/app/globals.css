@@ -490,12 +490,40 @@ main:focus { outline: none !important; }
   }
 }
 
-/* ---------- Animations de données (progressives, sobres) ---------- */
+/* ---------- Animations de données (à l'apparition, une seule fois, progressives, sobres) ----------
+   Sans JavaScript, hors écran avant l'arrivée ou en mouvement réduit : la valeur finale est celle du HTML serveur.
+   RevealOnView pose data-reveal="pending" (hors écran) puis "run" (animation, une fois), enfin data-animated="done".
+   Aucune propriété de mise en page n'est animée (transform, opacité, tracé) : pas de décalage. Le texte des valeurs n'est jamais masqué. */
 @keyframes bm-draw { from { stroke-dashoffset: var(--len, 600); } to { stroke-dashoffset: 0; } }
+@keyframes bm-draw-unit { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes bm-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes bm-fade { from { opacity: 0; } to { opacity: 1; } }
-.anim-ring { animation: bm-draw var(--duration-data) var(--ease-standard) both; }
-.anim-bar { transform-origin: left center; animation: bm-grow var(--duration-data) var(--ease-standard) both; }
+.anim-ring { stroke-dashoffset: 0; }
+.anim-line { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.anim-bar { transform-origin: left center; }
+/* Départ (hors écran seulement) */
+[data-reveal="pending"] .anim-ring { stroke-dashoffset: var(--len, 600); }
+[data-reveal="pending"] .anim-line { stroke-dashoffset: 1; }
+[data-reveal="pending"] .anim-bar { transform: scaleX(0); }
+[data-reveal="pending"] .anim-marker,
+[data-reveal="pending"] .anim-fade { opacity: 0; }
+/* Lecture */
+[data-reveal="run"] .anim-ring { animation: bm-draw var(--duration-data) var(--ease-standard) both; }
+[data-reveal="run"] .anim-line { animation: bm-draw-unit var(--duration-data) var(--ease-standard) both; }
+[data-reveal="run"] .anim-bar { animation: bm-grow var(--duration-data) var(--ease-standard) both; }
+[data-reveal="run"] .anim-fade { animation: bm-fade var(--duration-slow) var(--ease-standard) both; }
+[data-reveal="run"] .anim-marker { animation: bm-fade var(--duration-slow) var(--ease-standard) calc(var(--duration-data) - var(--duration-slow)) both; }
+/* Changement de valeur (curseurs de la simulation) : transition courte, jamais de rejeu de l'apparition. */
+.anim-ring { transition: stroke-dasharray var(--duration-normal) var(--ease-standard); }
+.anim-bar { transition: width var(--duration-normal) var(--ease-standard); }
+.anim-marker { transition: left var(--duration-normal) var(--ease-standard); }
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] .anim-ring, [data-reveal] .anim-line, [data-reveal] .anim-bar, [data-reveal] .anim-marker, [data-reveal] .anim-fade,
+  .anim-ring, .anim-bar, .anim-marker { animation: none !important; transition: none !important; opacity: 1 !important; }
+  .anim-bar, [data-reveal] .anim-bar { transform: none !important; }
+  .anim-ring, [data-reveal] .anim-ring { stroke-dashoffset: 0 !important; }
+  .anim-line, [data-reveal] .anim-line { stroke-dashoffset: 0 !important; }
+}
 
 /* ---------- Impression (PDF du rapport) ---------- */
 @media print {

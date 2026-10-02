@@ -19,7 +19,7 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 | 2 | Curseur interactif « Essayez » | FAIT |
 | 3 | Bandeau défilant d'informations vraies | FAIT |
 | 4 | Profils morphologiques (grille 3 × 3) | FAIT |
-| 5 | Animations | à faire |
+| 5 | Animations | FAIT |
 | 6 | Formule photo en bêta, réponse standardisée (PHOTO_BETA, désactivée) | à faire |
 | 7 | Kit de test photo (`docs/TEST-PHOTO.md`) | à faire |
 | 8 | Vérification d'âge branchée (`docs/ACTIVATION-PHOTO.md`) | à faire |
@@ -121,3 +121,22 @@ Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste
 - Les noms et phrases ont été relus pour un lecteur aux percentiles bas, mais restent un jugement éditorial à faire valider par le propriétaire.
 - Les seuils 33 et 67 découpent la population en classes de taille inégale (un peu moins d'un tiers, un peu plus d'un tiers, un tiers) ; le site n'affiche aucune statistique sur la fréquence des profils.
 - Un rapport de la formule photo (désactivée) afficherait aussi un profil, calculé de la même façon sur ses percentiles estimés.
+
+## Bloc 5 : animations des anneaux, barres et courbes : FAIT
+**Ce qui est fait**
+- Les animations existantes (anneau et barres qui jouaient dès le chargement, même hors écran) sont remplacées par des animations **à l'apparition**, une seule fois. `src/components/RevealOnView.tsx` (client, monté une fois dans la mise en page, environ 1 Ko) : un `IntersectionObserver` (seuil 15 %) pose `data-reveal="run"` sur les éléments marqués `data-reveal-on-view` quand ils entrent à l'écran (`pending` s'ils sont encore hors écran, ce qui prépare l'état de départ sans flash visible), puis `data-animated="done"` quand toutes leurs animations sont finies (`getAnimations().finished`). Un `MutationObserver` prend en charge la simulation « Essayez », chargée au défilement. Les éléments ne sont observés qu'une fois : pas de rejeu.
+- CSS (`globals.css`, variables de la section 37 déjà présentes, vérifiées par `tests/reveal-css.test.ts`) : anneau de score (arc qui se remplit, 700 ms), barres de percentile (remplissage, 700 ms ; repère en fondu en fin de course), courbes de distribution (tracé du contour via `pathLength="1"`, 700 ms ; aire en fondu 400 ms ; repère de l'utilisateur en fondu), indicateur de courbure (arc tracé, repère en fondu). Seules propriétés animées : `stroke-dashoffset`, `transform` (échelle), `opacity` : aucun décalage de mise en page. Tous les textes (valeurs, étiquettes SVG « Vous : … ») ne sont jamais masqués.
+- Les animations ne sont déclarées que sous `[data-reveal="run"]` : **sans JavaScript, ou si le script échoue, aucune règle ne les déclenche ni ne masque quoi que ce soit** (valeur finale du HTML serveur). `pending` ne masque que des tracés et marqueurs hors écran.
+- **Mouvement réduit** : le composant ne fait rien et la CSS force `animation: none`, `transition: none`, valeurs finales (aucune animation CSS en cours, vérifié par `getAnimations()`).
+- **« Essayez »** : un changement de valeur suit une transition de `--duration-normal` (200 ms) sur l'arc, la largeur de barre et la position du repère ; l'animation d'apparition ne rejoue pas (aucune `CSSAnimation` après des mouvements de curseur, testé).
+- Cartes de partage (images générées côté serveur) : inchangées, statiques.
+
+**Fichiers** : `src/components/RevealOnView.tsx`, `src/app/layout.tsx`, `src/app/globals.css`, `src/components/report/{ScoreRing,PercentileBar,DistributionChart,CurvatureIndicator}.tsx`, `tests/reveal-css.test.ts` (4), `e2e/animations.spec.ts` (8 : lecture puis état terminé et valeurs exactes, une seule exécution, mouvement réduit, sans JavaScript, « Essayez », 320/375/390 px avec détecteur de mise en page et axe-core). Les e2e existants n'ont pas été modifiés.
+
+**`npm run verify`** : vert (527 tests unitaires, 153 tests de bout en bout).
+
+**Lighthouse mobile** (accueil, site compilé `next build` + `next start`, base volontairement injoignable, Chromium de Playwright, 5 passages) : performance **94, 96, 96, 96, 96** ; accessibilité 100 ; bonnes pratiques 100 ; CLS 0 ; LCP 2,7 à 2,8 s ; TBT 70 à 160 ms.
+
+**Limites / à savoir**
+- Sur un élément déjà entièrement visible au chargement, l'animation démarre après l'hydratation (le HTML serveur affiche d'abord la valeur finale, puis l'arc se redessine : bref rejeu possible, non ajouté d'état masqué pour éviter tout flash de contenu).
+- Aucun essai sur un vrai téléphone.

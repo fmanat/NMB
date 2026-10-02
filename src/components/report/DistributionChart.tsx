@@ -25,19 +25,19 @@ export function DistributionChart({ label, value, mean, sd, unit = "cm" }: { lab
   const pct = clampPercentile(percentile(value, mean, sd));
   const anchor = ux > W - 70 ? "end" : ux < 70 ? "start" : "middle";
   return (
-    <figure>
+    <figure data-reveal-on-view>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full h-auto"
         role="img"
         aria-label={`${label} : ${f1(value)} ${unit}, percentile ${f1(pct)}. Courbe de la population de référence, médiane ${f1(mean)} ${unit}.`}
       >
-        <path d={area} fill="var(--bm-blue-100)" />
-        <polyline points={line} fill="none" stroke="var(--bm-blue-400)" strokeWidth="2" />
+        <path d={area} fill="var(--bm-blue-100)" className="anim-fade" />
+        <polyline points={line} pathLength="1" className="anim-line" fill="none" stroke="var(--bm-blue-400)" strokeWidth="2" />
         <line x1={x(mean)} x2={x(mean)} y1={top} y2={base} stroke="var(--bm-gray-500)" strokeWidth="1" strokeDasharray="3 3" />
         <line x1="0" x2={W} y1={base} y2={base} stroke="var(--border)" />
-        <line x1={ux} x2={ux} y1={top - 6} y2={base} stroke="var(--accent)" strokeWidth="2.5" />
-        <circle cx={ux} cy={top - 6} r="4" fill="var(--accent)" />
+        <line className="anim-marker" x1={ux} x2={ux} y1={top - 6} y2={base} stroke="var(--accent)" strokeWidth="2.5" />
+        <circle className="anim-marker" cx={ux} cy={top - 6} r="4" fill="var(--accent)" />
         <text x={ux} y="10" fontSize="12" fontWeight="700" fill="var(--accent)" textAnchor={anchor} className="num">{`Vous : ${f1(value)} ${unit}`}</text>
         <text x="0" y={H - 8} fontSize="11" fill="var(--bm-navy-700)" textAnchor="start" className="num">{`${f1(lo)} ${unit}`}</text>
         <text x={Math.min(W - 60, Math.max(60, x(mean)))} y={H - 8} fontSize="11" fill="var(--bm-navy-700)" textAnchor="middle" className="num">{`médiane ${f1(mean)} ${unit}`}</text>
