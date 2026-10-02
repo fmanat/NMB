@@ -43,6 +43,10 @@ test.describe("Formules B et C (photo neutre, moteurs simulés)", () => {
     await payReport(page);
     await expect(page.getByRole("cell", { name: /cm$/ }).first()).toBeVisible();
     await expect(page.getByText("Conicité")).toBeVisible();
+    // Commentaire standardisé (bloc 6) : trois observations et un verdict, sans chiffre.
+    await expect(page.locator("[data-observation]")).toHaveCount(3);
+    await expect(page.locator("[data-verdict]")).toBeVisible();
+    for (const t of await page.locator("[data-observation], [data-verdict]").allInnerTexts()) expect(t).not.toMatch(/\d/);
 
     // La photo n'a laissé aucune trace en base : pas de colonne binaire, pas d'octets JPEG dans les tables.
     await withDb(async (db) => {

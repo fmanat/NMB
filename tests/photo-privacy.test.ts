@@ -5,6 +5,7 @@ import sharp from "sharp";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runAnalysis, type FlowDeps, type FlowEvent, type FlowInput } from "@/lib/analyseFlow";
 import { pool } from "@/lib/db";
+import { absentScreening } from "@/lib/providers/absent";
 import { disabledCaptcha, disabledScreening, simulatedCaptcha, SIMULATED_CAPTCHA_TOKEN, simulatedScreening } from "@/lib/providers/simulated";
 import { createSimulatedVision, type Scenario } from "@/lib/vision/simulation";
 
@@ -33,7 +34,7 @@ async function drain(i: FlowInput, d: FlowDeps): Promise<FlowEvent[]> {
   return out;
 }
 
-const clean = () => pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries CASCADE");
+const clean = () => pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries, xai_daily_spend CASCADE");
 beforeEach(clean);
 afterEach(() => vi.restoreAllMocks());
 afterAll(async () => {
@@ -111,7 +112,7 @@ describe("la photo n'est écrite nulle part", () => {
     const lines = spies.flatMap((s) => s.mock.calls.map((c) => c.join(" ")));
     expect(lines.length).toBeGreaterThan(0);
     for (const l of lines) {
-      expect(l).toMatch(/^\{"event":"analysis_(refused|blocked|error)","motif":"[a-z_]+"/);
+      expect(l).toMatch(/^\{"event":"analysis_(ok|refused|blocked|error)","motif":"[a-z_]+"/);
       expect(l).not.toContain(p.toString("base64").slice(0, 30));
       expect(l).not.toContain("203.0.113.50");
     }
@@ -136,6 +137,26 @@ describe("contrôles désactivables, jamais en production", () => {
   it("captcha et filtrage « off » acceptent tout en développement", async () => {
     expect(await disabledCaptcha.verify(null, "1.2.3.4")).toBe(true);
     expect(await disabledScreening.screen(Buffer.from("x"))).toEqual({ blocked: false });
+  });
+
+  it("filtrage absent (non configuré) : accepté partout, y compris en production, avec un avertissement à chaque analyse", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const env = process.env as Record<string, string | undefined>;
+    const previous = env.NODE_ENV;
+    env.NODE_ENV = "production";
+    try {
+      expect(await absentScreening.screen(Buffer.from("x"))).toEqual({ blocked: false });
+    } finally {
+      env.NODE_ENV = previous;
+    }
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('"event":"screening_absent"');
+    // Avec ce fournisseur, l'analyse se déroule normalement (aucun blocage), et l'avertissement n'apparaît qu'une fois par analyse.
+    const i = await input();
+    const ev = await drain(i, { ...deps(), screening: absentScreening });
+    expect(ev[ev.length - 1].type).toBe("ready");
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(i.photo).toBeNull();
   });
 
   it("… mais refusent de fonctionner en production, comme les fournisseurs simulés", async () => {

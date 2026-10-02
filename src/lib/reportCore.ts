@@ -42,6 +42,17 @@ export type DeclaredComparison = {
   flagged: boolean;
 };
 
+/**
+ * Commentaire STANDARDISÉ des rapports photo (bloc 6) : trois observations courtes et un verdict d'une phrase, rédigés par le modèle
+ * à partir d'indicateurs calculés (jamais de la photo), validés contre un schéma versionné (aucun chiffre, aucun terme interdit).
+ */
+export type StandardComment = {
+  schemaVersion: string;
+  promptVersion: string;
+  observations: [string, string, string];
+  verdict: string;
+};
+
 export type ReportResults = {
   formula: "A" | "B" | "C";
   state: BodyState;
@@ -58,6 +69,8 @@ export type ReportResults = {
   taper?: number;
   /** Formule C : comparaison déclaré / estimé. */
   declared?: DeclaredComparison;
+  /** Formules photo : commentaire standardisé (le champ `comment` en est la version texte, observations puis verdict). */
+  standard?: StandardComment;
 };
 
 export const DIRECTION_FR = {

@@ -2,14 +2,15 @@ import Link from "next/link";
 import { Doc } from "@/components/Doc";
 import { ProfileTable } from "@/components/report/ProfileTable";
 import { REFERENCES, SCORE } from "@/config/site";
-import { isFreeBeta } from "@/lib/mode";
+import { isFreeBeta, isPhotoBeta } from "@/lib/mode";
 import { HIGH_FROM, LOW_BELOW } from "@/lib/profiles";
 
 export const metadata = { title: "Précision et méthode" };
 
 export default function Page() {
   const w = SCORE.weights;
-  const beta = isFreeBeta(); // bêta gratuite : questionnaire seulement, rien sur les protocoles photo
+  // Bêta gratuite : questionnaire seulement, rien sur les protocoles photo ; bêta photo active : les sections photo s'affichent.
+  const beta = isFreeBeta() && !isPhotoBeta();
   return (
     <Doc title="Précision et méthode">
       <h2>Ce que le service mesure</h2>
@@ -71,6 +72,12 @@ export default function Page() {
           l&apos;inclinaison de l&apos;appareil ; elle n&apos;est jamais inférieure à ± 10 %. Une photo trop inclinée (plus de 50°) ou où
           la carte est trop petite est refusée, car la précision serait insuffisante. La précision du calcul a été vérifiée sur des
           prises de vue simulées ; elle n&apos;a pas encore été validée sur un grand nombre de photos réelles de référence.
+        </p>
+        <p>
+          Le commentaire d&apos;un rapport photo suit un modèle fixe : trois observations courtes et un verdict d&apos;une phrase, rédigés par le modèle
+          d&apos;analyse à partir d&apos;indicateurs calculés par le site (il ne reçoit aucune mesure en centimètres et n&apos;en fournit aucune), puis
+          vérifiés par le site : aucun chiffre, aucun jugement sur la personne, aucun vocabulaire médical. Une réponse non conforme est demandée une
+          seconde fois, puis l&apos;analyse est abandonnée et il vous est proposé de reprendre la photo.
         </p>
         <h2>Traitement de la photo</h2>
         <p>

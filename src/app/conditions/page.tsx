@@ -1,27 +1,30 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Doc } from "@/components/Doc";
-import { BETA, isFreeBeta } from "@/lib/mode";
+import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
 
 export const metadata = { title: "Conditions d'utilisation (bêta)" };
 
 // Remplace les CGV pendant la bêta gratuite (les CGV restent prêtes pour la version payante : /cgv).
 export default function Page() {
   if (!isFreeBeta()) notFound();
+  const photo = isPhotoBeta();
   return (
     <Doc title="Conditions d'utilisation de la bêta">
       <h2>Service en bêta, gratuit</h2>
       <p>
-        Bitomètre est en phase de test (« bêta »). Le questionnaire et le rapport qui en découle sont gratuits : aucun paiement
+        Bitomètre est en phase de test (« bêta »). {photo ? "Le questionnaire, le protocole photo et les rapports qui en découlent" : "Le questionnaire et le rapport qui en découle"} sont gratuits : aucun paiement
         n&apos;est demandé et aucune donnée de paiement n&apos;est collectée. L&apos;éditeur est identifié dans les{" "}
         <Link href="/mentions-legales" className="underline">mentions légales</Link>.
       </p>
 
       <h2>Ce que fournit le service</h2>
       <p>
-        Un rapport calculé à partir des valeurs que vous déclarez. Ces valeurs ne sont pas vérifiées ; les résultats sont des
-        estimations statistiques, pas un avis médical (voir <Link href="/methode" className="underline">Précision et méthode</Link>).
-        Le service est réservé aux personnes de 18 ans ou plus.
+        {photo
+          ? "Un rapport calculé à partir des valeurs que vous déclarez (questionnaire) ou estimées à partir de votre photo par un modèle d'analyse (protocole photo, marge d'erreur d'au moins ± 10 %). Les valeurs déclarées ne sont pas vérifiées ; "
+          : "Un rapport calculé à partir des valeurs que vous déclarez. Ces valeurs ne sont pas vérifiées ; "}
+        les résultats sont des estimations statistiques, pas un avis médical (voir <Link href="/methode" className="underline">Précision et méthode</Link>).
+        Le service est réservé aux personnes de 18 ans ou plus{photo ? " ; l'envoi d'une photo exige en plus une vérification d'âge par un prestataire tiers et votre consentement explicite, et la photo est envoyée au prestataire d'analyse décrit dans la politique de confidentialité" : ""}.
       </p>
 
       <h2>Aucune garantie de conservation</h2>
@@ -34,7 +37,7 @@ export default function Page() {
 
       <h2>Votre usage</h2>
       <ul>
-        <li>Vous déclarez avoir 18 ans ou plus et saisir vos propres valeurs.</li>
+        <li>Vous déclarez avoir 18 ans ou plus et saisir vos propres valeurs{photo ? ", et n'envoyer qu'une photo de vous-même, sans visage ni autre personne" : ""}.</li>
         <li>Vous n&apos;utilisez pas le service pour tromper, harceler ou nuire à autrui, et vous ne cherchez pas à en perturber le fonctionnement.</li>
         <li>Le lien privé de votre rapport est le seul moyen d&apos;y accéder : conservez-le, ne le partagez qu&apos;à bon escient.</li>
       </ul>

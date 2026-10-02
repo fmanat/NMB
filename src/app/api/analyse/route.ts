@@ -4,6 +4,7 @@ import { UPLOAD } from "@/config/site";
 import { AGE_COOKIE, isAgeTokenValid } from "@/lib/age/token";
 import { attachFriend, CHALLENGE_COOKIE } from "@/lib/challenge";
 import { runAnalysis, type FlowInput } from "@/lib/analyseFlow";
+import { isPhotoBeta } from "@/lib/mode";
 import { getCaptcha, getScreening, getVision } from "@/lib/providers";
 
 export const runtime = "nodejs";
@@ -27,6 +28,9 @@ export async function POST(req: Request) {
   const file = fd.get("photo");
   const formula = fd.get("formula") === "C" ? "C" : "B";
   const state = fd.get("state") === "rest" ? "rest" : "erect";
+  // Bêta photo : formule B seule, gratuite (rapport débloqué sans paiement) ; la formule C n'existe pas.
+  const photoBeta = isPhotoBeta();
+  if (photoBeta && formula === "C") return new Response(null, { status: 404 });
 
   const store = await cookies();
   const challengeId = store.get(CHALLENGE_COOKIE)?.value;
@@ -42,6 +46,7 @@ export async function POST(req: Request) {
       formula === "C"
         ? { length: num(fd.get("declared_length")), girth: num(fd.get("declared_girth")) }
         : undefined,
+    freeBeta: photoBeta,
   };
 
   const encoder = new TextEncoder();

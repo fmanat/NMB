@@ -1,6 +1,7 @@
 import { createSimulatedVision } from "../vision/simulation";
 import type { VisionProvider } from "../vision/types";
 import { xaiVision } from "../vision/xai";
+import { absentScreening } from "./absent";
 import { ageVerifProvider } from "./ageverif";
 import { altchaCaptcha } from "./altcha";
 import { disabledCaptcha, disabledScreening, simulatedAge, simulatedCaptcha, simulatedScreening } from "./simulated";
@@ -20,11 +21,18 @@ export function getAgeProvider(): AgeVerificationProvider {
   const id = process.env.AGE_PROVIDER ?? "simulation";
   if (id === "simulation") return simulatedAge;
   if (id === "ageverif") return ageVerifProvider;
+  // Second candidat du propriétaire (docs/PRESTATAIRES.md) : reconnu par le garde-fou de la bêta photo, adaptateur à écrire (bloc 8).
+  if (id === "yoti") throw new Error("Prestataire de vérification d'âge « yoti » : adaptateur pas encore écrit (voir docs/SESSION-NUIT-4.md, bloc 8).");
   throw new Error(`Prestataire de vérification d'âge inconnu : ${id}`);
 }
 
+/**
+ * Filtrage d'empreintes : OPTIONNEL depuis le bloc 6. Variable vide ou absente : aucun filtrage, avec un avertissement journalisé à chaque
+ * analyse (jamais présenté comme un contrôle). « simulation » et « off » restent réservés au développement (interdits en production).
+ */
 export function getScreening(): ImageScreeningProvider {
-  const id = process.env.SCREENING_PROVIDER ?? "simulation";
+  const id = (process.env.SCREENING_PROVIDER ?? "").trim();
+  if (id === "") return absentScreening;
   if (id === "simulation") return simulatedScreening;
   if (id === "off") return disabledScreening; // désactivé (développement seulement)
   throw new Error(`Prestataire de filtrage d'empreintes inconnu : ${id}`);

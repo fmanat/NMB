@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { validateRecevabilite } from "@/lib/vision/schema";
 import { xaiVision } from "@/lib/vision/xai";
 import { VisionError, type CommentInput } from "@/lib/vision/types";
 
@@ -9,8 +10,10 @@ const reply = (content: unknown, extra: Record<string, unknown> = {}, usage = { 
   choices: [{ message: { content: typeof content === "string" ? content : JSON.stringify(content) }, finish_reason: "stop", ...extra }],
   usage,
 });
-const RECEVABLE = { recevable: true, motif: "ok" };
-const REPERAGE = { coins_carte: [], base: { x: 0, y: 0, confiance: 1 } };
+const V = "photo-report/1";
+const RECEVABLE = { schemaVersion: V, recevable: true, motif: "ok" };
+const REPERAGE = { schemaVersion: V, coins_carte: [], base: { x: 0, y: 0, confiance: 1 } };
+const COMMENTAIRE = { schemaVersion: V, observations: ["a", "b", "c"], verdict: "d" };
 
 type Call = { url: string; init: RequestInit; body: Record<string, unknown>; kind: "recevabilite" | "reperage" | "commentaire" };
 
@@ -43,10 +46,12 @@ const comment: CommentInput = {
   score: 80,
   lengthPercentile: 60,
   girthPercentile: 55,
-  lengthMarginPct: 12,
+  marginPct: 12,
   symmetry: 92,
   curvatureDeg: 8,
   confidence: 88,
+  cardFraction: 0.3,
+  tiltDeg: 10,
   declaredGapFlagged: false,
 };
 
@@ -82,11 +87,15 @@ describe("fournisseur xAI réel (fetch simulé, aucun appel réseau)", () => {
     }
     expect(calls.find((c) => c.kind === "recevabilite")!.body.response_format).toMatchObject({ json_schema: { name: "recevabilite" } });
     expect(calls.find((c) => c.kind === "reperage")!.body.response_format).toMatchObject({ json_schema: { name: "reperage" } });
-    expect(r.recevable).toBe(true);
+    expect(r.refused).toBe(false);
+    expect(r.recevabilite).toEqual(RECEVABLE); // réponses brutes : validées par le flux d'analyse contre le schéma versionné
     expect(r.reperage).toEqual(REPERAGE);
-    // jetons additionnés sur les deux appels
+    // jetons et appels additionnés sur les deux appels
     expect(r.usage.tokensIn).toBe(5000);
     expect(r.usage.tokensOut).toBe(800);
+    expect(r.usage.calls).toBe(2);
+    // le schéma envoyé impose la version
+    for (const c of calls) expect((c.body.response_format as { json_schema: { schema: { properties: { schemaVersion: { enum: string[] } } } } }).json_schema.schema.properties.schemaVersion.enum).toEqual([V]);
   });
 
   it("les deux appels partent en même temps (aucun n'attend la réponse de l'autre)", async () => {
@@ -121,10 +130,10 @@ describe("fournisseur xAI réel (fetch simulé, aucun appel réseau)", () => {
     expect(calls.every((c) => !("reasoning_effort" in c.body))).toBe(true);
   });
 
-  it("image non recevable : le repérage est ignoré, même s'il a échoué", async () => {
-    stubApi({ recevabilite: [{ json: reply({ recevable: false, motif: "visage_visible" }) }], reperage: [{ status: 500, json: { error: { message: "panne" } } }] });
+  it("image non recevable : la panne du repérage est ignorée", async () => {
+    stubApi({ recevabilite: [{ json: reply({ ...RECEVABLE, recevable: false, motif: "visage_visible" }) }], reperage: [{ status: 500, json: { error: { message: "panne" } } }] });
     const r = await xaiVision.analyse(JPEG);
-    expect(r).toMatchObject({ recevable: false, motif: "visage_visible", reperage: null });
+    expect(r).toMatchObject({ refused: false, recevabilite: { recevable: false, motif: "visage_visible" }, reperage: null });
   });
 
   it("un refus du prestataire (refusal ou filtre de contenu), sur l'un ou l'autre appel, devient une image non recevable sans détail", async () => {
@@ -132,14 +141,16 @@ describe("fournisseur xAI réel (fetch simulé, aucun appel réseau)", () => {
       recevabilite: [{ json: { choices: [{ message: { content: "", refusal: "politique" }, finish_reason: "stop" }], usage: { prompt_tokens: 10, completion_tokens: 1 } } }],
       reperage: [{ json: reply(REPERAGE) }],
     });
-    expect(await xaiVision.analyse(JPEG)).toMatchObject({ recevable: false, motif: "sujet_non_conforme", reperage: null });
+    expect(await xaiVision.analyse(JPEG)).toMatchObject({ refused: true, recevabilite: null, reperage: null });
     stubApi({ recevabilite: [{ json: reply(RECEVABLE) }], reperage: [{ json: reply("", { finish_reason: "content_filter" }) }] });
-    expect(await xaiVision.analyse(JPEG)).toMatchObject({ recevable: false, motif: "sujet_non_conforme" });
+    expect(await xaiVision.analyse(JPEG)).toMatchObject({ refused: true });
   });
 
-  it("un motif inconnu renvoyé par le modèle est ramené à un motif connu", async () => {
+  it("un motif inconnu ou une version absente sont renvoyés tels quels : c'est le flux qui les rejette (puis relance une fois)", async () => {
     stubApi({ recevabilite: [{ json: reply({ recevable: false, motif: "motif_invente" }) }], reperage: [{ json: reply(REPERAGE) }] });
-    expect((await xaiVision.analyse(JPEG)).motif).toBe("sujet_non_conforme");
+    const r = await xaiVision.analyse(JPEG);
+    expect(r.recevabilite).toEqual({ recevable: false, motif: "motif_invente" });
+    expect(validateRecevabilite(r.recevabilite)).toBeNull();
   });
 
   it("si le format JSON strict est rejeté, une requête moins stricte est envoyée pour cet appel", async () => {
@@ -154,7 +165,8 @@ describe("fournisseur xAI réel (fetch simulé, aucun appel réseau)", () => {
     const reperageCalls = calls.filter((c) => c.kind === "reperage");
     expect(reperageCalls).toHaveLength(2);
     expect((reperageCalls[1].body.response_format as { type: string }).type).toBe("json_object");
-    expect(r.recevable).toBe(true);
+    expect(r.reperage).toEqual(REPERAGE);
+    expect(r.usage.calls).toBe(3);
   });
 
   it("erreurs : clé refusée, accès refusé, réponse illisible, repérage en panne sur une photo recevable, panne réseau, clé absente", async () => {
@@ -163,11 +175,11 @@ describe("fournisseur xAI réel (fetch simulé, aucun appel réseau)", () => {
     stubApi({ recevabilite: [{ status: 403, json: { error: "interdit" } }], reperage: [{ json: reply(REPERAGE) }] });
     await expect(xaiVision.analyse(JPEG)).rejects.toMatchObject({ kind: "policy" });
     stubApi({ recevabilite: [{ json: reply("ceci n'est pas du JSON") }], reperage: [{ json: reply(REPERAGE) }] });
-    await expect(xaiVision.analyse(JPEG)).rejects.toMatchObject({ kind: "invalid" });
+    expect((await xaiVision.analyse(JPEG)).recevabilite).toBeNull(); // illisible : rejeté puis relancé par le flux
     stubApi({ recevabilite: [{ json: reply(RECEVABLE) }], reperage: [{ status: 500, json: { error: { message: "panne" } } }] });
     await expect(xaiVision.analyse(JPEG)).rejects.toMatchObject({ kind: "invalid" });
     stubApi({ recevabilite: [{ json: reply(RECEVABLE) }], reperage: [{ json: reply("pas du JSON non plus") }] });
-    await expect(xaiVision.analyse(JPEG)).rejects.toMatchObject({ kind: "invalid" });
+    expect((await xaiVision.analyse(JPEG)).reperage).toBeNull();
     vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("réseau coupé"))));
     await expect(xaiVision.analyse(JPEG)).rejects.toMatchObject({ kind: "network" });
     delete process.env.XAI_API_KEY;
@@ -193,15 +205,28 @@ describe("fournisseur xAI réel (fetch simulé, aucun appel réseau)", () => {
     expect(e.message).not.toContain(B64);
   });
 
-  it("la rédaction est un appel texte seul : les chiffres calculés, jamais la photo", async () => {
-    const calls = stubApi({ commentaire: [{ json: reply("Un commentaire.") }] });
+  it("la rédaction est un appel texte seul en JSON strict (schéma versionné « commentaire ») : des indicateurs en mots, jamais la photo ni une mesure", async () => {
+    const calls = stubApi({ commentaire: [{ json: reply(COMMENTAIRE) }] });
     const r = await xaiVision.writeComment(comment);
-    expect(r.text).toBe("Un commentaire.");
+    expect(r.json).toEqual(COMMENTAIRE);
+    expect(r.usage.calls).toBe(1);
     expect(calls).toHaveLength(1);
     const body = JSON.stringify(calls[0].body);
     expect(body).not.toContain("image_url");
     expect(body).not.toContain("base64");
-    expect(body).toContain("80/100");
-    expect(calls[0].body.response_format).toBeUndefined();
+    expect(body).not.toMatch(/\bcm\b/);
+    expect(body).toContain("zone médiane");
+    const rf = calls[0].body.response_format as { type: string; json_schema: { name: string; strict: boolean; schema: { required: string[] } } };
+    expect(rf.type).toBe("json_schema");
+    expect(rf.json_schema.name).toBe("commentaire");
+    expect(rf.json_schema.strict).toBe(true);
+    expect(rf.json_schema.schema.required).toEqual(["schemaVersion", "observations", "verdict"]);
+  });
+
+  it("rédaction refusée par le prestataire ou illisible : json nul (le flux relance une fois, puis refuse)", async () => {
+    stubApi({ commentaire: [{ json: { choices: [{ message: { content: "", refusal: "politique" }, finish_reason: "stop" }], usage: { prompt_tokens: 10, completion_tokens: 1 } } }] });
+    expect((await xaiVision.writeComment(comment)).json).toBeNull();
+    stubApi({ commentaire: [{ json: reply("du texte libre, pas du JSON") }] });
+    expect((await xaiVision.writeComment(comment)).json).toBeNull();
   });
 });

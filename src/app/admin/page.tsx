@@ -36,6 +36,8 @@ const MOTIFS: Record<string, string> = {
   fournisseur_auth: "Prestataire d'analyse : clé refusée",
   fournisseur_policy: "Prestataire d'analyse : accès refusé",
   fournisseur_invalid: "Prestataire d'analyse : réponse invalide",
+  recevabilite_invalide: "Réponse de recevabilité non conforme au schéma (après relance)",
+  commentaire_invalide: "Commentaire non conforme au schéma (après relance)",
 };
 const OUTCOMES: Record<string, string> = { refused: "Refus", blocked: "Bloquée", error: "Erreur technique" };
 
@@ -164,6 +166,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
 
       <Card title="Défis entre amis" note="Comptés au moment de l'événement : ces chiffres ne baissent pas quand un rapport est supprimé.">
         <Table head={["Défis créés", "Défis relevés", "Part relevée"]} rows={[[nb(d.challenges.created), nb(d.challenges.taken), pct(d.challenges.created > 0 ? d.challenges.taken / d.challenges.created : null)]]} />
+      </Card>
+
+      <Card
+        title="Plafond de dépense xAI (par jour civil, Europe/Paris)"
+        note={`Plafond : XAI_DAILY_CAP_USD (${usd(d.xaiSpend.capUsd, 2)} par jour). Coût estimé d'après les jetons consommés et le tarif configuré ; une réservation est prise avant chaque analyse et rendue à la fin. Plafond atteint : « Capacité du jour atteinte », aucun appel au modèle. Indépendant de la période choisie ci-dessus.`}
+      >
+        <Table
+          head={["Jour", "Dépense", "En cours (réservé)", "Appels au modèle", "Analyses"]}
+          rows={d.xaiSpend.days.map((x, i) => [i === 0 ? `${x.day} (aujourd'hui)` : x.day, usd(x.spentUsd), usd(x.reservedUsd), nb(x.calls), nb(x.analyses)])}
+        />
       </Card>
 
       <Card

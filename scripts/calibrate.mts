@@ -20,7 +20,7 @@ import { prepareImage } from "@/lib/image";
 import { confidenceIndex, marginPct } from "@/lib/measure";
 import { estimateMeasuresPose } from "@/lib/pose";
 import { createSimulatedVision } from "@/lib/vision/simulation";
-import { validateReperage } from "@/lib/vision/validate";
+import { validateRecevabilite, validateReperage } from "@/lib/vision/schema";
 import { xaiVision } from "@/lib/vision/xai";
 
 type Entry = { file: string; length: number; girth: number; state?: "rest" | "erect" };
@@ -72,9 +72,16 @@ for (const [i, e] of entries.entries()) {
     tokensIn += r.usage.tokensIn;
     tokensOut += r.usage.tokensOut;
     durations.push(r.usage.ms);
-    if (!r.recevable) {
-      refused[r.motif] = (refused[r.motif] ?? 0) + 1;
-      console.log(`${tag} refusée (${r.motif})`);
+    // Mêmes validations que le site (schéma versionné) ; un refus du prestataire est compté comme « sujet non conforme ».
+    const rec = r.refused ? { recevable: false, motif: "sujet_non_conforme" } : validateRecevabilite(r.recevabilite);
+    if (!rec) {
+      refused.recevabilite_invalide = (refused.recevabilite_invalide ?? 0) + 1;
+      console.log(`${tag} réponse de recevabilité non conforme au schéma`);
+      continue;
+    }
+    if (!rec.recevable) {
+      refused[rec.motif] = (refused[rec.motif] ?? 0) + 1;
+      console.log(`${tag} refusée (${rec.motif})`);
       continue;
     }
     const rep = validateReperage(r.reperage);

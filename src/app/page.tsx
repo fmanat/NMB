@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FORMULAS, REPORT_ACCESS, SITE, formatEur } from "@/config/site";
-import { BETA, isFreeBeta } from "@/lib/mode";
+import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
 import { exampleReport } from "@/lib/exampleReport";
 import { ScanButton } from "@/components/ScanButton";
 import { ScannerBand } from "@/components/scanner/ScannerBand";
@@ -35,6 +35,7 @@ export const revalidate = 300;
 
 export default async function Home() {
   const beta = isFreeBeta();
+  const photoBeta = isPhotoBeta(); // bêta photo : la formule photo (B) est proposée, gratuite ; les libellés disent ce qu'elle fait réellement
   const ex = exampleReport();
 
   return (
@@ -51,7 +52,10 @@ export default async function Home() {
             <h1 className="t-display mt-3 md:mt-4">Votre profil morphologique en données.</h1>
             <p className="t-lead text-muted mt-3 md:mt-5 max-w-[34rem]">
               Longueur, circonférence, courbure : un rapport statistique chiffré, comparé à une étude de référence.
-              <span className="hidden sm:inline">{" "}{beta ? "Gratuit pendant la bêta, sans compte, en une minute." : "Sans compte, paiement unique."}</span>
+              <span className="hidden sm:inline">
+                {" "}
+                {beta ? (photoBeta ? "Par questionnaire ou à partir d'une photo : gratuit pendant la bêta, sans compte." : "Gratuit pendant la bêta, sans compte, en une minute.") : "Sans compte, paiement unique."}
+              </span>
             </p>
           </div>
 
@@ -150,7 +154,10 @@ export default async function Home() {
             ))}
           </ul>
           <p className="t-small text-muted mt-6 max-w-[52rem]">
-            Les valeurs sont celles que vous déclarez : elles ne sont pas vérifiées. Les percentiles reposent sur une loi normale et les références de Veale et al. (2015) ;
+            {photoBeta
+              ? "Selon le protocole, les valeurs sont déclarées (non vérifiées) ou estimées à partir d'une photo par un modèle d'analyse. "
+              : "Les valeurs sont celles que vous déclarez : elles ne sont pas vérifiées. "}
+            Les percentiles reposent sur une loi normale et les références de Veale et al. (2015) ;
             la marge d&apos;erreur d&apos;une estimation n&apos;est jamais inférieure à ± 10 %.{" "}
             <Link href="/methode" className="text-accent underline">Lire la méthode</Link>.
           </p>
@@ -206,7 +213,10 @@ export default async function Home() {
               Non. Il n&apos;y a ni compte ni e-mail : le lien privé de votre rapport est le seul moyen d&apos;y accéder. Enregistrez-le dans vos favoris.
             </Accordion>
             <Accordion question="Quelle est la précision ?">
-              Les valeurs sont déclarées et non vérifiées. Les percentiles supposent une loi normale et les références de Veale et al. (2015). Le détail figure sur la page{" "}
+              {photoBeta
+                ? "Avec le questionnaire, les valeurs sont déclarées et non vérifiées ; avec une photo, elles sont estimées par un modèle d'analyse à partir d'une carte de référence, avec une marge d'erreur d'au moins ± 10 %. "
+                : "Les valeurs sont déclarées et non vérifiées. "}
+              Les percentiles supposent une loi normale et les références de Veale et al. (2015). Le détail figure sur la page{" "}
               <Link href="/methode" className="text-accent underline">Précision et méthode</Link>.
             </Accordion>
           </div>

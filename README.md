@@ -57,8 +57,10 @@ Un secret = une longue chaîne de caractères aléatoires (au moins 32), différ
 | `XAI_MODEL` | Modèle xAI. Vide = `grok-4.7` (celui qui a été testé). | Non |
 | `XAI_EFFORT` | Effort de raisonnement : `low` (recommandé, le plus rapide). Ne pas laisser vide : 10 fois plus lent. | Non |
 | `XAI_PRICE_IN_PER_M`, `XAI_PRICE_OUT_PER_M` | Tarifs xAI (dollars par million de jetons), pour calculer le coût réel d'une analyse dans l'administration. À mettre à jour si xAI change ses prix. | Non |
-| `AGE_PROVIDER` | Vérification d'âge : `simulation` en local ; en production `ageverif` (adaptateur prêt). | Oui (B, C) |
-| `SCREENING_PROVIDER` | Filtrage des images par empreinte : `simulation`, prestataire réel, ou `off` (local uniquement). | Oui (B, C) |
+| `AGE_PROVIDER` | Vérification d'âge : `simulation` en local ; en production `ageverif` (adaptateur prêt) ou `yoti` (adaptateur à écrire). | Oui (B, C) |
+| `SCREENING_PROVIDER` | Filtrage des images par empreinte : **optionnel**. Vide = aucun filtrage (accepté partout, un avertissement est journalisé au démarrage et à chaque analyse ; le site ne prétend jamais qu'un filtrage a eu lieu) ; `simulation` ou `off` : local uniquement ; prestataire réel : aucun adaptateur disponible à ce jour. | Non |
+| `PHOTO_BETA` | `on` = **bêta de la formule photo** (avec `FREE_BETA=on`) : la formule B (photo) existe, gratuite ; C, paiement et CGV restent introuvables. **Désactivée par défaut.** En production, ignorée (avertissement au démarrage) tant qu'un prestataire réel de vérification d'âge n'est pas configuré avec ses variables (`ageverif` : `AGEVERIF_CLIENT_ID`, `AGEVERIF_CLIENT_SECRET`, `AGE_TOKEN_SECRET`, `SITE_URL` ; `yoti` : `YOTI_CLIENT_SDK_ID`, `YOTI_KEY_PEM`, `AGE_TOKEN_SECRET`, `SITE_URL`), que `VISION_PROVIDER` n'est pas `xai` (avec `XAI_API_KEY`), que `CAPTCHA_PROVIDER` n'est pas `altcha` (avec `ALTCHA_HMAC_KEY`), ou si `SCREENING_PROVIDER` vaut `simulation` ou `off`. | Non |
+| `XAI_DAILY_CAP_USD` | Plafond de dépense xAI par jour civil (Europe/Paris), en dollars. Vide ou invalide = 5. Plafond atteint : « Capacité du jour atteinte, revenez demain », aucun appel au modèle. Dépense visible dans `/admin`. | Non |
 | `CAPTCHA_PROVIDER` | Anti-robots : `simulation`, `altcha` (preuve de travail auto-hébergée, prête), ou `off` (local uniquement). | Oui (B, C) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Clés du paiement Stripe (`sk_test_`/`sk_live_` et `whsec_`). Adresse de notification à déclarer chez Stripe : `SITE_URL` + `/api/payments/webhook`. | Si `stripe` |
 | `AGEVERIF_CLIENT_ID`, `AGEVERIF_CLIENT_SECRET`, `AGEVERIF_CHALLENGES` | Identifiants OAuth2 d'AgeVerif et liste facultative de méthodes. Adresse de retour à déclarer : `SITE_URL` + `/api/age/callback`. | Si `ageverif` |
@@ -77,6 +79,7 @@ Tout est dans un seul fichier : [src/config/site.ts](src/config/site.ts).
 - `MARGIN` : la marge d'erreur affichée et ses seuils. `PHOTO_LIMITS` : refus de photo (inclinaison, carte trop petite). `CAMERA` : réglages de géométrie.
 - `FINANCE` : TVA (20 %) et commission de paiement (15,5 %, **provisoire** : à remplacer par la vraie valeur).
 - `UPLOAD`, `TICKER`, `ADMIN`, `WEBHOOK` : taille des photos, bandeau défilant (seuil du compteur d'analyses, délais de lecture), administration, webhook.
+- Réponse standardisée des rapports photo : schéma versionné et règles de validation (nombre et longueur des observations, termes interdits) dans `src/lib/vision/schema.ts` ; prompts dans `src/lib/vision/prompts/photo-report-v1.ts` (pour les améliorer : nouveau fichier `-v2`, référencé dans `prompts/index.ts`). Réservation par analyse pour le plafond quotidien : `ESTIMATED_ANALYSIS_USD` dans `src/lib/xaiSpend.ts`.
 
 Après une modification : `npm run verify`, puis commit. Les formules de calcul sont couvertes par des tests automatiques : si un test casse, c'est qu'un résultat a changé, à examiner avant d'aller plus loin.
 
@@ -124,6 +127,7 @@ Les statistiques durables (journal anonyme, paiements) sont conservées même ap
 | `npm run geometry:report` | Rapport d'exactitude de la géométrie sur des prises de vue simulées. |
 | `npm run calibrate` | Calibration sur de vraies prises de vue : protocole dans [docs/CALIBRATION.md](docs/CALIBRATION.md). |
 | `npm run latency:bench`, `npm run xai:test` | Mesures et essais du moteur xAI. Coûtent quelques centimes ; n'utiliser qu'une image neutre. |
+| `npm run xai:schema-check` | Vérifie avec la vraie API que le schéma JSON strict versionné des réponses (`photo-report/1`) est accepté et que les réponses se valident, avec une image neutre fabriquée par le script (environ 2 centimes ; `--comment-only` : la rédaction seule). |
 
 ## 7. Règles à ne jamais enfreindre
 

@@ -44,7 +44,9 @@
     ".next-e2e-beta/types/**/*.ts",
     ".next-e2e-beta/dev/types/**/*.ts",
     ".next-e2e-shot/types/**/*.ts",
-    ".next-e2e-shot/dev/types/**/*.ts"
+    ".next-e2e-shot/dev/types/**/*.ts",
+    ".next-e2e-photo/types/**/*.ts",
+    ".next-e2e-photo/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

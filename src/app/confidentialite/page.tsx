@@ -1,6 +1,6 @@
 import { Doc } from "@/components/Doc";
 import { COMPANY, HOST } from "@/config/company";
-import { BETA, isFreeBeta } from "@/lib/mode";
+import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
 
 export const metadata = { title: "Politique de confidentialité" };
 
@@ -82,14 +82,44 @@ export default function Page() {
   );
 }
 
-// Version limitée à ce que fait la bêta gratuite : questionnaire déclaratif, aucune photo, aucun envoi à un prestataire d'analyse.
+// Version limitée à ce que fait la bêta gratuite : questionnaire déclaratif, aucun envoi à un prestataire d'analyse ; en bêta photo
+// (PHOTO_BETA active), les paragraphes sur la photo, le prestataire d'analyse et le transfert hors UE s'ajoutent.
 function BetaPolicy() {
+  const photo = isPhotoBeta();
   return (
     <Doc title="Politique de confidentialité (bêta)">
       <p>
         Responsable du traitement : l&apos;éditeur du site (contact : {COMPANY.contactEmail}). Pendant la bêta, le
-        service ne demande aucune photo, aucun compte, aucun e-mail et aucune donnée de paiement.
+        service ne demande {photo ? "aucun compte, aucun e-mail et aucune donnée de paiement ; la photo du protocole photo est facultative et n'est jamais enregistrée par le site" : "aucune photo, aucun compte, aucun e-mail et aucune donnée de paiement"}.
       </p>
+
+      {photo && (
+        <>
+          <h2>Votre photo (protocole photo, en bêta)</h2>
+          <p>
+            Bitomètre ne stocke jamais votre photo : elle est traitée en mémoire, pendant l&apos;analyse, puis abandonnée. Elle n&apos;est écrite
+            ni dans notre base de données, ni dans nos fichiers, ni dans nos journaux. Les données d&apos;image sont des données sensibles (RGPD,
+            art. 9) : nous ne les traitons qu&apos;avec votre consentement explicite, donné avant l&apos;envoi. Une vérification d&apos;âge par un
+            prestataire tiers précède l&apos;envoi ; le site n&apos;en reçoit qu&apos;une réponse « majeur : oui », sans donnée d&apos;identité, valable 30 minutes.
+          </p>
+          <h2>Prestataire d&apos;analyse (SpaceXAI LLC (connue sous le nom xAI), États-Unis)</h2>
+          <p>
+            L&apos;analyse de la photo est réalisée par l&apos;interface de programmation (API) de SpaceXAI LLC (connue sous le nom xAI, anciennement
+            X.AI Corp.), société du Nevada dont le siège social est situé 800 W Cesar Chavez St., Austin, Texas 78701, États-Unis. Pour détecter les
+            abus, xAI conserve les requêtes envoyées à son API, images comprises, pendant 30 jours, puis les supprime automatiquement. Selon sa
+            documentation, xAI ne les utilise pas pour entraîner ses modèles sans autorisation explicite. Notre site ne peut pas effacer ces copies
+            avant ce délai. Cet envoi constitue un transfert hors de l&apos;Union européenne, qui n&apos;a lieu qu&apos;avec votre consentement explicite.
+            Le modèle ne reçoit que la photo pour repérer des points et des indicateurs calculés pour rédiger un commentaire ; les mesures sont
+            calculées par notre programme.
+          </p>
+          <h2>Filtrage d&apos;images déjà répertoriées</h2>
+          <p>
+            Lorsqu&apos;un prestataire de comparaison d&apos;empreintes est configuré, la photo est comparée, avant analyse, à des bases d&apos;images
+            déjà répertoriées ; ce contrôle ne reconnaît que des images connues et ne détermine ni l&apos;âge d&apos;une personne ni la nature
+            d&apos;une image nouvelle. Tant qu&apos;aucun prestataire n&apos;est configuré, aucun filtrage n&apos;a lieu.
+          </p>
+        </>
+      )}
 
       <h2>Données que nous conservons</h2>
       <p>
@@ -118,16 +148,27 @@ function BetaPolicy() {
 
       <h2>Cookies</h2>
       <p>
-        Aucun cookie de suivi, de publicité ou de mesure d&apos;audience. Un seul cookie fonctionnel peut être posé : lorsque vous relevez le
-        défi d&apos;un ami, un cookie « défi » (24 heures, illisible par les scripts de la page) rattache votre rapport à ce défi. Il ne sert
-        à rien d&apos;autre. L&apos;administration du site utilise en plus un cookie de session réservé à ses administrateurs.
+        Aucun cookie de suivi, de publicité ou de mesure d&apos;audience. {photo ? "Seuls des cookies fonctionnels peuvent être posés, illisibles par les scripts de la page : « défi » (24 heures) lorsque vous relevez le défi d'un ami ; « âge » (30 minutes, sans donnée d'identité) après la vérification d'âge du protocole photo." : "Un seul cookie fonctionnel peut être posé : lorsque vous relevez le défi d'un ami, un cookie « défi » (24 heures, illisible par les scripts de la page) rattache votre rapport à ce défi. Il ne sert à rien d'autre."}{" "}
+        L&apos;administration du site utilise en plus un cookie de session réservé à ses administrateurs.
       </p>
 
-      <h2>Aucun envoi à un prestataire d&apos;analyse</h2>
-      <p>
-        Pendant la bêta, vos données ne sont envoyées à aucun service d&apos;analyse ou d&apos;intelligence artificielle : le rapport est
-        calculé par notre propre programme.
-      </p>
+      {photo ? (
+        <>
+          <h2>Questionnaire : aucun envoi à un prestataire d&apos;analyse</h2>
+          <p>
+            Les valeurs du questionnaire ne sont envoyées à aucun service d&apos;analyse ou d&apos;intelligence artificielle : ce rapport est calculé
+            par notre propre programme. Seule la photo du protocole photo est envoyée au prestataire d&apos;analyse décrit plus haut.
+          </p>
+        </>
+      ) : (
+        <>
+          <h2>Aucun envoi à un prestataire d&apos;analyse</h2>
+          <p>
+            Pendant la bêta, vos données ne sont envoyées à aucun service d&apos;analyse ou d&apos;intelligence artificielle : le rapport est
+            calculé par notre propre programme.
+          </p>
+        </>
+      )}
 
       <h2>Hébergement</h2>
       <p>

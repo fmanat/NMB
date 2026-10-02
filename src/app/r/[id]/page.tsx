@@ -200,11 +200,29 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         </div>
       </section>
 
-      {/* Synthèse : texte du rapport, après les données */}
-      <Card as="section" soft className="space-y-2">
-        <p className="t-eyebrow">Synthèse</p>
-        <p className="text-muted leading-relaxed">{r.comment}</p>
-      </Card>
+      {/* Synthèse : texte du rapport, après les données. Formules photo : modèle FIXE (trois observations, un verdict), rédigé par le modèle
+          à partir d'indicateurs calculés et validé contre un schéma versionné (aucun chiffre). Formule A : commentaire calculé. */}
+      {r.standard ? (
+        <Card as="section" soft className="space-y-3">
+          <p className="t-eyebrow">Observations du laboratoire</p>
+          <ol className="list-decimal pl-5 space-y-1 text-muted leading-relaxed" data-standard-comment={r.standard.schemaVersion}>
+            {r.standard.observations.map((o, i) => (
+              <li key={i} data-observation>{o}</li>
+            ))}
+          </ol>
+          <p className="t-eyebrow">Verdict</p>
+          <p className="leading-relaxed font-medium" data-verdict>{r.standard.verdict}</p>
+          <p className="t-small text-muted">
+            Observations et verdict portent sur la qualité de la photo, le cadrage, la cohérence des estimations et la position statistique générale ; les
+            chiffres du rapport sont tous calculés par le site à partir des points repérés.
+          </p>
+        </Card>
+      ) : (
+        <Card as="section" soft className="space-y-2">
+          <p className="t-eyebrow">Synthèse</p>
+          <p className="text-muted leading-relaxed">{r.comment}</p>
+        </Card>
+      )}
 
       {/* Méthodologie */}
       <section aria-labelledby="methodo" className="space-y-3">

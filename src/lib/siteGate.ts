@@ -2,6 +2,7 @@
 //  1. /api/health : toujours accessible (point de contrôle de santé de l'hébergeur), sans donnée.
 //  2. Protection par mot de passe (authentification HTTP « Basic ») si SITE_PASSWORD est défini : tout le reste exige les identifiants.
 //  3. Bêta gratuite : les chemins des formules photo, du paiement et des CGV n'existent pas (404) ; /conditions n'existe qu'en bêta.
+//     Bêta photo active (PHOTO_BETA=on et garde-fous satisfaits, src/lib/photoBeta.ts) : les chemins de la formule B existent.
 import { isBetaOnly, isFreeBeta, isHiddenInBeta } from "./mode";
 
 export type GateDecision = { action: "next"; protectedSite: boolean } | { action: "unauthorized" } | { action: "not_found" };
@@ -53,6 +54,6 @@ export function decideAccess(pathname: string, authorization: string | null, env
     if (!(okUser && okPass)) return { action: "unauthorized" };
   }
 
-  if (isFreeBeta(env) ? isHiddenInBeta(pathname) : isBetaOnly(pathname)) return { action: "not_found" };
+  if (isFreeBeta(env) ? isHiddenInBeta(pathname, env) : isBetaOnly(pathname)) return { action: "not_found" };
   return { action: "next", protectedSite: password !== "" && !signedByProvider };
 }

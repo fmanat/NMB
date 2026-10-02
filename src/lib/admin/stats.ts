@@ -1,5 +1,6 @@
 import { FINANCE, aiPricing } from "@/config/site";
 import { pool } from "../db";
+import { dailyCapUsd, spendHistory, type DaySpend } from "../xaiSpend";
 
 export type FormulaKey = "A" | "B" | "C";
 const FORMULAS: FormulaKey[] = ["A", "B", "C"];
@@ -67,6 +68,8 @@ export type Dashboard = {
   revenue: { total: Finance; byFormula: Record<FormulaKey, Finance> };
   challenges: { created: number; taken: number };
   ai: AiCost;
+  /** Plafond de dépense xAI quotidien : dépense du jour (Paris) et des 7 derniers jours, plafond configuré. */
+  xaiSpend: { capUsd: number; today: DaySpend; days: DaySpend[] };
 };
 
 const emptyFormulaRecord = <T>(make: () => T): Record<FormulaKey, T> => ({ A: make(), B: make(), C: make() });
@@ -155,7 +158,10 @@ export async function dashboardStats(days: number | null): Promise<Dashboard> {
   );
   const t = ai.rows[0];
 
+  const spend = await spendHistory(7);
+
   return {
+    xaiSpend: { capUsd: dailyCapUsd(), today: spend[0], days: spend },
     days,
     since,
     launched,
