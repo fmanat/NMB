@@ -89,7 +89,7 @@ test.describe("Site de test Railway", () => {
     const fp = await friend.newPage();
     await fp.goto(path);
     await fp.getByRole("button", { name: "Relever le défi" }).click();
-    await expect(fp).toHaveURL(/\/analyse\/questionnaire$/);
+    await expect(fp).toHaveURL(/\/analyse$/);
     const friendId = await report(fp, "10", "9,5");
     await page.goto(`/r/${id}/defi`);
     await expect(page.getByRole("columnheader", { name: "Votre ami" })).toBeVisible();
