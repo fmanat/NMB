@@ -13,6 +13,8 @@ Règle du projet : **je prépare, vous envoyez.** Aucun compte n'a été ouvert,
 | Destinataire | Fichier | Langue | Nécessaire pour le payant de la formule A ? | Rôle |
 |---|---|---|---|---|
 | Verotel | [verotel.md](verotel.md) | anglais | **OUI** | Paiement (premier choix) |
+| CCBill | [ccbill.md](ccbill.md) | anglais | **OUI (repli de Verotel)** | Paiement (repli) |
+| Segpay | [segpay.md](segpay.md) | anglais | **OUI (repli, 3e choix)** | Paiement (repli) |
 | Railway | [railway.md](railway.md) | anglais | Non (recommandé avant les formules photo) | Hébergeur : confirmation écrite que le service est accepté |
 | AgeVerif | [ageverif.md](ageverif.md) | **français** | Non (formules photo seulement) | Vérification d'âge (en parallèle de Yoti) |
 | Yoti | [yoti.md](yoti.md) | anglais | Non (formules photo seulement) | Vérification d'âge (en parallèle d'AgeVerif) |

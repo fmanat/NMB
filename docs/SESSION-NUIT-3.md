@@ -143,3 +143,8 @@ La première mise en ligne n'a pas lancé les migrations (`railway.json` ignoré
 **8. Ordre des demandes à envoyer** :
 - A. **Verotel et Railway d'abord ; AgeVerif, Yoti, PhotoDNA et xAI quand les formules photo reviennent à l'ordre du jour.** (recommandé)
 - B. Tout envoyer en même temps.
+
+---
+
+# Suite du 02/10/2026 (réponses du propriétaire)
+- 1A : champs de la Ltd toujours vides (ICO = « enregistrement en cours ») ; adresse et raison sociale de Railway ajoutées avec sources. 2A : CCBill et Segpay lus, recommandation, demandes `ccbill.md` et `segpay.md`. 3A : sauvegardes activées, restauration testée. 5A : base de test vidée. 6A : commission 15,5 %. 7 : `docs/JURISTE-COURT.md`. Détail : `docs/DECISIONS.md` (fin) et `docs/RAILWAY.md`.

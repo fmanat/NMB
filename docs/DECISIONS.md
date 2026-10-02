@@ -219,3 +219,16 @@ Le SEO de 63 sur le rapport est voulu : la page est en `noindex` (adresse privé
 Constat sans correction nécessaire : contrastes (axe : aucune violation), langue de la page, repères, hiérarchie des titres, étiquettes des champs, `role="alert"` des erreurs du questionnaire, fenêtre modale native (focus piégé, Échap, retour du focus).
 
 **Petits écrans (320, 375, 390 px).** Nouveau détecteur (`e2e/layout.ts`) fondé sur les rectangles réels de chaque morceau de texte : défilement horizontal, texte coupé à droite ou à gauche, contenu masqué par `overflow`, **textes qui se recouvrent**. Appliqué à toutes les pages et à plusieurs états (fenêtre d'âge ouverte, erreurs) dans les deux modes. **Aucun défaut réel trouvé.** Deux fausses alertes du détecteur ont été corrigées dans le détecteur lui-même (et non « résolues » dans le site) : l'interligne serré du score (le rectangle de la police dépasse l'interligne sans que les caractères se touchent) et le texte réservé aux lecteurs d'écran ; la page masquée derrière une fenêtre modale est ignorée. Un test de sensibilité vérifie que le détecteur signale bien un vrai recouvrement, un texte qui sort de l'écran et un défilement horizontal (sinon un test vert ne prouverait rien).
+
+## Session du 02/10/2026 : réponses du propriétaire au rapport de la nuit 3
+
+| Décision | Détail |
+|---|---|
+| Ltd | Les six champs sont **restés vides** dans la réponse (1A). Seul le numéro ICO a une valeur de repli décidée : « enregistrement en cours ». Les autres restent des marqueurs `[À COMPLÉTER]` : le site reste fermé au public sans mot de passe. |
+| Hébergeur dans les mentions légales | Railway Corporation, 548 Market St, PMB 68956, San Francisco, California 94104, États-Unis. Sources : https://railway.com/legal/terms (« Address: 548 Market St Suite 68956 ») et https://railway.com/legal/dpa (« 548 Market St PMB 68956 »), lues le 02/10/2026. L'écart « Suite » / « PMB » vient de ces deux pages ; « PMB » (celui du DPA et de l'agent DMCA) a été retenu. |
+| CCBill et Segpay | Lus ; recommandation dans `docs/PRESTATAIRES.md` : Verotel et CCBill en parallèle, Segpay en 3e (son site bloque les outils automatiques : seconde main seulement). Demandes préparées. |
+| Sauvegardes | Activées (quotidienne, 6 jours de conservation) et restauration testée sur un service séparé, avant l'ouverture de la bêta. Reste : constat de deux sauvegardes successives, copie hors Railway. |
+| Limite de dépense Railway | Posée par le propriétaire. |
+| Remise à zéro | Faite sur confirmation écrite (base de test vidée, vérifiée vide). |
+| Commission provisoire | 15,5 % (`FINANCE.paymentFeeRate`). |
+| Ouverture de la bêta | Après une consultation juridique d'une heure limitée à B1-B5 et B13 : `docs/JURISTE-COURT.md`. |

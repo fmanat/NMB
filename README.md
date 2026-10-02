@@ -75,7 +75,7 @@ Tout est dans un seul fichier : [src/config/site.ts](src/config/site.ts).
 - `SCORE` : la formule du score et le poids de chaque critère (longueur, circonférence, courbure, symétrie).
 - `REFERENCES` : les populations de référence pour les percentiles.
 - `MARGIN` : la marge d'erreur affichée et ses seuils. `PHOTO_LIMITS` : refus de photo (inclinaison, carte trop petite). `CAMERA` : réglages de géométrie.
-- `FINANCE` : TVA (20 %) et commission de paiement (12 %, **provisoire** : à remplacer par la vraie valeur).
+- `FINANCE` : TVA (20 %) et commission de paiement (15,5 %, **provisoire** : à remplacer par la vraie valeur).
 - `UPLOAD`, `TICKER`, `ADMIN`, `WEBHOOK` : taille des photos, bandeau de chiffres réels, administration, webhook.
 
 Après une modification : `npm run verify`, puis commit. Les formules de calcul sont couvertes par des tests automatiques : si un test casse, c'est qu'un résultat a changé, à examiner avant d'aller plus loin.

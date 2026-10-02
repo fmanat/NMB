@@ -52,10 +52,10 @@ describe("revenu brut et net", () => {
     expect(computeFinance(0, 0, cfg)).toEqual({ transactions: 0, grossCents: 0, vatCents: 0, netOfVatCents: 0, feeCents: 0, netCents: 0 });
   });
 
-  it("la configuration par défaut est 20 % de TVA et 12 % de commission", () => {
+  it("la configuration par défaut est 20 % de TVA et 15,5 % de commission", () => {
     const f = computeFinance(10000, 1);
     expect(f.vatCents).toBe(1667);
-    expect(f.feeCents).toBe(1200);
+    expect(f.feeCents).toBe(1550);
   });
 });
 

@@ -192,3 +192,44 @@ Pour comparaison : hCaptcha collecte mouvements de souris, défilement et frappe
 1. **Le compte Premium (FlexPay) est probablement le point bloquant** pour une société nouvelle : demander la dérogation ou une alternative. Si elle est refusée : CCBill ou Segpay (non étudiés cette nuit : leurs conditions n'ont pas été lues ; à faire avant toute demande).
 2. L'adaptateur est écrit d'après le client officiel (signature et URL, **vérifié contre le jeu d'essai public de Verotel** : la signature SHA-1 de son test est reproduite à l'identique) et une bibliothèque tierce (noms des événements et des paramètres de notification). **À confirmer en mode test**, avant tout paiement réel : (a) la valeur exacte de l'événement d'une vente unique (« initial », ou absence d'événement avec « type=purchase »), (b) les noms des paramètres de montant et de devise dans la notification (« priceAmount » / « amount »), (c) la présence de « referenceID » dans les notifications de remboursement et de contestation (sinon le numéro de vente est utilisé), (d) l'adresse de retour acceptée, (e) le format de signature (SHA-256 ; SHA-1 refusé par défaut).
 3. Aucune donnée d'identité n'est reçue de Verotel par le site ; seuls la référence du paiement, le numéro de vente, le montant et la devise sont lus. L'adresse privée du rapport n'est jamais transmise à Verotel.
+
+
+---
+
+# Mise à jour du 02/10/2026 : CCBill et Segpay (repli de Verotel) et recommandation
+
+**Méthode et limites.** CCBill : pages publiques lues **directement** le 02/10/2026 (ccbill.com/merchants, /pricing, /merchant-account, /industries/adult-business, la politique d'usage acceptable https://ccbill.com/cs/client/policies/ccbill/acceptable_use.html, la liste de pays de traitement). **Segpay : son site refuse l'accès aux outils automatiques (erreur 403) ; je n'ai pu lire que des extraits de résultats de recherche (seconde main, non vérifiés à la source)**, dont https://segpay.com/newsroom/segpay-ready-to-process-in-european-union-and-united-kingdom/ et https://cs.segpay.com/faq/ (titres seulement). Ni l'un ni l'autre ne publie ses taux ni le contrat marchand : tout chiffre de commission est à obtenir par écrit.
+
+## CCBill (lu directement)
+
+| Sujet | Ce que disent les pages | Portée pour ce service |
+|---|---|---|
+| Acceptation de ce type de service | Page « Merchant Eligibility Requirements » : « being incorporated in a supported region, having a compliant business model, a functional website, and a valid bank account » ; « Operate within supported industries and business models » ; « Comply with Acceptable Use Policy ». Page adulte : « No matter the history or business model … anyone can start application and boarding ». | Rien ne cite un service de mesures corporelles déclarées : **question à poser par écrit**. La politique d'usage vise le contenu sexuel illégal, extrême ou impliquant des mineurs ; **aucune clause sur un rapport statistique**. |
+| Société britannique | « Be incorporated in and have a principal in the same country within the supported regions » ; « Business bank account must be in country of incorporation ». CCBill a une entité britannique régulée (CCBill UK Limited, société n° 12645114, établissement de paiement FCA n° 936980) et la liste de pays de traitement Visa/Mastercard contient le Royaume-Uni et la France. | Une Ltd britannique avec dirigeant et compte bancaire au Royaume-Uni **semble compatible** ; la liste des « supported regions » (lien de la page) n'a pas été lue : à confirmer. Le dirigeant doit résider dans le pays d'immatriculation. |
+| Historique de paiement exigé | Aucune exigence d'historique sur les pages lues ; « Bespoke underwriting based on your business model and processing history » (compte marchand dédié, ISO) ; l'offre PSP est présentée comme « all-in-one », « no need to establish a direct relationship with an acquiring bank ». | **Meilleur point de CCBill face à Verotel** : pas de relevés de six mois annoncés pour l'offre PSP. À confirmer par écrit. |
+| Commission | Aucun taux publié. PSP : modèle « Flat Rate » ou « Discount Rate », « No monthly fees ». ISO : frais d'enregistrement annuels « high-risk » aux réseaux de cartes (Visa 950 $, Mastercard 1000 $, « applies only to certain business verticals »). | Taux à demander. **Ne pas retenir de chiffre.** |
+| Retenue, suspension | AUP : en cas de suspension pour comportement inacceptable ou soupçon de fraude, « all monies held for a period of six months to one year » ; « CCBill will hold all funds until … card association fines, chargebacks, and refunds have been satisfied ». Résiliation immédiate possible en cas de violation. Retenue ordinaire (réserve) : non publiée. | Risque comparable à Verotel (suspension et fonds gelés) ; réserve à demander. |
+| Apple Pay, Google Pay | **Non mentionnés** sur les pages lues. | À demander par écrit. |
+| Paiement par page hébergée ou API | Pages de paiement « FlexForms » et API REST (jetons de paiement), 3D Secure pour les porteurs de l'UE. | Un adaptateur serait à écrire d'après leur documentation (docs.ccbill.com, non lue en détail). |
+| Contenu sur la page de paiement | AUP : « Any attempt to bypass or remove CCBill's name, logo, or customer support link from the CCBill provided payment page » interdit ; matériel téléversé sur la page de paiement « non-sexual » et non nu. | Rien de gênant ici. |
+
+## Segpay (extraits de recherche, seconde main)
+
+- Traite des sociétés **aux États-Unis, au Royaume-Uni et en Europe** ; les marchands britanniques restent chez « Segpay UK » (paiement par le réseau bancaire britannique) : d'après l'annonce « Segpay Ready to Process in European Union and United Kingdom » (extrait de recherche).
+- Accepte des **entreprises nouvelles et petites** ; tarif, réserve et règlement **fixés au cas par cas** (secteur, volume, historique, lieu, risque de contestation) : extrait de recherche.
+- Réserve donnée en exemple par un site tiers : 5 % pendant 6 mois, rendue à partir du septième mois (offshorecorptalk.com / paymentpop.com : **avis d'utilisateurs, non officiel**).
+- Apple Pay et Google Pay : **aucune information trouvée**.
+- Acceptation du type de service et commission : **inconnues**.
+
+## Comparaison et recommandation
+
+| Critère | Verotel (lu) | CCBill (lu) | Segpay (extraits) |
+|---|---|---|---|
+| Ltd britannique récente | Rien d'écrit ; FlexPay demande 6 mois de relevés (Premium) | Semble acceptée si dirigeant et banque britanniques ; pas d'historique annoncé pour le PSP | Nouvelles sociétés acceptées ; entité britannique |
+| Vente d'un contenu numérique à l'unité | Accord écrit exigé (art. 4) | Plateforme prévue pour contenu numérique ; à confirmer | À confirmer |
+| Commission | 15,5 % (Basic, public) | Non publiée | Non publiée |
+| Retenue | 10 % pendant 26 semaines (art. 2) | Non publiée | « 5 % 6 mois » (avis tiers) |
+| Apple Pay / Google Pay | Non mentionnés | Non mentionnés | Non trouvés |
+| Documentation d'intégration | Client officiel public | API REST publique | Non lue |
+
+**Recommandation.** (1) Envoyer la demande à **Verotel** comme prévu (elle pose la question de la dérogation à l'historique). (2) **Envoyer en même temps une demande à CCBill** (offre PSP, société britannique, pas d'historique, taux, réserve, Apple Pay/Google Pay, acceptation du type de service) : c'est le repli le plus documenté publiquement. (3) **Segpay en troisième** : contact commercial seulement (son site est fermé aux outils automatiques), à lire à la main avant de s'engager. Décision finale sur **réponses écrites**, avec le critère déterminant : acceptation écrite du service par le prestataire. Les messages sont dans `docs/DEMANDES/ccbill.md` et `docs/DEMANDES/segpay.md`.

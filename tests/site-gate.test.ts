@@ -61,8 +61,10 @@ describe("notifications du prestataire de paiement sur un site protégé", () =>
 describe("garde-fou : identité de la Ltd non complétée", () => {
   it("les marqueurs sont présents tant que rien n'est renseigné (état actuel du dépôt)", () => {
     expect(hasCompanyPlaceholders()).toBe(true);
-    expect(missingCompanyFields()).toEqual(expect.arrayContaining(["legalName", "companiesHouseNumber", "registeredOffice", "publicationDirector", "icoNumber", "contactEmail", "hostAddress"]));
+    expect(missingCompanyFields()).toEqual(expect.arrayContaining(["legalName", "companiesHouseNumber", "registeredOffice", "publicationDirector", "contactEmail"]));
     expect(COMPANY.legalName).toContain("[À COMPLÉTER");
+    expect(HOST.address).toContain("548 Market St");
+    expect(missingCompanyFields()).not.toContain("hostAddress");
     expect(HOST.legalName).toBe("Railway Corporation (États-Unis)");
   });
   it("une valeur renseignée n'est plus signalée", () => {

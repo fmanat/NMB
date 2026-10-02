@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 // Les demandes à envoyer (docs/DEMANDES) : un fichier par destinataire, structure complète, aucune information inventée.
-const FILES = ["verotel", "railway", "ageverif", "yoti", "microsoft-photodna", "xai"] as const;
+const FILES = ["verotel", "ccbill", "segpay", "railway", "ageverif", "yoti", "microsoft-photodna", "xai"] as const;
 const read = (n: string) => readFileSync(`docs/DEMANDES/${n}.md`, "utf8");
 
 describe("demandes à envoyer", () => {

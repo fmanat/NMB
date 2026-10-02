@@ -9,7 +9,7 @@ Temps prévu : 30 minutes de manipulations, plus l'attente de la propagation (de
 | À vérifier | Pourquoi |
 |---|---|
 | **Les informations de la Ltd sont renseignées** dans `src/config/company.ts` (raison sociale, numéro Companies House, siège, directeur de la publication, numéro ICO, e-mail de contact, adresse de l'hébergeur). | Tant qu'il reste un `[À COMPLÉTER : …]`, le site **refuse de s'ouvrir** : il répond « 503 » dès que vous retirez le mot de passe. C'est voulu. Me demander de remplir le fichier en me donnant les informations, puis redéployer (voir 3). |
-| **Le juriste a validé la section « bêta gratuite »** de `docs/JURISTE.md`. | Ouvrir au public un service qui traite des données sur la vie sexuelle sans validation est le principal risque. |
+| **Le juriste a validé par écrit les points B1 à B5 et B13** (consultation d’une heure : `docs/JURISTE-COURT.md`). | Ouvrir au public un service qui traite des données sur la vie sexuelle sans validation est le principal risque. |
 | **Une limite d'usage est définie dans Railway** (Settings → Usage → limite dure, par exemple 20 $). | Aucune limite n'était définie au 01/10/2026 : une erreur ou un pic de trafic ferait monter la facture sans plafond. |
 | **Le nom de domaine est bien à vous** (acheté chez Cloudflare ou ailleurs). | Voir le cas A ou B ci-dessous. |
 

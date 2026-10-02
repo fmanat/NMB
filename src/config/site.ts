@@ -139,7 +139,7 @@ export const GIRTH_FROM: "max" | "mean" = "max";
 // Finances. Les prix affichés sont TTC. Revenu net = prix TTC − TVA − commission du prestataire de paiement.
 export const FINANCE = {
   vatRate: 0.2, // TVA française par défaut
-  paymentFeeRate: 0.12, // commission du prestataire de paiement : valeur PROVISOIRE, à remplacer par le tarif réel du prestataire choisi
+  paymentFeeRate: 0.155, // commission du prestataire de paiement : valeur PROVISOIRE (15,5 % = tarif public du compte Basic de Verotel, décision du propriétaire le 02/10/2026), à remplacer par le tarif réel du contrat
   paymentFeeFixedCents: 0, // frais fixes par transaction, en centimes (certains prestataires en facturent)
 } as const;
 
