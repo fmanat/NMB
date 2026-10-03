@@ -121,7 +121,7 @@ Vous pouvez utiliser [l'analyse statistique](/analyse) pour situer une mesure.
 
 Pour comprendre la mesure elle-même, consultez [comment mesurer son pénis](/comment-mesurer-son-penis).
 
-Et pour comparer longueur et circonférence, consultez [la taille moyenne du pénis en France](/taille-moyenne-penis-france).
+Et pour comparer longueur et circonférence, consultez [la taille moyenne du pénis](/taille-moyenne-penis).
 
 ## À retenir
 

@@ -39,6 +39,14 @@ export const REFERENCES = {
   erect: { length: { mean: 13.12, sd: 1.66 }, girth: { mean: 11.66, sd: 1.1 } },
 } as const;
 
+// Effectifs des mêmes séries (Veale et al., 2015, résumé de l'article : nombre d'hommes mesurés pour chaque moyenne).
+// Vérifiés sur le résumé PubMed (PMID 25487360) le 03/10/2026. Utilisés par les pages de contenu, jamais dans un calcul.
+export const REFERENCE_SAMPLES = {
+  flaccid: { length: 10704, girth: 9407 },
+  erect: { length: 692, girth: 381 },
+  total: 15521,
+} as const;
+
 // Citation de la source des références ci-dessus, telle qu'elle apparaît dans le bandeau défilant de l'accueil.
 export const REFERENCE_SOURCE = "Veale et al., BJU Int., 2015";
 

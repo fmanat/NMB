@@ -4,7 +4,7 @@ import { Doc } from "@/components/Doc";
 import { isFreeBeta } from "@/lib/mode";
 import { REPORT_ACCESS } from "@/config/site";
 
-export const metadata = { title: "Conditions générales de vente" };
+export const metadata = { title: "Conditions générales de vente", alternates: { canonical: "/cgv" } };
 
 export default function Page() {
   if (isFreeBeta()) notFound(); // bêta gratuite : /conditions à la place

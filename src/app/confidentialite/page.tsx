@@ -2,7 +2,7 @@ import { Doc } from "@/components/Doc";
 import { COMPANY, HOST } from "@/config/company";
 import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
 
-export const metadata = { title: "Politique de confidentialité" };
+export const metadata = { title: "Politique de confidentialité", alternates: { canonical: "/confidentialite" } };
 
 export default function Page() {
   if (isFreeBeta()) return <BetaPolicy />;

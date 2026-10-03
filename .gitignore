@@ -60,3 +60,4 @@ next-env.d.ts
 # tests de bout en bout
 /test-results/
 /playwright-report/
+playwright.local.config.ts

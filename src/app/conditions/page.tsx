@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Doc } from "@/components/Doc";
 import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
 
-export const metadata = { title: "Conditions d'utilisation (bêta)" };
+export const metadata = { title: "Conditions d'utilisation (bêta)", alternates: { canonical: "/conditions" } };
 
 // Remplace les CGV pendant la bêta gratuite (les CGV restent prêtes pour la version payante : /cgv).
 export default function Page() {

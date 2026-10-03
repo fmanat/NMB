@@ -23,6 +23,16 @@ export const TRY_DEFAULTS: Pick<QuestionnaireInput, "state" | "length" | "girth"
 
 export type TryValues = { state: BodyState; length: number; girth: number };
 
+/** Réglages du composant de simulation (accueil : aucun ; pages de contenu : valeurs préremplies, version compacte). */
+export type TryItProps = {
+  /** Valeurs de départ (pages de contenu : taille de la page) ; à défaut, celles du rapport d'exemple. */
+  initial?: TryValues;
+  /** Version compacte des pages de contenu : sans les repères de taille. */
+  compact?: boolean;
+  /** Préfixe des identifiants des champs. */
+  idPrefix?: string;
+};
+
 /** Ramène une valeur dans les bornes du questionnaire, au pas de 0,1 (évite les décimales parasites du curseur). */
 export function snap(dim: "length" | "girth", v: number): number {
   const { min, max } = TRY_BOUNDS[dim];

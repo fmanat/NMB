@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FORMULAS, REPORT_ACCESS, SITE, formatEur } from "@/config/site";
 import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
@@ -13,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { TrustBadge } from "@/components/ui/TrustBadge";
 import { ReportDashboard } from "@/components/report/ReportDashboard";
+import { ogImagePath, toJsonLd, webApplication } from "@/lib/structuredData";
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
   { icon: "ruler", title: "Saisir", text: "Vous indiquez votre longueur et votre circonférence en centimètres, et la courbure approximative. Environ une minute." },
@@ -32,6 +34,12 @@ const MEASURES: { icon: IconName; title: string; text: string }[] = [
 // Valeur littérale obligatoire (Next.js ne lit pas une constante importée) : tests/ticker.test.ts la vérifie.
 export const revalidate = 300;
 
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { type: "website", url: "/", siteName: SITE.name, locale: "fr_FR", images: [{ url: ogImagePath("accueil"), width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", images: [ogImagePath("accueil")] },
+};
+
 export default async function Home() {
   const beta = isFreeBeta();
   const photoBeta = isPhotoBeta(); // bêta photo : la formule photo (B) est proposée, gratuite ; les libellés disent ce qu'elle fait réellement
@@ -40,6 +48,7 @@ export default async function Home() {
   return (
     <>
       <TrackView event="home_view" />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(webApplication(beta)) }} />
 
       {/* Hero : le sujet est dit dans le titre et le sous-titre ; un rapport rempli est visible avant de se lancer */}
       <section className="bg-gradient-to-b from-[var(--bm-blue-050)] to-white">

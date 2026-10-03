@@ -69,7 +69,7 @@ Un secret = une longue chaîne de caractères aléatoires (au moins 32), différ
 | `AGEVERIF_CHALLENGES` | AgeVerif : méthodes proposées, séparées par des virgules, vide = toutes. Valeurs documentées : `selfie`, `email_age`, `credit_card`, `ticket`, `anonymage`, `pleenk`, `paypal`, `agego`, `agekey`. Exemple de forme : `selfie,email_age,credit_card`. Adresse de retour à déclarer si la plateforme la demande : `SITE_URL` + `/api/age/callback`. | Non |
 | `YOTI_CLIENT_SDK_ID`, `YOTI_API_KEY` | Yoti : **noms réservés, non lus par le code** (aucun adaptateur, `yoti` ne compte pas comme prestataire prêt). D'après la documentation de Yoti : « Client SDK ID » (UUID, en-tête `Yoti-SDK-Id`) et « API Key » (jeton Bearer, secret), créés avec le service « Age Verification » dans Yoti Hub. | Non |
 | `ALTCHA_HMAC_KEY`, `ALTCHA_MAX_NUMBER` | Clé secrète (32 caractères ou plus) et difficulté du captcha auto-hébergé (défaut 100000). | Si `altcha` |
-| `SEO_PUBLISH` | Vide = pages de contenu (guides) cachées et en `noindex`. Mettre `on` **après relecture des textes**, puis reconstruire le site. | Non |
+| `SEO_PUBLISH` | Vide ou `on` = pages de contenu (guides, piliers, pages par centimètre) publiées : indexables et dans le sitemap. `off` = cachées et en `noindex`. Lu à la construction du site. | Non |
 | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | Accès à `/admin`. Générez-les avec `npm run admin:hash -- "votre mot de passe de 12 caractères ou plus"` et copiez les deux lignes affichées. Le mot de passe lui-même n'est écrit nulle part. | Pour /admin |
 | `STATS_WEBHOOK_URL`, `STATS_WEBHOOK_SECRET` | Envoi quotidien de chiffres anonymes agrégés (Make, n8n…). Adresse en https. Vide = rien n'est envoyé. | Non |
 
@@ -110,7 +110,7 @@ Les statistiques durables (journal anonyme, paiements) sont conservées même ap
 6. **Construire et démarrer** : `npm run build` puis `npm run start`.
 7. **Programmer** `db:purge` (toutes les heures) et `stats:webhook` (une fois par jour).
 8. **Contrôler** : pages principales, un paiement de test en mode test du prestataire, `/admin`, les en-têtes de sécurité, `npm run seo:check -- --urls` sur l'adresse publique.
-9. **Relire les pages de guide** puis mettre `SEO_PUBLISH=on` et reconstruire.
+9. **Pages de guide** : publiées par défaut (mettre `SEO_PUBLISH=off` pour les couper). Déclarer ensuite le site à Google et Bing : `docs/SEARCH-CONSOLE.md`.
 10. Demander à xAI la **non-conservation des données** (Zero Data Retention) : sans cela, xAI garde les requêtes 30 jours, ce que la politique de confidentialité indique.
 
 ## 6. Commandes utiles

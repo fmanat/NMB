@@ -2,9 +2,14 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Marked, type Token, type Tokens } from "marked";
 
-/** Les huit pages du lancement (cahier des charges, section 12). Le nom du fichier est <slug>.md. */
-export const SEO_SLUGS = [
-  "taille-moyenne-penis-france",
+import { FigureError, resolveFigureTokens } from "./seoFigures";
+
+/**
+ * Pages de contenu. Le nom du fichier est <slug>.md. La nature d'une page (pilier, guide, information, page par centimètre)
+ * se déduit de son slug : elle décide de la mise en page (réponse immédiate, courbe, calculateur prérempli, fil d'Ariane).
+ */
+export const PILLAR_SLUGS = ["taille-moyenne-penis", "taille-penis-normale", "percentile-penis"] as const;
+export const GUIDE_SLUGS = [
   "taille-penis-par-pays",
   "comment-mesurer-son-penis",
   "circonference-moyenne-penis",
@@ -13,10 +18,40 @@ export const SEO_SLUGS = [
   "etudes-taille-penis",
   "faq",
 ] as const;
-export type SeoSlug = (typeof SEO_SLUGS)[number];
+export const INFO_SLUGS = ["a-propos"] as const;
+/** Pages par centimètre : longueur en érection, de 10 à 20 cm. */
+export const CM_SIZES = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
+export type CmSize = (typeof CM_SIZES)[number];
+export const cmSlug = (n: number) => `taille-penis-${n}-cm` as const;
+const CM_SLUGS = CM_SIZES.map(cmSlug);
 
-/** Pages publiques du site vers lesquelles le corps d'une page de contenu peut renvoyer (en plus de /analyse et des 8 slugs). */
-export const PUBLIC_PAGES = ["methode", "confidentialite", "cgv", "contact", "mentions-legales"] as const;
+export const SEO_SLUGS = [...PILLAR_SLUGS, ...GUIDE_SLUGS, ...INFO_SLUGS, ...CM_SLUGS] as const;
+export type SeoSlug = (typeof SEO_SLUGS)[number];
+export type SeoKind = "pilier" | "guide" | "info" | "centimetre";
+
+export function kindOf(slug: SeoSlug): SeoKind {
+  if ((PILLAR_SLUGS as readonly string[]).includes(slug)) return "pilier";
+  if ((INFO_SLUGS as readonly string[]).includes(slug)) return "info";
+  if ((CM_SLUGS as readonly string[]).includes(slug)) return "centimetre";
+  return "guide";
+}
+
+/** Taille (cm) d'une page par centimètre, sinon null. */
+export function cmOf(slug: string): CmSize | null {
+  const m = slug.match(/^taille-penis-(\d+)-cm$/);
+  const n = m ? Number(m[1]) : NaN;
+  return (CM_SIZES as readonly number[]).includes(n) ? (n as CmSize) : null;
+}
+
+export { RENAMED_SLUGS } from "./seoRenamed";
+
+/** Pages publiques du site vers lesquelles le corps d'une page de contenu peut renvoyer (en plus de /, /analyse et des slugs). */
+export const PUBLIC_PAGES = ["methode", "confidentialite", "cgv", "contact", "mentions-legales", "presse"] as const;
+
+/** Blocs interactifs ou calculés insérés dans le corps par une ligne seule « [[nom]] ». */
+export const BLOCKS = ["calculateur", "distribution", "tableau-percentiles", "tailles", "mesure"] as const;
+export type BlockName = (typeof BLOCKS)[number];
+export type BodySegment = { type: "html"; html: string } | { type: "block"; name: BlockName };
 
 export const SEO_LIMITS = { titleMax: 60, metaDescriptionMax: 155, wordsMin: 600, wordsMax: 1500 } as const;
 export const SEO_DIR = join(process.cwd(), "content", "seo");
@@ -29,12 +64,27 @@ export type Heading = { depth: 2 | 3; text: string; id: string };
 
 export type SeoPage = {
   slug: SeoSlug;
+  kind: SeoKind;
+  /** Taille de la page par centimètre (longueur en érection), sinon null. */
+  cm: CmSize | null;
+  /** Titre de la page pour les moteurs (balise title, 60 caractères au plus). */
   title: string;
+  /** Titre affiché (H1) ; à défaut, le titre. */
+  h1: string;
+  /** Libellé court du fil d'Ariane ; à défaut, le H1. */
+  breadcrumb: string;
+  /** Date de vérification du contenu (AAAA-MM-JJ), affichée sous le titre et reprise dans les données structurées. */
+  verified: string | null;
+  /** Chiffre clé de l'image de partage (déjà calculé) et son libellé. */
+  ogFigure: string | null;
+  ogLabel: string | null;
   metaDescription: string;
   targetKeyword: string;
   faq: SeoFaq[];
   sources: SeoSource[];
   bodyHtml: string;
+  /** Corps découpé autour des blocs [[…]] (calculateur, courbe, tableau, tailles, mesure). */
+  segments: BodySegment[];
   headings: Heading[];
   words: number;
   /** Liens internes vers des pages du lancement qui n'existent pas (encore). */
@@ -42,9 +92,12 @@ export type SeoPage = {
   modifiedAt: Date;
 };
 
-/** Publication : tant que SEO_PUBLISH n'est pas « on », les pages restent en noindex, hors sitemap, et cachées en production. */
+/**
+ * Publication des pages de contenu : activée par défaut depuis la phase 1 du référencement (session SEO 1, 03/10/2026).
+ * `SEO_PUBLISH=off` la coupe : pages en noindex, hors sitemap, et introuvables en production. Lu à la construction du site.
+ */
 export function isPublished(): boolean {
-  return process.env.SEO_PUBLISH === "on";
+  return process.env.SEO_PUBLISH !== "off";
 }
 
 const slugify = (s: string) =>
@@ -62,7 +115,7 @@ function nonEmpty(v: unknown, what: string, file: string): string {
   return v.trim();
 }
 
-const SCALAR_KEYS = ["slug", "title", "metaDescription", "targetKeyword"] as const;
+const SCALAR_KEYS = ["slug", "title", "h1", "breadcrumb", "metaDescription", "targetKeyword", "verified", "ogFigure", "ogLabel"] as const;
 const LIST_KEYS = { faq: ["q", "a"], sources: ["title", "url"] } as const;
 
 /** Valeur d'une ligne « clé: valeur » : tout ce qui suit le premier « : », les deux-points du texte sont donc permis. */
@@ -143,18 +196,29 @@ function resolveHref(href: string, file: string, pending: Set<string>, existing:
   if (/^https?:\/\//i.test(href)) return href;
   const clean = href.replace(/^\/+/, "");
   const [base, hash] = clean.split("#");
+  if (base === "") return "/" + (hash ? `#${hash}` : "");
   if (base === "analyse" || (PUBLIC_PAGES as readonly string[]).includes(base)) return `/${base}` + (hash ? `#${hash}` : "");
   if (isSlug(base)) {
     if (!existing.has(base)) pending.add(base);
     return `/${base}` + (hash ? `#${hash}` : "");
   }
-  throw new SeoError(`${file} : lien interne inconnu « ${href} » (autorisés : /analyse, le slug d'une des 8 pages, ou /methode, /confidentialite, /cgv, /contact, /mentions-legales).`);
+  throw new SeoError(`${file} : lien interne inconnu « ${href} » (autorisés : /, /analyse, le slug d'une page de contenu, ou /${PUBLIC_PAGES.join(", /")}).`);
 }
 
 /** Convertit le Markdown en HTML après validation stricte : titres H2/H3 seulement, ni image, ni HTML brut, liens contrôlés. */
-export function renderBody(markdown: string, file: string, existingSlugs: Set<string>): { html: string; headings: Heading[]; words: number; pending: string[] } {
+export function renderBody(
+  markdown: string,
+  file: string,
+  existingSlugs: Set<string>,
+): { html: string; segments: BodySegment[]; headings: Heading[]; words: number; pending: string[] } {
   const marked = new Marked();
-  const tokens = marked.lexer(markdown);
+  let resolved: string;
+  try {
+    resolved = resolveFigureTokens(markdown, file);
+  } catch (e) {
+    throw new SeoError(e instanceof FigureError ? e.message : String(e));
+  }
+  const tokens = marked.lexer(resolved);
   const pending = new Set<string>();
   const headings: Heading[] = [];
   const used = new Map<string, number>();
@@ -181,6 +245,14 @@ export function renderBody(markdown: string, file: string, existingSlugs: Set<st
         headings.push({ depth: depth as 2 | 3, text, id });
         return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
       },
+      paragraph(this: { parser: { parseInline: (t: Token[]) => string } }, { tokens, text }: Tokens.Paragraph) {
+        const block = text.trim().match(/^\[\[([a-z-]+)\]\]$/);
+        if (block) {
+          if (!(BLOCKS as readonly string[]).includes(block[1])) throw new SeoError(`${file} : bloc inconnu « [[${block[1]}]] » (disponibles : ${BLOCKS.join(", ")}).`);
+          return `<!--bloc:${block[1]}-->`;
+        }
+        return `<p>${this.parser.parseInline(tokens)}</p>\n`;
+      },
       link(this: { parser: { parseInline: (t: Token[]) => string } }, { href, title, tokens }: Tokens.Link) {
         const resolved = resolveHref(href, file, pending, existingSlugs);
         const external = /^https?:\/\//i.test(resolved);
@@ -191,9 +263,15 @@ export function renderBody(markdown: string, file: string, existingSlugs: Set<st
     },
   });
 
-  const html = marked.parser(tokens) as string;
+  const raw = marked.parser(tokens) as string;
+  const segments: BodySegment[] = [];
+  for (const [i, part] of raw.split(/<!--bloc:([a-z-]+)-->/).entries()) {
+    if (i % 2 === 1) segments.push({ type: "block", name: part as BlockName });
+    else if (part.trim() !== "") segments.push({ type: "html", html: part });
+  }
+  const html = raw.replace(/<!--bloc:[a-z-]+-->/g, "");
   const words = html.replace(/<[^>]+>/g, " ").replace(/&[a-z#0-9]+;/gi, " ").split(/\s+/).filter(Boolean).length;
-  return { html, headings, words, pending: [...pending] };
+  return { html, segments, headings, words, pending: [...pending] };
 }
 
 /** Lit et valide un fichier de page. Toute erreur de format est signalée en français, avec le nom du fichier. */
@@ -203,8 +281,25 @@ export function parseSeoFile(raw: string, filename: string, existingSlugs: Set<s
   if (!isSlug(slug)) throw new SeoError(`${filename} : slug inconnu « ${slug} » (attendus : ${SEO_SLUGS.join(", ")}).`);
   if (filename !== `${slug}.md`) throw new SeoError(`${filename} : le nom du fichier doit être ${slug}.md.`);
 
-  const title = nonEmpty(meta.title, "title", filename);
-  const metaDescription = nonEmpty(meta.metaDescription, "metaDescription", filename);
+  // Les jetons de chiffres {{…}} sont permis dans tous les champs de texte : ils sont remplacés avant les contrôles de longueur.
+  const tok = (v: string, field: string) => {
+    try {
+      return resolveFigureTokens(v, `${filename}, ${field}`);
+    } catch (e) {
+      throw new SeoError(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const opt = (k: string) => (typeof meta[k] === "string" && (meta[k] as string).trim() !== "" ? tok((meta[k] as string).trim(), k) : null);
+  const title = tok(nonEmpty(meta.title, "title", filename), "title");
+  const metaDescription = tok(nonEmpty(meta.metaDescription, "metaDescription", filename), "metaDescription");
+  const h1 = opt("h1") ?? title;
+  const breadcrumb = opt("breadcrumb") ?? h1;
+  const verified = opt("verified");
+  if (verified !== null && (!/^\d{4}-\d{2}-\d{2}$/.test(verified) || Number.isNaN(new Date(verified).getTime())))
+    throw new SeoError(`${filename} : « verified » doit être une date AAAA-MM-JJ (trouvé « ${verified} »).`);
+  const ogFigure = opt("ogFigure");
+  const ogLabel = opt("ogLabel");
+  if ((ogFigure === null) !== (ogLabel === null)) throw new SeoError(`${filename} : « ogFigure » et « ogLabel » vont ensemble.`);
   // Tous les dépassements de longueur sont signalés ensemble, pour ne pas obliger à corriger en plusieurs passes.
   const limitErrors: string[] = [];
   if ([...title].length > SEO_LIMITS.titleMax) limitErrors.push(`title de ${[...title].length} caractères (maximum ${SEO_LIMITS.titleMax})`);
@@ -217,7 +312,7 @@ export function parseSeoFile(raw: string, filename: string, existingSlugs: Set<s
   if (!Array.isArray(faqRaw)) throw new SeoError(`${filename} : « faq » doit être une liste de questions (q) et réponses (a).`);
   const faq = faqRaw.map((f, i) => {
     const o = (f ?? {}) as Record<string, unknown>;
-    return { q: nonEmpty(o.q, `faq[${i + 1}].q`, filename), a: nonEmpty(o.a, `faq[${i + 1}].a`, filename) };
+    return { q: tok(nonEmpty(o.q, `faq[${i + 1}].q`, filename), `faq[${i + 1}].q`), a: tok(nonEmpty(o.a, `faq[${i + 1}].a`, filename), `faq[${i + 1}].a`) };
   });
 
   const sourcesRaw = meta.sources ?? [];
@@ -230,7 +325,27 @@ export function parseSeoFile(raw: string, filename: string, existingSlugs: Set<s
   });
 
   const rendered = renderBody(body, filename, existingSlugs);
-  return { slug, title, metaDescription, targetKeyword, faq, sources, bodyHtml: rendered.html, headings: rendered.headings, words: rendered.words, pendingLinks: rendered.pending, modifiedAt };
+  return {
+    slug,
+    kind: kindOf(slug),
+    cm: cmOf(slug),
+    title,
+    h1,
+    breadcrumb,
+    verified,
+    ogFigure,
+    ogLabel,
+    metaDescription,
+    targetKeyword,
+    faq,
+    sources,
+    bodyHtml: rendered.html,
+    segments: rendered.segments,
+    headings: rendered.headings,
+    words: rendered.words,
+    pendingLinks: rendered.pending,
+    modifiedAt,
+  };
 }
 
 /** Charge toutes les pages présentes dans le dossier (les fichiers absents sont simplement ignorés). */
@@ -269,6 +384,11 @@ export function loadSeoPagesReport(dir: string = SEO_DIR): { pages: SeoPage[]; e
   return { pages, errors };
 }
 
+/** Slugs des pages présentes (et valides) : un lien vers une page de contenu n'est affiché que si elle existe. */
+export function existingSlugs(dir?: string): Set<string> {
+  return new Set(loadSeoPages(dir).map((p) => p.slug));
+}
+
 export function getSeoPage(slug: string, dir?: string): SeoPage | null {
   if (!isSlug(slug)) return null;
   return loadSeoPages(dir).find((p) => p.slug === slug) ?? null;
@@ -286,8 +406,17 @@ export function faqJsonLd(page: Pick<SeoPage, "faq">): string | null {
 }
 
 /** Entrées du sitemap : pages publiques fixes, plus les pages de contenu seulement si elles sont publiées. */
-export function sitemapEntries(base: string, pages: Pick<SeoPage, "slug" | "modifiedAt">[], published: boolean, beta = false) {
-  const fixed = ["", "/methode", "/contact", "/mentions-legales", beta ? "/conditions" : "/cgv", "/confidentialite"].map((p) => ({ url: `${base}${p}` }));
-  const content = published ? pages.map((p) => ({ url: `${base}/${p.slug}`, lastModified: p.modifiedAt })) : [];
+/** Pages publiques fixes (hors pages de contenu) qui ont leur place dans le sitemap. La page presse suit la publication. */
+export function fixedPublicPaths(published: boolean, beta = false): string[] {
+  return ["", "/methode", "/contact", "/mentions-legales", beta ? "/conditions" : "/cgv", "/confidentialite"];
+}
+
+/**
+ * Entrées du sitemap : pages publiques fixes, plus les pages de contenu seulement si elles sont publiées. Date de modification d'une
+ * page de contenu : sa date de vérification (champ verified), à défaut la date du fichier.
+ */
+export function sitemapEntries(base: string, pages: Pick<SeoPage, "slug" | "modifiedAt" | "verified">[], published: boolean, beta = false) {
+  const fixed = fixedPublicPaths(published, beta).map((p) => ({ url: `${base}${p}` }));
+  const content = published ? pages.map((p) => ({ url: `${base}/${p.slug}`, lastModified: p.verified ? new Date(p.verified) : p.modifiedAt })) : [];
   return [...fixed, ...content];
 }

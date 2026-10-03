@@ -5,7 +5,7 @@ import { REFERENCES, SCORE } from "@/config/site";
 import { isFreeBeta, isPhotoBeta } from "@/lib/mode";
 import { HIGH_FROM, LOW_BELOW } from "@/lib/profiles";
 
-export const metadata = { title: "Précision et méthode" };
+export const metadata = { title: "Précision et méthode", alternates: { canonical: "/methode" } };
 
 export default function Page() {
   const w = SCORE.weights;

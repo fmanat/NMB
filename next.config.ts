@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { RENAMED_SLUGS } from "./src/lib/seoRenamed";
 
 const isDev = process.env.NODE_ENV === "development";
 // Mise à niveau automatique http → https : seulement si l'adresse publique du site (SITE_URL) est en https, pour ne pas
@@ -36,6 +37,10 @@ const nextConfig: NextConfig = {
   // Tests de bout en bout : chaque copie du site de test a son propre dossier de travail (voir playwright.config.ts).
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false, // ne pas annoncer la technologie du serveur
+  // Pages de contenu renommées : redirection permanente de l'ancienne adresse (liste dans src/lib/seo.ts, RENAMED_SLUGS).
+  async redirects() {
+    return Object.entries(RENAMED_SLUGS).map(([from, to]) => ({ source: `/${from}`, destination: `/${to}`, permanent: true }));
+  },
   async headers() {
     return [
       {

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { f1, aboveText } from "@/lib/format";
 import { OUT_OF_RANGE_MESSAGE } from "@/lib/reportCore";
-import { TRY_BOUNDS, TRY_DEFAULTS, simulate, type TryValues } from "@/lib/tryIt";
+import { TRY_BOUNDS, TRY_DEFAULTS, simulate, type TryItProps, type TryValues } from "@/lib/tryIt";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { choiceClass } from "@/components/ui/choiceStyles";
@@ -40,10 +40,12 @@ function Slider({ id, label, dim, value, onChange }: { id: string; label: string
   );
 }
 
-export default function TryIt() {
-  const [v, setV] = useState<TryValues>(TRY_DEFAULTS);
+export default function TryIt({ initial, compact = false, idPrefix = "try" }: TryItProps = {}) {
+  const start = initial ?? TRY_DEFAULTS;
+  const prefilled = !!initial;
+  const [v, setV] = useState<TryValues>(start);
   const outcome = useMemo(() => simulate(v), [v]);
-  const atDefaults = v.state === TRY_DEFAULTS.state && v.length === TRY_DEFAULTS.length && v.girth === TRY_DEFAULTS.girth;
+  const atDefaults = v.state === start.state && v.length === start.length && v.girth === start.girth;
 
   // Annonce vocale : résumé des percentiles, légèrement différé pour ne pas parler à chaque cran du curseur.
   const summary = outcome.kind === "ok" ? `Longueur : ${aboveText(outcome.results.length.percentile)}. Circonférence : ${aboveText(outcome.results.girth.percentile)}.` : OUT_OF_RANGE_MESSAGE;
@@ -58,27 +60,31 @@ export default function TryIt() {
       <Card as="section" className="!p-5 md:!p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="t-h4">Vos valeurs</h3>
-          {atDefaults ? <Badge tone="warning">Exemple · valeurs fictives</Badge> : <Badge tone="blue">Valeurs de votre simulation</Badge>}
+          {atDefaults ? (
+            prefilled ? <Badge tone="blue">Valeurs préremplies</Badge> : <Badge tone="warning">Exemple · valeurs fictives</Badge>
+          ) : (
+            <Badge tone="blue">Valeurs de votre simulation</Badge>
+          )}
         </div>
         <fieldset className="mt-4">
           <legend className="text-sm font-semibold mb-2">État</legend>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className={choiceClass}>
-              <input type="radio" name="try-state" value="rest" checked={v.state === "rest"} onChange={() => setV((p) => ({ ...p, state: "rest" }))} className="accent-[var(--accent)]" /> Au repos
+              <input type="radio" name={`${idPrefix}-state`} value="rest" checked={v.state === "rest"} onChange={() => setV((p) => ({ ...p, state: "rest" }))} className="accent-[var(--accent)]" /> Au repos
             </label>
             <label className={choiceClass}>
-              <input type="radio" name="try-state" value="erect" checked={v.state === "erect"} onChange={() => setV((p) => ({ ...p, state: "erect" }))} className="accent-[var(--accent)]" /> En érection
+              <input type="radio" name={`${idPrefix}-state`} value="erect" checked={v.state === "erect"} onChange={() => setV((p) => ({ ...p, state: "erect" }))} className="accent-[var(--accent)]" /> En érection
             </label>
           </div>
         </fieldset>
         <div className="mt-5 grid gap-5 sm:grid-cols-2 sm:gap-8">
-          <Slider id="try-length" label="Longueur (cm)" dim="length" value={v.length} onChange={(length) => setV((p) => ({ ...p, length }))} />
-          <Slider id="try-girth" label="Circonférence (cm)" dim="girth" value={v.girth} onChange={(girth) => setV((p) => ({ ...p, girth }))} />
+          <Slider id={`${idPrefix}-length`} label="Longueur (cm)" dim="length" value={v.length} onChange={(length) => setV((p) => ({ ...p, length }))} />
+          <Slider id={`${idPrefix}-girth`} label="Circonférence (cm)" dim="girth" value={v.girth} onChange={(girth) => setV((p) => ({ ...p, girth }))} />
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className="t-small text-muted">Les curseurs vont des bornes du questionnaire ; au pas de 0,1 cm.</p>
-          <button type="button" className="btn btn-tertiary btn-sm" disabled={atDefaults} onClick={() => setV(TRY_DEFAULTS)}>
-            Revenir à l&apos;exemple
+          <button type="button" className="btn btn-tertiary btn-sm" disabled={atDefaults} onClick={() => setV(start)}>
+            {prefilled ? "Revenir aux valeurs de départ" : "Revenir à l'exemple"}
           </button>
         </div>
       </Card>
@@ -94,7 +100,7 @@ export default function TryIt() {
           <div className="grid gap-4 md:grid-cols-2 md:gap-6">
             <DimensionMetrics results={outcome.results} landmark={false} />
           </div>
-          <SizeReferences results={outcome.results} headingLevel={3} />
+          {!compact && <SizeReferences results={outcome.results} headingLevel={3} />}
         </div>
       ) : (
         <p className="flex items-start gap-2 rounded-[10px] bg-[var(--bm-error-soft)] px-4 py-3 text-sm font-medium" style={{ color: "var(--bm-error-text)" }} data-testid="try-out-of-range">

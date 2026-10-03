@@ -1,7 +1,7 @@
 import { Doc } from "@/components/Doc";
 import { SITE } from "@/config/site";
 
-export const metadata = { title: "Contact et signalement" };
+export const metadata = { title: "Contact et signalement", alternates: { canonical: "/contact" } };
 
 export default function Page() {
   return (

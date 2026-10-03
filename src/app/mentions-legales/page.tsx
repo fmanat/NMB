@@ -1,7 +1,7 @@
 import { COMPANY, HOST } from "@/config/company";
 import { Doc } from "@/components/Doc";
 
-export const metadata = { title: "Mentions légales" };
+export const metadata = { title: "Mentions légales", alternates: { canonical: "/mentions-legales" } };
 
 export default function Page() {
   return (

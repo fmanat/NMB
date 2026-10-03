@@ -137,7 +137,7 @@ describe("balisage FAQ (schema.org) et sitemap", () => {
   });
 
   it("le sitemap ne contient les pages de contenu qu'une fois publiées, jamais de page privée", () => {
-    const pages = [{ slug: "faq" as const, modifiedAt: new Date("2026-01-01") }];
+    const pages = [{ slug: "faq" as const, modifiedAt: new Date("2026-01-01"), verified: null }];
     const off = sitemapEntries("https://exemple.fr", pages, false).map((e) => e.url);
     const on = sitemapEntries("https://exemple.fr", pages, true).map((e) => e.url);
     expect(off).not.toContain("https://exemple.fr/faq");

@@ -117,7 +117,7 @@ Pour une comparaison statistique, une méthode constante est plus utile qu'une s
 
 Vous pouvez ensuite utiliser [l'analyse statistique](/analyse) pour situer votre résultat.
 
-Pour comprendre les valeurs de référence, consultez aussi [la taille moyenne du pénis en France](/taille-moyenne-penis-france).
+Pour comprendre les valeurs de référence, consultez aussi [la taille moyenne du pénis](/taille-moyenne-penis).
 
 ## À retenir
 
