@@ -35,3 +35,12 @@ Session autonome, sans question. Journal mis à jour à la fin de chaque bloc. �
 - Section « Où vous situez-vous ? » (11 tailles) et « Comprendre les chiffres » (pages piliers) : `src/components/content/HomeGuides.tsx`. Chaque lien n'apparaît que si sa page existe et est publiée.
 - Bandeau défilant : « Indicateurs dans chaque rapport : 4 » au lieu de « Mesures ».
 - Pied de page : libellés courts des guides (champ `breadcrumb`), sans les pages par centimètre.
+
+## Bloc 3 : les 8 guides — terminé
+- `taille-moyenne-penis-france` → **`taille-moyenne-penis`** (redirection permanente), élargie en page pilier : réponse en tête, moyennes au repos et en érection, longueur et circonférence, distribution (courbes calculées), France (passages d'origine conservés), Internet. Requête visée : « taille moyenne pénis ».
+- Pour chaque guide : `title` et `metaDescription` orientés requête, `h1`, `breadcrumb`, `verified` (03/10/2026), chiffre clé de l'image de partage ; mini-calculateur ajouté par la mise en page ; liens vers l'accueil (« À lire aussi »), les piliers et des pages par centimètre pertinentes ; signature « Rédaction Bitomètre » ; références existantes conservées.
+- Chiffres de Veale et al. (moyennes, écarts-types, effectifs) remplacés par des jetons calculés : mêmes valeurs, une seule source dans le code.
+- Liens vers une page pas encore créée : affichés en texte simple (jamais de lien cassé) ; ils deviennent des liens dès que la page existe.
+- **Modifications de vos textes** (règles d'écriture) : « petits échantillons » → « échantillons réduits » (taille-moyenne) ; « plus courte » → « donner une valeur inférieure » (mesure) ; « anormale/anormal » → « un problème médical », « le signe d'un problème », « pathologique » (courbure, 4 occurrences) ; FAQ du service : « Par défaut » → « sauf choix contraire », « un petit nombre de photos » → « un nombre limité de photos » (2 occurrences).
+- Contrôles ajoutés : `src/lib/contentQuality.ts`, `tests/content-quality.test.ts`, `npm run seo:check` (mots interdits, paragraphes partagés à plus de 30 %, longueurs).
+- **À voir** : `npm run seo:check` signale 24 recoupements de plus de 30 % entre vos guides d'origine (paragraphes repris d'un guide à l'autre, par exemple « Ces moyennes ne reposent pas sur le même nombre d'hommes… »). Simple avertissement : je n'ai pas réécrit vos textes pour cela.

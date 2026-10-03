@@ -8,6 +8,7 @@
 // et se fait page par page, à la relecture.
 
 import { SEO_LIMITS, SEO_SLUGS, loadSeoPagesReport } from "@/lib/seo";
+import { CONTENT_RULES, forbiddenWords, isNewPage, paragraphsOf, sharedParagraphs } from "@/lib/contentQuality";
 
 const checkUrls = process.argv.includes("--urls");
 let errors = 0;
@@ -54,7 +55,11 @@ for (const p of pages) {
   console.log(`\n${p.slug}.md`);
   console.log(`  titre : ${[...p.title].length}/${SEO_LIMITS.titleMax} caractères · description : ${[...p.metaDescription].length}/${SEO_LIMITS.metaDescriptionMax} · mot-clé : ${p.targetKeyword}`);
   console.log(`  corps : ${p.words} mots · ${p.headings.filter((h) => h.depth === 2).length} titres H2, ${p.headings.filter((h) => h.depth === 3).length} H3 · FAQ : ${p.faq.length} · sources : ${p.sources.length}`);
-  if (p.words < SEO_LIMITS.wordsMin || p.words > SEO_LIMITS.wordsMax) warn(`longueur ${p.words} mots, hors de la cible ${SEO_LIMITS.wordsMin} à ${SEO_LIMITS.wordsMax}`);
+  // Cible de longueur : pages par centimètre 700 à 1 100 mots (corps et questions-réponses) ; autres pages, corps de 600 à 1 500 mots.
+  if (p.kind === "centimetre") {
+    if (p.totalWords < 700 || p.totalWords > 1100) warn(`longueur ${p.totalWords} mots (corps et questions-réponses), hors de la cible 700 à 1 100`);
+  } else if (p.words < SEO_LIMITS.wordsMin || p.words > SEO_LIMITS.wordsMax) warn(`longueur ${p.words} mots, hors de la cible ${SEO_LIMITS.wordsMin} à ${SEO_LIMITS.wordsMax}`);
+  for (const w of forbiddenWords([p.title, p.h1, p.metaDescription, ...p.faq.flatMap((f) => [f.q, f.a]), p.bodyHtml.replace(/<[^>]+>/g, " ")].join("\n"))) err(`mot interdit par les règles d'écriture : « ${w} »`);
   if (p.sources.length === 0) warn("aucune source citée");
   if (p.faq.length === 0) warn("aucune question FAQ (le balisage schema.org ne sera pas généré)");
   if (!/\]\(\/?analyse\b/.test(p.bodyHtml) && !p.bodyHtml.includes('href="/analyse"')) warn("aucun lien vers /analyse dans le corps");
@@ -72,6 +77,20 @@ for (const p of pages) {
     }
   }
 }
+
+// Paragraphes partagés entre deux pages (plus de 30 % de triplets de mots communs). Bloquant si une page nouvelle est en cause
+// (le test tests/content-quality.test.ts le vérifie aussi) ; simple avertissement entre deux guides d'origine.
+console.log(`\nParagraphes partagés à plus de ${CONTENT_RULES.maxShared * 100} % entre deux pages :`);
+let shared = 0;
+for (let i = 0; i < pages.length; i++)
+  for (let j = i + 1; j < pages.length; j++)
+    for (const s of sharedParagraphs(paragraphsOf(pages[i].bodyHtml), paragraphsOf(pages[j].bodyHtml))) {
+      shared++;
+      const msg = `${pages[i].slug} ↔ ${pages[j].slug} (${Math.round(s.score * 100)} %) : « ${s.a.slice(0, 70)}… »`;
+      if (isNewPage(pages[i]) || isNewPage(pages[j])) err(msg);
+      else warn(msg);
+    }
+if (shared === 0) console.log("  aucun");
 
 console.log(`\nRésultat : ${errors} erreur(s), ${warnings} avertissement(s).`);
 process.exit(errors > 0 ? 1 : 0);

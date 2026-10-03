@@ -70,7 +70,7 @@ export function CmAnswer({ cm }: { cm: number }) {
   const below = perThousandBelow(s, cm);
   return (
     <Card as="section" className="!p-5 md:!p-6 mt-6" >
-      <h2 className="sr-only">Réponse courte</h2>
+      <h2 className="sr-only">En bref</h2>
       <p className="t-eyebrow">{cm} cm en érection</p>
       <p className="num text-[28px] leading-[34px] md:text-[34px] md:leading-[40px] font-bold mt-2 text-accent">{rankLabel(raw)}</p>
       <p className="mt-2 font-semibold">
@@ -110,18 +110,18 @@ export function ReferenceCurve({ series, title }: { series: Series; title: strin
       return `L${x(v).toFixed(1)},${(base - pdf(v) * (base - top)).toFixed(1)}`;
     }).join(" ") + ` L${x(marks[2].v).toFixed(1)},${base} Z`;
   return (
-    <figure className="mt-6">
+    <figure className="mt-6 max-w-[560px]">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img"
         aria-label={`${title} : courbe de la population de référence. 10e percentile ${f1(marks[0].v)} cm, médiane ${f1(marks[1].v)} cm, 90e percentile ${f1(marks[2].v)} cm.`}>
         <path d={`M0,${base} L${pts.join(" L")} L${W},${base} Z`} fill="var(--bm-blue-050)" />
-        <path d={band} fill="var(--bm-blue-100)" />
+        <path d={band} fill="var(--bm-blue-400)" fillOpacity="0.3" />
         <polyline points={pts.join(" ")} fill="none" stroke="var(--bm-blue-400)" strokeWidth="2" />
         <line x1="0" x2={W} y1={base} y2={base} stroke="var(--border)" />
         {marks.map((m) => (
           <g key={m.p}>
             <line x1={x(m.v)} x2={x(m.v)} y1={top} y2={base} stroke={m.p === 50 ? "var(--accent)" : "var(--bm-gray-500)"} strokeWidth={m.p === 50 ? 2 : 1} strokeDasharray={m.p === 50 ? undefined : "3 3"} />
             <text x={x(m.v)} y={base + 13} fontSize="10.5" textAnchor="middle" fill="var(--bm-navy-700)" className="num">{`${f1(m.v)} cm`}</text>
-            <text x={x(m.v)} y={base + 25} fontSize="9.5" textAnchor="middle" fill="var(--bm-gray-600, #5b6b84)">{m.p === 50 ? "médiane" : `${m.p}e perc.`}</text>
+            <text x={x(m.v)} y={base + 25} fontSize="9.5" textAnchor="middle" fill="var(--muted)">{m.p === 50 ? "médiane" : `${m.p}e perc.`}</text>
           </g>
         ))}
       </svg>

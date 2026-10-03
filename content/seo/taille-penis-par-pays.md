@@ -1,6 +1,11 @@
 ---
 slug: taille-penis-par-pays
-title: Taille du pénis par pays : que disent les études ?
+title: Taille du pénis par pays : que valent les classements ?
+h1: Taille du pénis par pays : ce que disent vraiment les études
+breadcrumb: Par pays
+verified: 2026-10-03
+ogFigure: 4 questions
+ogLabel: pour juger un classement par pays avant d'y croire
 metaDescription: Existe-t-il un classement de la taille du pénis par pays ? Ce que montrent les études et pourquoi les classements Internet sont difficiles à interpréter.
 targetKeyword: taille pénis par pays
 faq:
@@ -52,7 +57,7 @@ Comparer directement deux études réalisées avec des protocoles différents pe
 
 La revue de Veale et al. publiée en 2015 a regroupé les données disponibles provenant de mesures réalisées par des professionnels de santé.
 
-Elle rapportait notamment une longueur moyenne en érection de **13,12 cm** et une circonférence moyenne en érection de **11,66 cm**. Ces deux moyennes en érection reposent respectivement sur 692 et 381 hommes.
+Elle rapportait notamment une longueur moyenne en érection de **{{moyenne:erect-length}}** et une circonférence moyenne en érection de **{{moyenne:erect-girth}}**. Ces deux moyennes en érection reposent respectivement sur {{effectif:erect-length}} et {{effectif:erect-girth}} hommes.
 
 Une méta-analyse plus récente consacrée aux tendances mondiales a également sélectionné les études dans lesquelles les mesures étaient réalisées par des investigateurs et excluait les études reposant sur l'auto-mesure.
 
@@ -137,7 +142,7 @@ Si ces informations ne sont pas disponibles, le chiffre mérite d'être considé
 
 Pour connaître votre position statistique, vous pouvez utiliser [l'analyse du Bitomètre](/analyse).
 
-Pour comprendre la méthode de mesure, consultez également [comment mesurer son pénis](/comment-mesurer-son-penis).
+Pour comprendre la méthode de mesure, consultez également [comment mesurer son pénis](/comment-mesurer-son-penis). Pour la référence internationale et la question d'une moyenne française, voyez [la taille moyenne du pénis](/taille-moyenne-penis) ; pour ce que « normal » veut dire en statistique, [la taille normale du pénis](/taille-penis-normale) ; et pour la position de chaque centimètre, par exemple [13 cm](/taille-penis-13-cm) ou [18 cm](/taille-penis-18-cm), le [tableau des percentiles](/percentile-penis).
 
 ## À retenir
 

@@ -1,13 +1,18 @@
 ---
 slug: circonference-moyenne-penis
-title: Circonférence moyenne du pénis : valeurs de référence
-metaDescription: Quelle est la circonférence moyenne du pénis ? Données scientifiques sur le tour du pénis au repos et en érection, et comment interpréter une mesure.
+title: Circonférence moyenne du pénis : chiffres et percentiles
+h1: Circonférence moyenne du pénis : les valeurs de référence
+breadcrumb: Circonférence moyenne
+metaDescription: Circonférence moyenne du pénis au repos et en érection, distribution, percentiles de 9 à 15 cm, et comment mesurer le tour du pénis correctement.
+verified: 2026-10-03
+ogFigure: "{{moyenne:erect-girth}}"
+ogLabel: circonférence moyenne en érection (Veale et al., BJU Int., 2015)
 targetKeyword: circonférence moyenne pénis
 faq:
   - q: Quelle est la circonférence moyenne du pénis en érection ?
-    a: La revue systématique de Veale et al. rapporte une moyenne de 11,66 cm en érection.
+    a: La revue systématique de Veale et al. rapporte une moyenne de {{moyenne:erect-girth}} en érection.
   - q: Quelle est la circonférence moyenne au repos ?
-    a: Veale et al. rapportent une circonférence flaccide moyenne de 9,31 cm.
+    a: Veale et al. rapportent une circonférence flaccide moyenne de {{moyenne:rest-girth}}.
   - q: Comment mesurer le tour du pénis ?
     a: Utilisez un mètre ruban souple autour du corps du pénis, en notant précisément la mesure.
   - q: La circonférence est-elle aussi variable que la longueur ?
@@ -36,12 +41,12 @@ Elle rapporte :
 
 | État | Circonférence moyenne | Écart-type |
 |---|---:|---:|
-| Flaccide | 9,31 cm | 0,90 cm |
-| En érection | 11,66 cm | 1,10 cm |
+| Flaccide | {{moyenne:rest-girth}} | {{ecart-type:rest-girth}} |
+| En érection | {{moyenne:erect-girth}} | {{ecart-type:erect-girth}} |
 
-La valeur de **11,66 cm** correspond donc à la circonférence moyenne en érection dans cette grande synthèse internationale.
+La valeur de **{{moyenne:erect-girth}}** correspond donc à la circonférence moyenne en érection dans cette grande synthèse internationale.
 
-Cette moyenne en érection repose sur 381 hommes (contre 9 407 hommes pour la circonférence flaccide), et les auteurs signalent que relativement peu de mesures en érection ont été réalisées en contexte clinique.
+Cette moyenne en érection repose sur {{effectif:erect-girth}} hommes (contre {{effectif:rest-girth}} hommes pour la circonférence flaccide), et les auteurs signalent que relativement peu de mesures en érection ont été réalisées en contexte clinique.
 
 Elle ne doit pas être interprétée comme une valeur spécifiquement française.
 
@@ -89,9 +94,11 @@ Les études récentes continuent d'ailleurs à montrer une hétérogénéité im
 
 Comme pour la longueur, la moyenne ne décrit pas toute la population.
 
-La valeur de 11,66 cm correspond au centre de la distribution de référence de Veale.
+La valeur de {{moyenne:erect-girth}} correspond au centre de la distribution de référence de Veale.
 
-Des valeurs supérieures et inférieures sont donc parfaitement attendues.
+Des valeurs supérieures et inférieures sont donc parfaitement attendues. Selon la loi normale construite sur ces références, la moitié des hommes a une circonférence en érection comprise entre {{quantile:erect-girth:25}} et {{quantile:erect-girth:75}}, et 80 % entre {{quantile:erect-girth:10}} et {{quantile:erect-girth:90}}.
+
+Quelques repères calculés par le site : une circonférence en érection de 11 cm correspond au {{rang:erect-girth:11}}, 12 cm au {{rang:erect-girth:12}}, 13 cm au {{rang:erect-girth:13}}. Le [tableau complet des percentiles](/percentile-penis) donne toutes les valeurs de 9 à 15 cm.
 
 Pour interpréter une mesure individuelle, il est plus pertinent d'utiliser une distribution statistique et éventuellement un percentile.
 
@@ -121,14 +128,14 @@ Vous pouvez utiliser [l'analyse statistique](/analyse) pour situer une mesure.
 
 Pour comprendre la mesure elle-même, consultez [comment mesurer son pénis](/comment-mesurer-son-penis).
 
-Et pour comparer longueur et circonférence, consultez [la taille moyenne du pénis](/taille-moyenne-penis).
+Et pour comparer longueur et circonférence, consultez [la taille moyenne du pénis](/taille-moyenne-penis). Longueur et circonférence se lisent séparément : un rang en longueur, par exemple à [13 cm](/taille-penis-13-cm) ou [15 cm](/taille-penis-15-cm), ne dit rien du rang en circonférence. Pour la notion de normalité, voyez [la taille normale du pénis](/taille-penis-normale).
 
 ## À retenir
 
 La référence de Veale donne une circonférence moyenne de :
 
-- **9,31 cm au repos** ;
-- **11,66 cm en érection**.
+- **{{moyenne:rest-girth}} au repos** ;
+- **{{moyenne:erect-girth}} en érection**.
 
 Ces chiffres sont issus d'une synthèse internationale et ne constituent pas une moyenne française.
 

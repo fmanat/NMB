@@ -1,12 +1,17 @@
 ---
 slug: courbure-penis-normale
 title: Courbure du pénis : quelle courbure est normale ?
+h1: Courbure du pénis : ce qui est normal, et quand consulter
+breadcrumb: Courbure
+verified: 2026-10-03
+ogFigure: 30°
+ogLabel: seuil souvent cité par les recommandations, pas une frontière absolue
 metaDescription: Une courbure du pénis est-elle normale ? Découvrez ce que disent les recommandations urologiques sur les courbures congénitales et acquises.
 targetKeyword: courbure pénis normale
 faq:
   - q: Est-il normal que le pénis soit légèrement courbé ?
     a: Une certaine asymétrie ou courbure peut être présente. Une courbure n’est pas automatiquement une maladie.
-  - q: À partir de quel angle une courbure devient-elle anormale ?
+  - q: À partir de quel angle une courbure devient-elle un problème médical ?
     a: Il n’existe pas un angle unique permettant de définir à lui seul une maladie. Les recommandations considèrent notamment la gêne fonctionnelle, la déformation et son évolution.
   - q: Une courbure de 30 degrés est-elle grave ?
     a: 30 degrés est le seuil au-delà duquel les recommandations européennes d’urologie pédiatrique considèrent généralement une courbure congénitale comme cliniquement significative. Cela ne signifie pas qu’une courbure inférieure est forcément normale ni qu’une courbure supérieure est forcément problématique.
@@ -22,7 +27,7 @@ sources:
   - title: EAU Guidelines on Paediatric Urology — Congenital Penile Curvature
     url: https://uroweb.org/guidelines/paediatric-urology/chapter/congenital-penile-curvature
 ---
-Une **courbure du pénis** n'est pas nécessairement anormale.
+Une **courbure du pénis** n'est pas nécessairement le signe d'un problème.
 
 Comme beaucoup de structures anatomiques, le pénis peut présenter une certaine asymétrie. La question médicale n'est donc pas simplement de savoir si le pénis est parfaitement droit, mais plutôt de déterminer la nature de la courbure, son ancienneté, son évolution et son éventuel retentissement.
 
@@ -42,7 +47,7 @@ D'autres peuvent avoir un impact fonctionnel ou psychologique.
 
 Il serait donc réducteur de dire :
 
-> « Au-dessus de X degrés, c'est anormal. »
+> « Au-dessus de X degrés, c'est un problème. »
 
 Les recommandations européennes ne définissent pas la normalité uniquement à partir d'un chiffre.
 
@@ -50,7 +55,7 @@ L'évaluation tient notamment compte de la déformation, de son origine, de son 
 
 Pour les courbures congénitales, les recommandations européennes d'urologie pédiatrique indiquent toutefois qu'une courbure supérieure à **30° est généralement considérée comme cliniquement significative**, tout en précisant que de nombreux patients présentant une courbure plus importante peuvent ne rencontrer aucun problème.
 
-Le seuil de 30° ne doit donc pas être transformé en frontière absolue entre « normal » et « anormal ».
+Le seuil de 30° ne doit donc pas être transformé en frontière absolue entre « normal » et « pathologique ».
 
 ## Courbure congénitale ou acquise
 
@@ -102,7 +107,7 @@ C'est pourquoi une analyse statistique de la morphologie ne doit pas être prés
 
 Le [rapport du Bitomètre](/analyse) peut décrire certains paramètres morphologiques, mais une courbure nouvellement apparue, douloureuse ou évolutive relève d'une évaluation médicale.
 
-Pour comprendre les autres dimensions mesurables, consultez également [comment mesurer son pénis](/comment-mesurer-son-penis).
+Pour comprendre les autres dimensions mesurables, consultez également [comment mesurer son pénis](/comment-mesurer-son-penis). La longueur et la circonférence ont leurs propres références statistiques : voyez [la taille normale du pénis](/taille-penis-normale) et le [tableau des percentiles](/percentile-penis).
 
 ## À retenir
 

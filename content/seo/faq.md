@@ -1,6 +1,9 @@
 ---
 slug: faq
 title: Bitomètre : questions fréquentes sur le service
+h1: Questions fréquentes sur Bitomètre
+breadcrumb: FAQ
+verified: 2026-10-03
 metaDescription: Comment fonctionne Bitomètre ? Méthode, précision des estimations, confidentialité de la photo, paiement et défi entre amis : les réponses à vos questions.
 targetKeyword: Bitomètre fonctionnement
 faq:
@@ -11,7 +14,7 @@ faq:
   - q: Comment les mesures sont-elles estimées à partir d’une photo ?
     a: La photo est analysée en deux temps. Un modèle d’intelligence artificielle (xAI) l’examine d’abord : il vérifie qu’elle peut être analysée, puis estime l’état (repos ou érection), la longueur, la circonférence à mi-tige, la courbure, la symétrie et les proportions du gland. Si une carte au format bancaire (85,60 × 53,98 mm) est posée à côté, entière et lisible, le modèle y repère aussi des points, et ce sont les calculs du site qui mesurent la longueur et la circonférence en prenant la carte comme échelle : le rapport porte alors le badge « Taille calibrée ». Sans carte, ou si la photo est trop inclinée pour ce calcul, ces deux dimensions sont les estimations du modèle. Les percentiles, les indices et le score sont toujours calculés par le site. Un second appel, sans la photo, rédige le rapport à partir de ces valeurs, et le site vérifie le texte avant de l’afficher. Dans tous les cas, ce sont des estimations.
   - q: Quelle est la précision de l’analyse ?
-    a: Les mesures issues d’une photo sont des estimations : estimations visuelles du modèle sans carte, mesures calculées par le site avec une carte de référence. Leur écart avec une mesure à la règle n’a été vérifié que sur un petit nombre de photos ; le site compare en continu, de façon anonyme, ses mesures par la carte aux estimations du modèle pour le surveiller. Au repos, la longueur n’est pas positionnée par un percentile : une photo en érection donne une lecture complète. Les valeurs du questionnaire, elles, ne sont pas vérifiées.
+    a: Les mesures issues d’une photo sont des estimations : estimations visuelles du modèle sans carte, mesures calculées par le site avec une carte de référence. Leur écart avec une mesure à la règle n’a été vérifié que sur un nombre limité de photos ; le site compare en continu, de façon anonyme, ses mesures par la carte aux estimations du modèle pour le surveiller. Au repos, la longueur n’est pas positionnée par un percentile : une photo en érection donne une lecture complète. Les valeurs du questionnaire, elles, ne sont pas vérifiées.
   - q: Comment sont calculés les percentiles et le score ?
     a: Chaque mesure est comparée aux distributions de la revue systématique de Veale et al. (2015), selon l’état choisi (repos ou érection). Le score sur 100 est une note de présentation volontairement indulgente ; ce n’est pas un percentile. La formule est publiée sur la page Précision et méthode.
   - q: Ma photo est-elle stockée ?
@@ -27,7 +30,7 @@ faq:
   - q: Comment fonctionne le défi entre amis ?
     a: Depuis votre rapport débloqué, vous créez un lien de défi. Votre ami suit le parcours complet de son protocole et paie son propre rapport. La comparaison, faite de scores et de percentiles sans aucune image, n’apparaît qu’une fois les deux rapports débloqués, et seulement sur les pages privées des deux participants. Chacun peut retirer son rapport de la comparaison à tout moment.
   - q: Que montre la carte de partage ?
-    a: Par défaut, le score seul. Vous pouvez ajouter un ou deux percentiles, ou une mesure de référence comme la tour Eiffel. La carte ne contient aucune image de vous et indique « valeurs déclarées » pour le questionnaire. Supprimer votre rapport supprime aussi ses cartes.
+    a: Le score seul, sauf choix contraire. Vous pouvez ajouter un ou deux percentiles, ou une mesure de référence comme la tour Eiffel. La carte ne contient aucune image de vous et indique « valeurs déclarées » pour le questionnaire. Supprimer votre rapport supprime aussi ses cartes.
   - q: Bitomètre remplace-t-il un avis médical ?
     a: Non. C’est un service statistique. Si la courbure estimée atteint 30° ou plus, le rapport suggère un avis médical ; une courbure nouvelle, douloureuse ou qui évolue relève toujours d’une consultation.
 sources:
@@ -52,11 +55,11 @@ Le nombre d'analyses est limité à 5 par période de 24 heures.
 
 Une mesure tirée d'une photo dépend de la qualité de l'image et de la perspective. Sans carte de référence, la longueur et la circonférence sont des estimations visuelles du modèle d'analyse. Avec une carte posée à côté, entière et lisible, le site les calcule lui-même en prenant la carte comme échelle ; la circonférence est alors déduite de la largeur en supposant une section circulaire, ce qui reste une hypothèse.
 
-L'écart entre ces valeurs et une mesure à la règle n'a été vérifié que sur un petit nombre de photos. Le site compare, de façon anonyme, chaque mesure par la carte à l'estimation que le modèle donne sans la carte, pour détecter une dérive. Les chiffres du rapport sont donc à lire comme des estimations, pas comme des garanties.
+L'écart entre ces valeurs et une mesure à la règle n'a été vérifié que sur un nombre limité de photos. Le site compare, de façon anonyme, chaque mesure par la carte à l'estimation que le modèle donne sans la carte, pour détecter une dérive. Les chiffres du rapport sont donc à lire comme des estimations, pas comme des garanties.
 
 Avec le protocole photo et mesures, le rapport compare vos mesures déclarées aux mesures estimées. Au-delà de 20 % d'écart, il affiche « Écart important : vérifiez votre méthode de mesure ».
 
-Les percentiles sont calculés à partir des références publiées par Veale et al. en 2015. Ce sont des références internationales, pas des moyennes françaises. Pour comprendre la méthode de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis) ; pour les données disponibles, [les études sur la taille du pénis](/etudes-taille-penis).
+Les percentiles sont calculés à partir des références publiées par Veale et al. en 2015. Ce sont des références internationales, pas des moyennes françaises. Pour comprendre la méthode de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis) ; pour les données disponibles, [les études sur la taille du pénis](/etudes-taille-penis). Trois pages rassemblent les chiffres utilisés par le calcul : [la taille moyenne](/taille-moyenne-penis), [la taille normale](/taille-penis-normale) et [le tableau des percentiles](/percentile-penis), centimètre par centimètre.
 
 ## Confidentialité : où va la photo
 

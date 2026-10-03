@@ -87,6 +87,8 @@ export type SeoPage = {
   segments: BodySegment[];
   headings: Heading[];
   words: number;
+  /** Mots du corps et des questions-réponses (texte propre à la page). */
+  totalWords: number;
   /** Liens internes vers des pages du lancement qui n'existent pas (encore). */
   pendingLinks: string[];
   modifiedAt: Date;
@@ -255,6 +257,9 @@ export function renderBody(
       },
       link(this: { parser: { parseInline: (t: Token[]) => string } }, { href, title, tokens }: Tokens.Link) {
         const resolved = resolveHref(href, file, pending, existingSlugs);
+        // Page de contenu pas encore présente : le texte reste, sans lien (aucun lien cassé sur le site), et la page est signalée.
+        const target = href.replace(/^\/+/, "").split("#")[0];
+        if (isSlug(target) && !existingSlugs.has(target)) return this.parser.parseInline(tokens);
         const external = /^https?:\/\//i.test(resolved);
         const t = title ? ` title="${title.replace(/"/g, "&quot;")}"` : "";
         const rel = external ? ' rel="noopener nofollow" target="_blank"' : "";
@@ -343,6 +348,7 @@ export function parseSeoFile(raw: string, filename: string, existingSlugs: Set<s
     segments: rendered.segments,
     headings: rendered.headings,
     words: rendered.words,
+    totalWords: rendered.words + faq.reduce((n, f) => n + `${f.q} ${f.a}`.split(/\s+/).filter(Boolean).length, 0),
     pendingLinks: rendered.pending,
     modifiedAt,
   };

@@ -1,13 +1,18 @@
 ---
 slug: taille-repos-erection
 title: Taille du pénis au repos et en érection : les écarts
+h1: Taille du pénis au repos et en érection : deux références distinctes
+breadcrumb: Repos et érection
+verified: 2026-10-03
+ogFigure: "{{moyenne:rest-length}} / {{moyenne:erect-length}}"
+ogLabel: longueur moyenne au repos / en érection (Veale et al., BJU Int., 2015)
 metaDescription: Quelle est la différence entre la taille du pénis au repos et en érection ? Données scientifiques sur les mesures flaccides, étirées et érectiles.
 targetKeyword: taille pénis repos érection
 faq:
   - q: Quelle est la longueur moyenne au repos ?
-    a: Veale et al. rapportent une longueur flaccide pendante moyenne de 9,16 cm.
+    a: Veale et al. rapportent une longueur flaccide pendante moyenne de {{moyenne:rest-length}}.
   - q: Quelle est la longueur moyenne en érection ?
-    a: La même revue rapporte une longueur moyenne de 13,12 cm en érection.
+    a: La même revue rapporte une longueur moyenne de {{moyenne:erect-length}} en érection.
   - q: Peut-on prévoir la taille en érection à partir de la taille au repos ?
     a: Pas précisément. Les études montrent une relation imparfaite entre les deux mesures.
   - q: Qu'est-ce qu'un grower ?
@@ -38,15 +43,15 @@ Elle rapporte :
 
 | Mesure | Moyenne |
 |---|---:|
-| Longueur flaccide pendante | 9,16 cm |
+| Longueur flaccide pendante | {{moyenne:rest-length}} |
 | Longueur étirée | 13,24 cm |
-| Longueur en érection | 13,12 cm |
+| Longueur en érection | {{moyenne:erect-length}} |
 
-La différence entre 9,16 cm au repos et 13,12 cm en érection illustre simplement la capacité du pénis à augmenter de volume et de longueur lors de l'érection.
+La différence entre {{moyenne:rest-length}} au repos et {{moyenne:erect-length}} en érection illustre simplement la capacité du pénis à augmenter de volume et de longueur lors de l'érection.
 
 Ces valeurs sont des moyennes internationales et non des normes individuelles.
 
-Ces moyennes ne reposent pas sur les mêmes effectifs : 10 704 hommes pour la longueur flaccide pendante, 14 160 pour la longueur étirée, mais 692 seulement pour la longueur en érection.
+Ces moyennes ne reposent pas sur les mêmes effectifs : {{effectif:rest-length}} hommes pour la longueur flaccide pendante, 14 160 pour la longueur étirée, mais {{effectif:erect-length}} seulement pour la longueur en érection.
 
 ## La taille au repos permet-elle de prédire la taille en érection ?
 
@@ -78,9 +83,9 @@ Elle ne permet donc pas d'affirmer que ces proportions représentent la populati
 
 C'est un point essentiel lorsqu'on compare des données.
 
-Une étude peut rapporter une longueur moyenne flaccide de 9,16 cm.
+Une étude peut rapporter une longueur moyenne flaccide de {{moyenne:rest-length}}.
 
-Une autre peut rapporter une longueur moyenne en érection de 13,12 cm.
+Une autre peut rapporter une longueur moyenne en érection de {{moyenne:erect-length}}.
 
 Il serait incorrect de conclure qu'une personne mesurant 9 cm au repos devrait nécessairement mesurer 13 cm en érection.
 
@@ -92,7 +97,7 @@ La longueur étirée occupe une position particulière dans la littérature scie
 
 Elle est obtenue en exerçant une traction manuelle standardisée.
 
-La revue de Veale rapporte une moyenne de **13,24 cm**, très proche de la moyenne en érection de 13,12 cm.
+La revue de Veale rapporte une moyenne de **13,24 cm**, très proche de la moyenne en érection de {{moyenne:erect-length}}.
 
 Cette proximité ne signifie toutefois pas que la longueur étirée est identique à la longueur en érection chez chaque individu.
 
@@ -110,15 +115,17 @@ Il est préférable de mesurer séparément :
 
 Ensuite, chaque valeur doit être comparée à la référence correspondant exactement au même état.
 
+Un exemple montre l'enjeu. Une longueur de 10 cm mesurée au repos correspond au {{rang:rest-length:10}} de la longueur au repos ; la même valeur comparée par erreur à la référence en érection donnerait le {{rang:erect-length:10}}. Le chiffre est identique, la conclusion change complètement. La page [10 cm en érection](/taille-penis-10-cm) revient sur cette confusion fréquente, et le [tableau des percentiles](/percentile-penis) donne la position de chaque centimètre en érection.
+
 Vous pouvez utiliser [l'analyse statistique](/analyse) pour obtenir une comparaison structurée.
 
-Pour la méthode de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis).
+Pour la méthode de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis). Pour l'ensemble des moyennes, voyez [la taille moyenne du pénis](/taille-moyenne-penis) et [la taille normale du pénis](/taille-penis-normale).
 
 ## À retenir
 
 La taille au repos ne permet pas de prédire parfaitement la taille en érection.
 
-La longueur flaccide moyenne rapportée par Veale est de **9,16 cm**, contre **13,12 cm en érection**.
+La longueur flaccide moyenne rapportée par Veale est de **{{moyenne:rest-length}}**, contre **{{moyenne:erect-length}} en érection**.
 
 Les différences individuelles de croissance entre repos et érection sont importantes.
 

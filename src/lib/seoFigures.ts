@@ -1,6 +1,6 @@
 import { MAX_SIGMA, REFERENCE_SAMPLES } from "@/config/site";
 import { clampPercentile } from "./reportCore";
-import { percentile, referenceFor, valueAtPercentile, type BodyState } from "./stats";
+import { normalCdf, percentile, referenceFor, valueAtPercentile, type BodyState } from "./stats";
 import { f1, rankLabel } from "./format";
 import { frInt, frNumber } from "./ticker";
 
@@ -55,6 +55,9 @@ const sig2 = (n: number) => {
 
 export class FigureError extends Error {}
 
+/** Définition internationale du pouce. */
+const CM_PER_INCH = 2.54;
+
 const num = (v: string | undefined, what: string): number => {
   const n = Number((v ?? "").replace(",", "."));
   if (v === undefined || v === "" || !Number.isFinite(n)) throw new FigureError(`argument « ${what} » manquant ou non numérique`);
@@ -103,9 +106,24 @@ const TOKENS: Record<string, (args: string[]) => string> = {
   },
   // {{ecart:erect-length:15}} → écart à la moyenne en cm, une décimale, sans signe
   ecart: ([s, cm]) => `${f1(Math.abs(num(cm, "cm") - seriesRef(series(s)).mean))} cm`,
-  // {{un-sur-dessus:erect-length:17}} → « 1 sur 100 » : rareté d'une valeur au moins égale (deux chiffres significatifs)
-  "un-sur-dessus": ([s, cm]) => `1 sur ${frInt(sig2(100 / (100 - rawPercentile(series(s), num(cm, "cm")))))}`,
-  "un-sur-dessous": ([s, cm]) => `1 sur ${frInt(sig2(100 / rawPercentile(series(s), num(cm, "cm"))))}`,
+  // {{un-sur-dessus:erect-length:17}} → « 1 homme sur 100 » : rareté d'une valeur au moins égale (deux chiffres significatifs)
+  "un-sur-dessus": ([s, cm]) => `1 homme sur ${frInt(sig2(100 / (100 - rawPercentile(series(s), num(cm, "cm")))))}`,
+  "un-sur-dessous": ([s, cm]) => `1 homme sur ${frInt(sig2(100 / rawPercentile(series(s), num(cm, "cm"))))}`,
+  // {{attendus:erect-length:17}} → nombre d'hommes que le modèle attend au-delà de 17 cm dans l'échantillon publié (effectif × part au-dessus)
+  attendus: ([s, cm]) => {
+    const k = series(s);
+    return frInt(Math.round((seriesRef(k).n * (100 - rawPercentile(k, num(cm, "cm")))) / 100));
+  },
+  // {{dans-sigma:1}} → part de la population à moins de k écarts-types de la moyenne (loi normale), une décimale
+  "dans-sigma": ([k]) => `${f1((normalCdf(num(k, "k")) - normalCdf(-num(k, "k"))) * 100)} %`,
+  // {{pct-sigma:1}} → percentile d'une valeur située k écarts-types au-dessus de la moyenne, une décimale, sans « % »
+  "pct-sigma": ([k]) => f1(normalCdf(num(k, "k")) * 100),
+  // {{borne-basse}}, {{borne-haute}} → bornes d'affichage des percentiles du rapport
+  "borne-basse": () => f1(clampPercentile(0)),
+  "borne-haute": () => f1(clampPercentile(100)),
+  // {{pouces:18}} → « 7,1 pouces » ; {{pouces-en-cm:7}} → « 17,78 cm » (1 pouce = 2,54 cm exactement)
+  pouces: ([cm]) => `${f1(num(cm, "cm") / CM_PER_INCH)} pouces`,
+  "pouces-en-cm": ([inch]) => `${frNumber(num(inch, "pouces") * CM_PER_INCH)} cm`,
   // {{max-sigma}} → nombre d'écarts-types au-delà duquel le questionnaire refuse une valeur
   "max-sigma": () => String(MAX_SIGMA),
 };

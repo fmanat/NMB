@@ -66,12 +66,14 @@ describe("chargeur de pages : corps Markdown", () => {
     expect(() => renderBody("Texte <b>gras</b>", "f.md", ex)).toThrow(/HTML brut/);
   });
 
-  it("résout les liens internes par slug et /analyse ; signale les pages pas encore présentes", () => {
-    const r = renderBody("[a](/analyse) [b](faq) [c](taille-repos-erection) [d](/courbure-penis-normale#x)", "f.md", ex);
+  it("résout les liens internes par slug et /analyse ; une page pas encore présente est signalée et son lien rendu en texte simple", () => {
+    const r = renderBody("[a](/analyse) [b](faq) [c](taille-repos-erection) [d](/courbure-penis-normale#x) [e](/)", "f.md", ex);
     expect(r.html).toContain('href="/analyse"');
     expect(r.html).toContain('href="/faq"');
-    expect(r.html).toContain('href="/taille-repos-erection"');
-    expect(r.html).toContain('href="/courbure-penis-normale#x"');
+    expect(r.html).toContain('href="/"');
+    expect(r.html).not.toContain('href="/taille-repos-erection"');
+    expect(r.html).not.toContain('href="/courbure-penis-normale');
+    expect(r.html).toContain(" c ");
     expect(r.pending.sort()).toEqual(["courbure-penis-normale", "taille-repos-erection"]);
   });
 

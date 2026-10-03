@@ -1,11 +1,16 @@
 ---
 slug: etudes-taille-penis
-title: Études sur la taille du pénis : références scientifiques
+title: Études sur la taille du pénis : ce que dit la science
+h1: Études sur la taille du pénis : ce que disent vraiment les références
+breadcrumb: Études scientifiques
+verified: 2026-10-03
+ogFigure: "{{effectif-total}}"
+ogLabel: hommes au plus dans la revue de Veale et al. (BJU Int., 2015)
 metaDescription: Quelles sont les principales études scientifiques sur la taille du pénis ? Méta-analyses, méthodes de mesure, populations et chiffres de référence.
 targetKeyword: études taille pénis
 faq:
   - q: Quelle est l'étude de référence sur la taille du pénis ?
-    a: La revue systématique de Veale et al., publiée dans BJU International en 2015, constitue une référence majeure avec jusqu'à 15 521 hommes.
+    a: La revue systématique de Veale et al., publiée dans BJU International en 2015, constitue une référence majeure avec jusqu'à {{effectif-total}} hommes.
   - q: Les études utilisent-elles toutes la même méthode ?
     a: Non. Les méthodes de mesure, les populations et les conditions expérimentales varient entre les études.
   - q: Pourquoi privilégier les mesures réalisées par des professionnels ?
@@ -38,17 +43,17 @@ Son titre est particulièrement explicite : *Am I normal? A systematic review an
 
 Les chercheurs ont recherché les études répondant à des critères méthodologiques précis et ont privilégié les mesures réalisées par des professionnels de santé.
 
-La synthèse porte sur jusqu'à **15 521 hommes**.
+La synthèse porte sur jusqu'à **{{effectif-total}} hommes**.
 
 Elle rapporte notamment :
 
-- 9,16 cm de longueur flaccide pendante ;
+- {{moyenne:rest-length}} de longueur flaccide pendante ;
 - 13,24 cm de longueur étirée ;
-- 13,12 cm de longueur en érection ;
-- 9,31 cm de circonférence flaccide ;
-- 11,66 cm de circonférence en érection.
+- {{moyenne:erect-length}} de longueur en érection ;
+- {{moyenne:rest-girth}} de circonférence flaccide ;
+- {{moyenne:erect-girth}} de circonférence en érection.
 
-Les effectifs diffèrent selon la mesure : 10 704 hommes pour la longueur flaccide pendante, 14 160 pour la longueur étirée, 9 407 pour la circonférence flaccide, mais 692 seulement pour la longueur en érection et 381 pour la circonférence en érection. Les auteurs relèvent que relativement peu de mesures en érection ont été réalisées en contexte clinique.
+Les effectifs diffèrent selon la mesure : {{effectif:rest-length}} hommes pour la longueur flaccide pendante, 14 160 pour la longueur étirée, {{effectif:rest-girth}} pour la circonférence flaccide, mais {{effectif:erect-length}} seulement pour la longueur en érection et {{effectif:erect-girth}} pour la circonférence en érection. Les auteurs relèvent que relativement peu de mesures en érection ont été réalisées en contexte clinique.
 
 L'intérêt majeur de cette publication est qu'elle ne donne pas seulement une moyenne : elle construit également des distributions permettant d'étudier les percentiles.
 
@@ -56,9 +61,9 @@ L'intérêt majeur de cette publication est qu'elle ne donne pas seulement une m
 
 Une moyenne seule donne une information limitée.
 
-Supposons une moyenne de 13,12 cm.
+Supposons une moyenne de {{moyenne:erect-length}}.
 
-Deux personnes mesurant respectivement 11 cm et 15 cm se situent toutes les deux autour de cette même population, mais leur position statistique est différente.
+Deux personnes mesurant respectivement [11 cm](/taille-penis-11-cm) et [15 cm](/taille-penis-15-cm) se situent toutes les deux autour de cette même population, mais leur position statistique est différente : le site calcule le {{rang:erect-length:11}} pour la première et le {{rang:erect-length:15}} pour la seconde.
 
 Les percentiles permettent de représenter cette position.
 
@@ -94,7 +99,7 @@ Une autre méta-analyse plus récente a regroupé **33 études et 36 883 hommes*
 
 Cette dernière rapporte notamment une moyenne de **13,84 cm** pour la longueur en érection parmi 5 669 hommes disposant de données correspondantes.
 
-La différence avec les 13,12 cm de Veale ne signifie pas que l'une des deux études est nécessairement « fausse ».
+La différence avec les {{moyenne:erect-length}} de Veale ne signifie pas que l'une des deux études est nécessairement « fausse ».
 
 Les populations et les études incluses sont différentes.
 
@@ -158,7 +163,7 @@ Le plus rigoureux est donc d'indiquer la source utilisée plutôt que de parler 
 
 Vous pouvez consulter [l'analyse du Bitomètre](/analyse) pour obtenir une comparaison statistique.
 
-Pour comprendre les méthodes de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis).
+Pour comprendre les méthodes de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis). Les moyennes de référence sont détaillées sur la page [taille moyenne du pénis](/taille-moyenne-penis), et la position de chaque centimètre dans le [tableau des percentiles](/percentile-penis).
 
 ## À retenir
 
