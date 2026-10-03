@@ -15,7 +15,7 @@
  */
 
 import { referenceFor } from "./stats";
-import { mulberry32, scanHeight, CYLINDER } from "./scanner3d";
+import { CAMERA_DISTANCE, PITCH_MAX, PITCH_MIN, mulberry32, project, scanHeight, CYLINDER } from "./scanner3d";
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Proportions (lues dans les constantes du site, jamais écrites ici)
@@ -296,8 +296,11 @@ export function silhouetteMeridian(spec: SilhouetteSpec, angle: number, n = 48):
   return out;
 }
 
-/** Vue de départ du moteur animé (et image fixe en mouvement réduit) : presque de profil, légèrement de dessus, pour que le profil et la courbure se lisent. */
-export const SILHOUETTE_VIEW = { yaw: 0.25, pitch: 0.2 } as const;
+/**
+ * Vue de départ du moteur animé (et image fixe en mouvement réduit), identique sur mobile et sur ordinateur : de trois quarts et
+ * légèrement de dessus, pour que le profil, la courbure et l'ouverture des anneaux (donc du plan de balayage) se lisent.
+ */
+export const SILHOUETTE_VIEW = { yaw: 0.6, pitch: 0.34 } as const;
 
 /** Polyligne de l'axe (graduation centrale), `n` + 1 points de t = 0 à t = 1. */
 export function silhouetteAxis(spec: SilhouetteSpec, n = 24): Float32Array {
@@ -313,13 +316,114 @@ export function silhouetteAxis(spec: SilhouetteSpec, n = 24): Float32Array {
 
 /** Positions (t) des anneaux de mesure : réparties le long de l'axe, dont la jonction de la collerette et le rayon maximal du bout. */
 export const RING_PARAMS: readonly number[] = [0.04, 0.3, 0.56, PROFILE.collarAt, PROFILE.swellEnd];
-/** Rayon d'anneau relatif (× rayon local) : un peu plus large aux deux extrémités. */
-export const ringFactor = (index: number, n: number): number => (index === 0 || index === n - 1 ? 1.45 : 1.25);
-/** Rayon fixe du disque de balayage : nettement plus large que le plus grand rayon de l'objet. */
-export const SCAN_DISC_RADIUS = SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell) * 1.6;
 
-/** Fraction du balayage (0 à 1) à l'instant t (ms) : même va-et-vient adouci que le cylindre (`scanHeight`). */
+/**
+ * Style UNIQUE des anneaux de mesure : tous les anneaux (y compris le premier, en bas, et le dernier) ont exactement le même rayon
+ * relatif, le même trait et la même transparence. Aucun anneau n'a de style particulier.
+ */
+export const RING_STYLE = { factor: 1.25, alpha: 0.3, width: 1 } as const;
+/** Rayon d'anneau relatif (× rayon local) : le même pour tous les anneaux (aucun paramètre : il ne dépend ni de l'indice, ni de la position). */
+export const ringFactor = (): number => RING_STYLE.factor;
+
+/** Rayon fixe du disque de balayage : plus large que tout anneau et que l'objet, mais volontairement serré (pas un trait qui dépasse). */
+export const SCAN_DISC_RADIUS = SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell) * 1.4;
+/** Style du plan de balayage : trait fin, voile très léger. */
+export const PLANE_STYLE = { strokeAlpha: 0.7, fillAlpha: 0.07, width: 1 } as const;
+
+/** Fraction du balayage (0 à 1) à l'instant t (ms) : même va-et-vient adouci que le cylindre (`scanHeight`) ; de l'extrémité basse à l'extrémité haute puis retour. */
 export function scanFraction(timeMs: number, periodMs = 6400): number {
   const H = CYLINDER.halfHeight;
   return (scanHeight(timeMs, periodMs) + H) / (2 * H);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Cadrage : tout ce qui est dessiné reste dans le cadre du bandeau, quelle que soit la rotation, l'inclinaison ou la position du plan
+
+/** Marge (pixels CSS) entre le dessin et le bord du cadre. */
+export const FRAME_MARGIN = 6;
+/** Largeur (pixels CSS) réservée aux valeurs affichées de part et d'autre de l'objet sur les bandeaux étroits (mobile). */
+export const SIDE_VALUES_WIDTH = 100;
+/** En dessous de cette largeur de bandeau (pixels CSS), les valeurs occupent les deux côtés et l'objet tient dans la colonne centrale. */
+export const NARROW_BAND = 480;
+/** Coefficient de sécurité sur l'étendue (l'étendue est échantillonnée) : le dessin occupe au plus 1/1,04 de la place disponible. */
+const EXTENT_SAFETY = 1.04;
+
+/**
+ * Tout ce qui est dessiné (surface, anneaux, axe, méridiens) est contenu dans le « tube » balayé par le disque de balayage (rayon fixe
+ * `SCAN_DISC_RADIUS`) : l'étendue projetée de ce tube, au pire sur toutes les rotations (azimut) et toutes les inclinaisons permises,
+ * borne donc tout le dessin ET le plan de balayage à toute position. Résultat en unités normalisées de `project` (valeurs absolues maximales).
+ */
+export function sceneExtent(spec: SilhouetteSpec, discRadius = SCAN_DISC_RADIUS): { x: number; y: number } {
+  const YAWS = 24;
+  const PITCHES = 5;
+  const TS = 16;
+  const ANGLES = 16;
+  let mx = 0;
+  let my = 0;
+  const tmp = { x: 0, y: 0, scale: 1, depth: 0 };
+  for (let ti = 0; ti <= TS; ti++) {
+    const t = ti / TS;
+    const c = axisPoint(spec, t);
+    const { N, B } = axisFrame(spec, t);
+    for (let a = 0; a < ANGLES; a++) {
+      const ang = (a / ANGLES) * Math.PI * 2;
+      const ca = Math.cos(ang) * discRadius;
+      const sa = Math.sin(ang) * discRadius;
+      const x = c.x + N.x * ca + B.x * sa;
+      const y = c.y + N.y * ca + B.y * sa;
+      const z = c.z + N.z * ca + B.z * sa;
+      for (let yi = 0; yi < YAWS; yi++) {
+        for (let pi = 0; pi < PITCHES; pi++) {
+          const view = { yaw: (yi / YAWS) * Math.PI * 2, pitch: PITCH_MIN + (pi / (PITCHES - 1)) * (PITCH_MAX - PITCH_MIN), cameraDistance: CAMERA_DISTANCE };
+          project(x, y, z, view, tmp);
+          mx = Math.max(mx, Math.abs(tmp.x));
+          my = Math.max(my, Math.abs(tmp.y));
+        }
+      }
+    }
+  }
+  return { x: mx * EXTENT_SAFETY, y: my * EXTENT_SAFETY };
+}
+
+/**
+ * Unité d'échelle (pixels par unité normalisée) pour un bandeau de `cssW` × `cssH` pixels : le plus grand dessin dont l'étendue
+ * (`sceneExtent`) tient dans le cadre, marge comprise. Sur un bandeau étroit, la largeur utile est la colonne centrale entre les valeurs.
+ * Constante : ne dépend ni de l'azimut, ni de l'inclinaison, ni de la position du plan.
+ */
+export function sceneUnit(extent: { x: number; y: number }, cssW: number, cssH: number): number {
+  const halfW = cssW < NARROW_BAND ? Math.max(40, (cssW - 2 * SIDE_VALUES_WIDTH) / 2) : cssW / 2 - FRAME_MARGIN;
+  const halfH = cssH / 2 - FRAME_MARGIN;
+  return Math.max(1, Math.min(halfW / extent.x, halfH / extent.y));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Points : ronds, plus petits quand ils sont loin (perspective), tracés par lots de profondeur
+
+/** Nombre de classes de profondeur (un tracé et un remplissage par classe). Classe 0 = la plus proche de la caméra. */
+export const POINT_CLASSES = 6;
+/** Demi-étendue de profondeur (autour de la distance de la caméra) couverte par les classes. */
+export const POINT_DEPTH_SPAN = 1.8;
+/** Rayon (pixels CSS) d'un point à la distance de la caméra. */
+export const POINT_RADIUS_AT_CAMERA = 0.85;
+
+/** Rayon d'un point rond (pixels CSS) à la profondeur donnée : strictement décroissant avec la profondeur (perspective). */
+export function pointRadius(depth: number): number {
+  const d = Math.max(0.5, depth);
+  return POINT_RADIUS_AT_CAMERA * Math.pow(CAMERA_DISTANCE / d, 1.2);
+}
+
+/** Classe de profondeur (0 = proche, POINT_CLASSES − 1 = loin) d'un point à la profondeur donnée. */
+export function depthClass(depth: number): number {
+  const u = (depth - (CAMERA_DISTANCE - POINT_DEPTH_SPAN)) / (2 * POINT_DEPTH_SPAN);
+  return Math.min(POINT_CLASSES - 1, Math.max(0, Math.floor(u * POINT_CLASSES)));
+}
+
+/** Rayon commun des points d'une classe (rayon à la profondeur médiane de la classe). */
+export function classRadius(c: number): number {
+  return pointRadius(CAMERA_DISTANCE - POINT_DEPTH_SPAN + ((c + 0.5) / POINT_CLASSES) * 2 * POINT_DEPTH_SPAN);
+}
+
+/** Opacité des points d'une classe : plus loin = plus transparent. */
+export function classAlpha(c: number): number {
+  return 0.9 - c * 0.09;
 }

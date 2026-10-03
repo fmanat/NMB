@@ -2,8 +2,22 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { REFERENCES } from "@/config/site";
 import { exampleReport } from "@/lib/exampleReport";
+import { CAMERA_DISTANCE, PITCH_MAX, PITCH_MIN, project } from "@/lib/scanner3d";
 import {
+  FRAME_MARGIN,
   LENGTH_TO_DIAMETER,
+  NARROW_BAND,
+  PLANE_STYLE,
+  POINT_CLASSES,
+  RING_STYLE,
+  SIDE_VALUES_WIDTH,
+  SILHOUETTE_VIEW,
+  classAlpha,
+  classRadius,
+  depthClass,
+  pointRadius,
+  sceneExtent,
+  sceneUnit,
   MAX_RENDER_BEND_DEG,
   PROFILE,
   RING_PARAMS,
@@ -335,7 +349,7 @@ describe("anneaux de mesure, disque de balayage, axe", () => {
   it("un anneau est un cercle fermé perpendiculaire à l'axe, à rayon relatif constant, au-dessus de la surface", () => {
     for (let k = 0; k < RING_PARAMS.length; k++) {
       const t = RING_PARAMS[k];
-      const f = ringFactor(k, RING_PARAMS.length);
+      const f = ringFactor();
       expect(f).toBeGreaterThanOrEqual(1);
       const ring = silhouetteRing(spec, t, f, 36);
       expect(ring.length).toBe(37 * 3);
@@ -397,5 +411,243 @@ describe("anneaux de mesure, disque de balayage, axe", () => {
     expect(axis.length).toBe(25 * 3);
     expect(Array.from(axis).every(Number.isFinite)).toBe(true);
     for (let i = 1; i <= 24; i++) expect(axis[i * 3 + 1]).toBeGreaterThan(axis[(i - 1) * 3 + 1]);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Retouches du 03/10/2026 : anneaux et plan perpendiculaires à l'axe, plan toujours dans le cadre, points ronds, style unique des anneaux
+
+const DIRECTIONS: BendDirection[] = ["left", "right", "up", "down"];
+
+/** Normale unitaire d'un polygone fermé (méthode de Newell), orientée comme le sens de parcours. */
+function polygonNormal(poly: Float32Array): { x: number; y: number; z: number } {
+  const n = poly.length / 3 - 1; // le premier point est répété à la fin
+  let nx = 0;
+  let ny = 0;
+  let nz = 0;
+  for (let i = 0; i < n; i++) {
+    const [ax, ay, az] = [poly[i * 3], poly[i * 3 + 1], poly[i * 3 + 2]];
+    const j = (i + 1) % n;
+    const [bx, by, bz] = [poly[j * 3], poly[j * 3 + 1], poly[j * 3 + 2]];
+    nx += (ay - by) * (az + bz);
+    ny += (az - bz) * (ax + bx);
+    nz += (ax - bx) * (ay + by);
+  }
+  const len = Math.hypot(nx, ny, nz);
+  return { x: nx / len, y: ny / len, z: nz / len };
+}
+
+describe("anneaux et plan de balayage : perpendiculaires à la tangente de l'axe à leur hauteur", () => {
+  for (const direction of DIRECTIONS) {
+    for (const angleDeg of [15, 20]) {
+      it(`${direction}, ${angleDeg}° : normale de l'anneau · tangente = ±1 à de nombreuses hauteurs (anneaux de mesure et plan de balayage)`, () => {
+        const spec = silhouetteSpec({ angleDeg, direction });
+        for (const t of [0, 0.04, 0.1, 0.2, 0.3, 0.45, 0.56, 0.7, PROFILE.collarAt, 0.85, PROFILE.swellEnd, 0.95, 1]) {
+          const { T } = axisFrame(spec, t);
+          if (t < 0.99) {
+            // (à t = 1 le rayon local est nul : l'anneau est dégénéré)
+            const ring = polygonNormal(silhouetteRing(spec, t, RING_STYLE.factor, 72));
+            expect(Math.abs(dot(ring, T)), `anneau t=${t}`).toBeGreaterThan(1 - 1e-6);
+          }
+          const disc = polygonNormal(scanDisc(spec, t, SCAN_DISC_RADIUS, 64));
+          expect(Math.abs(dot(disc, T)), `plan t=${t}`).toBeGreaterThan(1 - 1e-6);
+        }
+      });
+    }
+  }
+
+  it("la tangente tourne bien le long de l'axe courbe : l'anneau du haut n'est pas parallèle à celui du bas", () => {
+    for (const direction of DIRECTIONS) {
+      const spec = silhouetteSpec({ angleDeg: 15, direction });
+      const bottom = polygonNormal(silhouetteRing(spec, RING_PARAMS[0], RING_STYLE.factor));
+      const top = polygonNormal(silhouetteRing(spec, RING_PARAMS[RING_PARAMS.length - 1], RING_STYLE.factor));
+      const sign = Math.sign(dot(bottom, top));
+      const angle = Math.acos(Math.min(1, Math.abs(dot(bottom, top))));
+      expect(sign).not.toBe(0);
+      expect(angle).toBeGreaterThan(0.18); // environ 15° au total, moins le bout de l'axe non couvert
+      expect(angle).toBeLessThan((20 * Math.PI) / 180);
+    }
+  });
+
+  it("axe droit (sans courbure) : tous les anneaux sont parallèles et horizontaux", () => {
+    const spec = silhouetteSpec();
+    for (const t of RING_PARAMS) {
+      const nrm = polygonNormal(silhouetteRing(spec, t, RING_STYLE.factor));
+      expect(Math.abs(nrm.y)).toBeGreaterThan(1 - 1e-9);
+    }
+  });
+});
+
+describe("aucun anneau « spécial » : un seul style pour tous", () => {
+  it("le rayon relatif est identique pour tous les anneaux, base et bout compris", () => {
+    const factors = RING_PARAMS.map(() => ringFactor());
+    expect(new Set(factors).size).toBe(1);
+    expect(factors[0]).toBe(RING_STYLE.factor);
+    expect(RING_STYLE.factor).toBeLessThanOrEqual(1.3); // pas plus large que les autres
+  });
+
+  it("le moteur trace tous les anneaux avec les mêmes paramètres de style, sans condition sur l'indice, la proximité du plan ou la base", () => {
+    const src = readFileSync("src/components/scanner/scannerEngine.ts", "utf8");
+    const loop = src.slice(src.indexOf("// Anneaux de mesure"), src.indexOf("// Fil de fer"));
+    expect(loop).toContain("RING_STYLE.alpha");
+    expect(loop).toContain("RING_STYLE.width");
+    // Le style est fixé une fois avant la boucle : rien dans la boucle ne le modifie.
+    const body = loop.slice(loop.indexOf("for (let r"));
+    expect(body).not.toMatch(/strokeStyle|lineWidth|edge|scanProximity|r === 0|r === rings\.length/);
+  });
+
+  it("le disque de balayage est plus large que tout anneau, mais sans excès ; trait fin et voile léger", () => {
+    const maxRing = SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell) * RING_STYLE.factor;
+    expect(SCAN_DISC_RADIUS).toBeGreaterThan(maxRing);
+    expect(SCAN_DISC_RADIUS).toBeLessThan(SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell) * 1.6);
+    expect(PLANE_STYLE.width).toBeLessThanOrEqual(1);
+    expect(PLANE_STYLE.fillAlpha).toBeLessThanOrEqual(0.1);
+  });
+});
+
+describe("cadrage : le plan de balayage et tout le dessin restent dans le cadre du bandeau", () => {
+  const FRAMES: [number, number][] = [
+    [320, 276], [360, 276], [375, 276], [390, 276], [430, 276], [640, 276], [525, 400], [730, 400], [1000, 400], [1440, 400],
+  ];
+  const yaws = Array.from({ length: 72 }, (_, i) => (i / 72) * Math.PI * 2);
+  const pitches = [PITCH_MIN, 0.15, SILHOUETTE_VIEW.pitch, 0.5, 0.7, 0.85, PITCH_MAX];
+
+  for (const direction of DIRECTIONS) {
+    it(`courbure ${direction} : bornes projetées du plan (toutes positions), des anneaux et de la surface dans le cadre, pour toutes les rotations, inclinaisons et tailles`, () => {
+      const spec = silhouetteSpec({ angleDeg: 20, direction });
+      const extent = sceneExtent(spec);
+      const cloud = generateSilhouettePoints(spec, 400);
+      const discs = Array.from({ length: 41 }, (_, i) => scanDisc(spec, i / 40, SCAN_DISC_RADIUS, 48)); // du bas (0) au haut (1)
+      const rings = RING_PARAMS.map((t) => silhouetteRing(spec, t, RING_STYLE.factor, 48));
+      const sets = [...discs, ...rings, cloud.points];
+      for (const [w, h] of FRAMES) {
+        const unit = sceneUnit(extent, w, h);
+        const halfW = w < NARROW_BAND ? (w - 2 * SIDE_VALUES_WIDTH) / 2 : w / 2 - FRAME_MARGIN;
+        const halfH = h / 2 - FRAME_MARGIN;
+        let worstX = 0;
+        let worstY = 0;
+        for (const pitch of pitches) {
+          for (const yaw of yaws) {
+            const view = { yaw, pitch, cameraDistance: CAMERA_DISTANCE };
+            for (const poly of sets) {
+              for (let i = 0; i < poly.length; i += 3) {
+                const p = project(poly[i], poly[i + 1], poly[i + 2], view);
+                worstX = Math.max(worstX, Math.abs(p.x) * unit);
+                worstY = Math.max(worstY, Math.abs(p.y) * unit);
+              }
+            }
+          }
+        }
+        // Largeur utile : colonne centrale sur mobile (au moins 40 px de demi-largeur) ; hauteur : cadre moins la marge.
+        expect(worstX, `${w}×${h} largeur`).toBeLessThanOrEqual(Math.max(40, halfW) + 1e-6);
+        expect(worstY, `${w}×${h} hauteur`).toBeLessThanOrEqual(halfH + 1e-6);
+        expect(worstX, `${w}×${h} dans le cadre`).toBeLessThan(w / 2);
+        expect(worstY).toBeLessThan(h / 2);
+      }
+    });
+  }
+
+  it("le plan balaye bien toute la forme : à t = 0 et t = 1 il est aux extrémités de l'axe, et sa boîte y reste dans le cadre (mobile 390×276)", () => {
+    const spec = silhouetteSpec(exampleReport().curvature);
+    const extent = sceneExtent(spec);
+    const unit = sceneUnit(extent, 390, 276);
+    const view = { yaw: SILHOUETTE_VIEW.yaw, pitch: SILHOUETTE_VIEW.pitch, cameraDistance: CAMERA_DISTANCE };
+    const ys: number[] = [];
+    for (const t of [0, 0.5, 1]) {
+      const disc = scanDisc(spec, t, SCAN_DISC_RADIUS, 64);
+      let y0 = Infinity;
+      let y1 = -Infinity;
+      for (let i = 0; i < disc.length; i += 3) {
+        const p = project(disc[i], disc[i + 1], disc[i + 2], view);
+        y0 = Math.min(y0, 138 + p.y * unit);
+        y1 = Math.max(y1, 138 + p.y * unit);
+      }
+      expect(y0).toBeGreaterThan(0);
+      expect(y1).toBeLessThan(276);
+      ys.push((y0 + y1) / 2);
+    }
+    expect(ys[0]).toBeGreaterThan(ys[1]); // t = 0 : bas de l'écran (y croît vers le bas)
+    expect(ys[1]).toBeGreaterThan(ys[2]);
+  });
+
+  it("l'unité est constante (indépendante de la vue) et la forme est plus grande de plus de 25 % qu'avant sur mobile (390 px)", () => {
+    const spec = silhouetteSpec(exampleReport().curvature);
+    const unit = sceneUnit(sceneExtent(spec), 390, 276);
+    const before = Math.min(184 / 3.5, (390 - 190) / 2.8); // ancienne unité du moteur sur mobile
+    expect(unit / before).toBeGreaterThan(1.25);
+    expect(unit / before).toBeLessThan(1.4);
+  });
+
+  it("tient aussi dans les petites largeurs (320 px) sans dépasser la colonne centrale réservée aux valeurs", () => {
+    const spec = silhouetteSpec(exampleReport().curvature);
+    const extent = sceneExtent(spec);
+    expect(extent.x * sceneUnit(extent, 320, 276)).toBeLessThanOrEqual((320 - 2 * SIDE_VALUES_WIDTH) / 2 + 1e-6);
+  });
+});
+
+describe("vue de départ : de trois quarts, la même partout", () => {
+  it("azimut et inclinaison de départ : ni de face, ni de profil, ni de dessus", () => {
+    expect(SILHOUETTE_VIEW.yaw).toBeGreaterThan(0.45);
+    expect(SILHOUETTE_VIEW.yaw).toBeLessThan(1.1);
+    expect(SILHOUETTE_VIEW.pitch).toBeGreaterThan(0.25);
+    expect(SILHOUETTE_VIEW.pitch).toBeLessThan(0.6);
+  });
+
+  it("le moteur part de cette vue quelle que soit la taille du bandeau (aucune vue propre au mobile)", () => {
+    const src = readFileSync("src/components/scanner/scannerEngine.ts", "utf8");
+    expect(src).toContain("yaw: SILHOUETTE_VIEW.yaw, pitch: SILHOUETTE_VIEW.pitch");
+    expect(src.match(/SILHOUETTE_VIEW/g)?.length).toBeLessThanOrEqual(3);
+    expect(src).not.toMatch(/view\.(yaw|pitch)\s*=\s*[^=]*cssW/);
+  });
+});
+
+describe("points ronds dont la taille décroît avec la profondeur", () => {
+  it("le rayon est strictement décroissant avec la profondeur, positif, sans NaN", () => {
+    let prev = Infinity;
+    for (let d = 2.8; d <= 6.6; d += 0.1) {
+      const r = pointRadius(d);
+      expect(Number.isFinite(r)).toBe(true);
+      expect(r).toBeGreaterThan(0);
+      expect(r).toBeLessThan(prev);
+      prev = r;
+    }
+  });
+
+  it("les classes de profondeur sont ordonnées de proche à loin : rayon et opacité décroissent, tous les niveaux sont atteints", () => {
+    expect(POINT_CLASSES).toBeGreaterThanOrEqual(4);
+    for (let c = 1; c < POINT_CLASSES; c++) {
+      expect(classRadius(c)).toBeLessThan(classRadius(c - 1));
+      expect(classAlpha(c)).toBeLessThan(classAlpha(c - 1));
+    }
+    expect(classAlpha(POINT_CLASSES - 1)).toBeGreaterThan(0.2);
+    expect(classRadius(0)).toBeGreaterThan(classRadius(POINT_CLASSES - 1) * 1.8); // la perspective se voit
+    let last = -1;
+    const seen = new Set<number>();
+    for (let d = 2.0; d <= 7.5; d += 0.05) {
+      const c = depthClass(d);
+      expect(c).toBeGreaterThanOrEqual(last);
+      last = c;
+      seen.add(c);
+    }
+    expect(seen.size).toBe(POINT_CLASSES);
+  });
+
+  it("une classe est cohérente avec la projection : un point plus loin tombe dans une classe de rayon plus petit", () => {
+    const view = { yaw: 0, pitch: 0, cameraDistance: CAMERA_DISTANCE };
+    const near = project(0, 0, 1.2, view); // du côté de la caméra
+    const far = project(0, 0, -1.2, view);
+    expect(near.depth).toBeLessThan(far.depth);
+    expect(classRadius(depthClass(near.depth))).toBeGreaterThan(classRadius(depthClass(far.depth)));
+  });
+
+  it("le moteur dessine des disques (arcs) et non des carrés, par lots, avec le rayon de la classe, y compris pour les points éclairés par le plan", () => {
+    const src = readFileSync("src/components/scanner/scannerEngine.ts", "utf8");
+    expect(src).toContain("ctx.arc(");
+    expect(src).not.toContain("ctx.rect(");
+    expect(src).not.toContain("fillRect(sx"); // pas de carré par point
+    const batch = src.slice(src.indexOf("for (let lv = 0"), src.indexOf("// Plan de balayage"));
+    expect(batch).toContain("classRadius(cls)");
+    expect(batch.match(/ctx\.fill\(\)/g)?.length).toBe(1); // un seul remplissage par lot (jamais un par point)
+    expect(batch).not.toMatch(/ctx\.arc\([^)]*,\s*(2\.|3\.|[4-9])/); // aucun rayon spécial
   });
 });

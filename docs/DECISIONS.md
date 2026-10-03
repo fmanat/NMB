@@ -365,3 +365,18 @@ Constat sans correction nécessaire : contrastes (axe : aucune violation), langu
 | Vue de départ | Presque de profil, légèrement de dessus (`SILHOUETTE_VIEW`) pour que le profil et la courbure se lisent ; l'image fixe du mouvement réduit l'utilise aussi. Le cylindre du repli garde sa vue d'avant (`STATIC_VIEW`). | Même vue que le cylindre : la courbure se voyait mal. |
 | Abstraction conservée | Aucun mot anatomique dans le code, les noms d'export ou les commentaires de la géométrie (« fût », « renflement », « collerette » de dessin) ; la documentation du propriétaire (ce document) dit « silhouette stylisée ». | — |
 
+
+## Retouches du bandeau scanner (03/10/2026, d'après les captures du propriétaire ; mise en œuvre prise seul)
+
+Portée inchangée : moteur canvas seulement ; repli SVG et images de partage restent le cylindre abstrait (tests de séparation et référence inchangés). Rendu toujours en nuage de points, fil de fer et anneaux, sans détail ajouté.
+
+| Question | Décision | Alternative écartée |
+|---|---|---|
+| Garder le plan dans le cadre | Unité d'échelle **constante**, calculée une fois comme le plus grand dessin dont le tube balayé par le disque (t de 0 à 1) tient dans le cadre pour toutes les rotations et inclinaisons permises (marge de 6 px, sécurité 4 %). Garantie par test unitaire (grille d'azimuts, d'inclinaisons, de tailles) et e2e (boîte du plan à chaque image, pixels du bord). | Recalculer l'échelle à chaque image selon la vue : la forme « respirerait » pendant la rotation. Réduire seulement le rayon du plan : ne garantit rien aux inclinaisons extrêmes. |
+| Plan de balayage | Rayon 1,4 fois le rayon maximal (juste plus large que les anneaux, au lieu de 1,6), trait de 1 px, voile 0,07 ; mêmes extrémités t = 0 à 1, aller-retour adouci (période 6,4 s) ; orienté selon la tangente de l'axe à sa position (testé). | Balayage sans retour (recommencement brusque) : saut visuel. |
+| Anneaux | Un seul style (`RING_STYLE` : 1,25 de rayon relatif, opacité 0,3, 1 px), sans mise en valeur à l'approche du plan ; la géométrie perpendiculaire à la tangente existait déjà, désormais prouvée sur les polylignes dessinées. | Garder deux styles (extrémités plus marquées) : c'est ce qui ressemblait à un bug en bas. |
+| « Anneau blanc épais » sur mobile | Cause identifiée : plan de balayage au bas + points éclairés blancs de 2,8 px + anneaux d'extrémité plus larges et opaques. Points éclairés = taille de leur profondeur, bleu éclairci ; anneaux uniformes. | Retirer l'éclairage des points : on garde un léger indice de la position du plan. |
+| Mobile plus grand | Unité +29,5 % (52,6 → 68,1) ; bandeau mobile 184 → 276 px ; marges du hero mobile réduites (24 → 16 px en haut, espacement 20 → 16 px) pour garder le bouton dans le premier écran à 375 × 700 (693 px) ; ordinateur inchangé. | Renoncer à l'agrandissement (exclu par la consigne) ; réduire le bandeau et la forme avec lui. |
+| Vue de départ | `SILHOUETTE_VIEW` = azimut 0,6, inclinaison 0,34 (trois quarts, légèrement de dessus), **la même sur toutes les tailles** (testé en e2e). | Une vue propre au mobile : écartée par la consigne. |
+| Points | Disques par lots (6 classes de profondeur × normal / éclairé), rayon 0,85 × (distance caméra / profondeur)^1,2 (≈ 1,36 à 0,6 px), opacité décroissante avec la profondeur ; 560 points sur bandeau étroit. | Un remplissage par point (trop coûteux, voir le bloc 1) ; sprites pré-dessinés (inutile à cette échelle). |
+| État de test | `canvas.__scannerState()` (lecture seule : vue, position du plan, boîte du plan) pour que l'e2e mesure sans deviner ; aucune donnée personnelle. | Seulement l'échantillonnage de pixels : ne donne pas la position du plan. |

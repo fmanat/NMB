@@ -46,7 +46,7 @@ export default async function Home() {
       <section className="bg-gradient-to-b from-[var(--bm-blue-050)] to-white">
         {/* Mobile : texte, rapport d'exemple compact, puis boutons (le bouton principal reste visible sans défilement à 390 px).
             Ordinateur : texte et boutons à gauche, rapport d'exemple complet à droite. */}
-        <div className="container-bm pt-6 pb-10 md:pt-16 md:pb-20 grid gap-5 lg:grid-cols-[1.05fr_1fr] lg:gap-x-14 lg:gap-y-0 lg:content-center">
+        <div className="container-bm pt-4 pb-10 md:pt-16 md:pb-20 grid gap-4 md:gap-5 lg:grid-cols-[1.05fr_1fr] lg:gap-x-14 lg:gap-y-0 lg:content-center">
           <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
             <p className="t-eyebrow">Science · Données · Statistiques</p>
             <h1 className="t-display mt-3 md:mt-4">Votre profil morphologique en données.</h1>

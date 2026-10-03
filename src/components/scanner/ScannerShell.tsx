@@ -66,7 +66,7 @@ export function ScannerShell({
       data-scanner={live ? "live" : "static"}
       className="group scanner-band relative overflow-hidden bg-[var(--bm-dark-bg)] text-[var(--bm-dark-text)] md:rounded-[var(--radius-xl)] md:border md:border-[var(--bm-dark-border)]"
     >
-      <div className="relative h-[184px] sm:h-[230px] lg:h-[400px]">
+      <div className="relative h-[276px] sm:h-[276px] lg:h-[400px]">
         <div className="absolute inset-0 transition-opacity duration-300 group-data-[scanner=live]:opacity-0" aria-hidden="true">
           {fallback}
         </div>

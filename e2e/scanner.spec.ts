@@ -41,6 +41,41 @@ const inked = (page: Page) =>
     return n;
   });
 
+
+/** État exposé par le moteur (lecture seule) : vue, position du plan de balayage et sa boîte à l'écran (pixels CSS du canevas). */
+type State = { yaw: number; pitch: number; planeT: number; unit: number; width: number; height: number; plane: { x0: number; y0: number; x1: number; y1: number } };
+const state = (page: Page) => canvas(page).evaluate((c) => (c as unknown as { __scannerState: () => State }).__scannerState());
+/** Échantillonne l'état à chaque image pendant `ms` millisecondes. */
+const sampleStates = (page: Page, ms: number) =>
+  canvas(page).evaluate(
+    (c, ms) =>
+      new Promise<State[]>((resolve) => {
+        const out: State[] = [];
+        const t0 = performance.now();
+        const tick = () => {
+          out.push((c as unknown as { __scannerState: () => State }).__scannerState());
+          if (performance.now() - t0 < ms) requestAnimationFrame(tick);
+          else resolve(out);
+        };
+        tick();
+      }),
+    ms,
+  );
+/** Pixels « allumés » (canal bleu au-dessus du fond) dans la bande de `edge` pixels CSS le long du bord du canevas. */
+const inkOnEdge = (page: Page, edge = 2) =>
+  canvas(page).evaluate((c: HTMLCanvasElement, edge) => {
+    const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+    const k = Math.max(1, Math.round(edge * (c.width / c.getBoundingClientRect().width)));
+    let n = 0;
+    for (let y = 0; y < c.height; y++)
+      for (let x = 0; x < c.width; x++) {
+        if (x >= k && x < c.width - k && y >= k && y < c.height - k) continue;
+        if (d[(y * c.width + x) * 4 + 2] > 70) n++;
+      }
+    return n;
+  }, edge);
+const planeInside = (st: State) => st.plane.x0 >= 0 && st.plane.y0 >= 0 && st.plane.x1 <= st.width && st.plane.y1 <= st.height;
+
 async function expectExampleValues(page: Page) {
   const b = band(page);
   await expect(b.getByText("Exemple · valeurs fictives")).toBeVisible();
@@ -180,6 +215,107 @@ test.describe("Bandeau scanner : mouvement réduit", () => {
       return out;
     });
     expect(moving).toEqual([]);
+  });
+});
+
+
+test.describe("Bandeau scanner : plan de balayage dans le cadre", () => {
+  test("le plan balaie la forme de bas en haut et retour, sans jamais sortir du cadre, ni pendant un glissement extrême", async ({ page }) => {
+    await page.goto("/");
+    await live(page);
+    // Un balayage complet (période 6,4 s) : le plan va d'une extrémité à l'autre, sa boîte reste dans le cadre à chaque image.
+    const states = await sampleStates(page, 7000);
+    const ts = states.map((s) => s.planeT);
+    expect(Math.min(...ts)).toBeLessThan(0.1);
+    expect(Math.max(...ts)).toBeGreaterThan(0.9);
+    for (const st of states) expect(planeInside(st), JSON.stringify(st)).toBe(true);
+    // Le plan est un disque vu en coupe oblique, pas un trait : sa hauteur à l'écran est au moins 15 % de sa largeur.
+    for (const st of states) expect((st.plane.y1 - st.plane.y0) / (st.plane.x1 - st.plane.x0)).toBeGreaterThan(0.15);
+    expect(await inkOnEdge(page)).toBe(0); // aucun pixel dessiné contre le bord du canevas
+
+    // Glissement extrême à la souris (azimut et inclinaison, vers le haut puis vers le bas) : toujours dans le cadre.
+    const box = (await canvas(page).boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    const seen: State[] = [];
+    for (const [dx, dy] of [[60, 400], [-120, -800], [60, 500], [-40, 300], [90, -300]]) {
+      await page.mouse.move(cx + dx, cy + dy, { steps: 6 });
+      seen.push(await state(page));
+      expect(await inkOnEdge(page)).toBe(0);
+    }
+    await page.mouse.up();
+    expect(new Set(seen.map((s) => s.pitch.toFixed(2))).size).toBeGreaterThan(1); // l'inclinaison a bien changé (butées comprises)
+    for (const st of [...seen, ...(await sampleStates(page, 600))]) expect(planeInside(st), JSON.stringify(st)).toBe(true);
+  });
+
+  test("mouvement réduit : le plan est figé à une position dans le cadre, y compris pendant un glissement", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await live(page);
+    const a = await state(page);
+    expect(a.planeT).toBeGreaterThan(0.1);
+    expect(a.planeT).toBeLessThan(0.9);
+    expect(planeInside(a)).toBe(true);
+    await page.waitForTimeout(900);
+    expect((await state(page)).planeT).toBe(a.planeT);
+    const box = (await canvas(page).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 100, box.y + box.height / 2 + 500, { steps: 8 });
+    const during = await state(page);
+    await page.mouse.up();
+    expect(during.planeT).toBe(a.planeT);
+    expect(planeInside(during)).toBe(true);
+    expect(await inkOnEdge(page)).toBe(0);
+  });
+});
+
+test.describe("Bandeau scanner : vue de trois quarts, la même sur mobile et sur ordinateur", () => {
+  const initialView = async (page: Page, width: number, height: number) => {
+    await page.setViewportSize({ width, height });
+    await page.emulateMedia({ reducedMotion: "reduce" }); // image fixe : la vue de départ n'est pas modifiée par la rotation automatique
+    await page.goto("/");
+    await live(page);
+    return state(page);
+  };
+
+  test("même azimut et même inclinaison par défaut à 390 px et à 1 280 px (de trois quarts, pas de face)", async ({ page }) => {
+    const mobile = await initialView(page, 390, 844);
+    const desktop = await initialView(page, 1280, 800);
+    expect(mobile.yaw).toBe(desktop.yaw);
+    expect(mobile.pitch).toBe(desktop.pitch);
+    expect(desktop.yaw).toBeGreaterThan(0.45); // ni de face (0)…
+    expect(desktop.yaw).toBeLessThan(1.1); // …ni de profil
+    expect(desktop.pitch).toBeGreaterThan(0.25);
+  });
+
+  test("en marche aussi, l'inclinaison est la même sur mobile et sur ordinateur", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await live(page);
+    const mobile = await state(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForTimeout(300);
+    const desktop = await state(page);
+    expect(mobile.pitch).toBe(desktop.pitch);
+  });
+
+  test("mobile 390 px : la forme est agrandie d'environ 30 % et reste dans la colonne centrale, entre les valeurs", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await live(page);
+    const before = Math.min(184 / 3.5, (390 - 190) / 2.8); // unité du moteur avant la retouche (bandeau de 184 px)
+    const samples = await sampleStates(page, 3500);
+    for (const st of samples) {
+      expect(st.unit / before).toBeGreaterThan(1.25);
+      expect(st.unit / before).toBeLessThan(1.4);
+      expect(planeInside(st)).toBe(true);
+      // Colonne centrale : 100 px réservés aux valeurs de chaque côté.
+      expect(st.plane.x0).toBeGreaterThanOrEqual(100 - 1e-6);
+      expect(st.plane.x1).toBeLessThanOrEqual(390 - 100 + 1e-6);
+    }
   });
 });
 
