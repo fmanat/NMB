@@ -25,6 +25,9 @@ test.describe("Aperçu de la formule photo (PHOTO_BETA=admin)", () => {
 
   test("session d'administration : lien depuis le tableau de bord, choix A ou B, âge remplacé par la session, rapport complet", async ({ page }) => {
     await login(page);
+    // Session valable sur tout le site, envoyée au retour d'un prestataire d'âge (navigation venue d'un autre site) : SameSite=Lax.
+    const session = (await page.context().cookies()).find((c) => c.name === "nmb_admin_session");
+    expect(session).toMatchObject({ path: "/", sameSite: "Lax", httpOnly: true });
     await page.locator("[data-photo-preview-link]").click();
     await expect(page.locator("[data-photo-preview]")).toBeVisible();
     await page.locator("[data-protocol=B]").click();

@@ -29,7 +29,10 @@ export async function login(_prev: LoginState, fd: FormData): Promise<LoginState
   loginLimiter.reset(key);
   (await cookies()).set(ADMIN_COOKIE, issueAdminToken(), {
     httpOnly: true,
-    sameSite: "strict",
+    // « lax » et non « strict » : au retour d'AgeVerif (navigation venue d'un autre site), la session doit accompagner la requête,
+    // sinon l'aperçu administrateur (PHOTO_BETA=admin) répondrait 404 sur /api/age/callback. Les envois de formulaire venus d'autres sites
+    // restent sans cookie, et les actions serveur vérifient l'origine.
+    sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: ADMIN.sessionHours * 3600,
     // Tout le site (et non plus /admin seulement) : l'aperçu de la formule photo (PHOTO_BETA=admin) lit cette session sur ses pages.
