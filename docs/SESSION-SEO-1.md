@@ -63,3 +63,94 @@ Session autonome, sans question. Journal mis à jour à la fin de chaque bloc. �
 - **/presse** : trois graphiques originaux téléchargeables en PNG 1 600 × 900 (`/presse/graphiques/distribution-longueur.png`, `distribution-circonference.png`, `tableau-percentiles.png`), source intégrée dans l'image ; mention de source à reprendre (texte et version avec lien) ; chiffres clés ; pages de référence. Aucun chiffre qui ne vienne de Veale et al. (2015) ou des calculs du site. Dans le sitemap, lien dans le pied de page et depuis « À propos ».
 - **docs/PRESSE/** : `README.md` (règles d'envoi, origine des chiffres), `ANGLES.md` (trois angles : ce que dit vraiment la science sur la taille moyenne ; pourquoi la plupart des hommes se mesurent mal ; les classements par pays ne valent rien), `COMMUNIQUE.md` (communiqué court), `CIBLES.md` (santé, lifestyle masculin, sexologie, vulgarisation scientifique, annuaires d'outils), `MODELES.md` (un message par type, plus une relance).
 - `npm run presse:chiffres` recalcule tous les chiffres du kit avec les fonctions du site (valeurs vérifiées identiques à celles des documents le 03/10/2026).
+
+## Bloc 7 : contrôle — terminé
+Mesures faites sur une version de production compilée localement, en mode bêta comme le site Railway (`FREE_BETA=on`, sans mot de passe).
+
+**Captures** (`docs/captures-seo1/`, sur votre ordinateur seulement : le dépôt exclut les images `.jpg`, comme pour les captures de la nuit 4 ; premier écran et page entière) : accueil, page pilier « taille moyenne », pages 12 cm et 17 cm, à 390 px et 1 440 px. Aucun débordement horizontal (0 px mesuré sur les 8 combinaisons).
+
+**Lighthouse 13.5, mobile (simulation de téléphone et de réseau lent)** :
+
+| Page | Performance | Accessibilité | Bonnes pratiques | SEO | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|
+| Accueil | 71 | 100 | 100 | 100 | 2,8 s | 1 450 ms | 0 |
+| /taille-moyenne-penis | 95 | 100 | 100 | 100 | 2,7 s | 130 ms | 0 |
+| /taille-penis-12-cm | 97 | 100 | 100 | 100 | 2,6 s | 50 ms | 0 |
+| /taille-penis-17-cm | 96 | 100 | 100 | 100 | 2,7 s | 70 ms | 0 |
+
+La note de performance de l'accueil vient de l'animation 3D du bandeau scanner (environ 0,7 s de calcul sur le fil principal en simulation mobile) : fonctionnalité antérieure à cette session, non modifiée. Voir les questions en fin de rapport.
+
+**Parcours des liens et sitemap** : sur la version de production en mode bêta, le parcours a trouvé **un lien cassé** : `/faq` renvoyait vers `/cgv`, qui n'existe pas en bêta (404). Corrigé : en bêta, ce lien s'affiche en texte simple (test ajouté), et le parcours tourne désormais aussi sur la copie bêta des tests de bout en bout. Après correction : aucun lien cassé ; le sitemap contient exactement les 29 pages publiables (6 pages fixes, /presse, 22 pages de contenu) ; chaque page publiable a sa canonique et son image de partage.
+
+**Sources** : `npm run seo:check -- --urls` : les 12 adresses de sources citées répondent.
+
+**Autres retouches** : la réponse courte des pages s'affiche désormais avant le sommaire ; test d'accessibilité de la page de paiement rendu robuste (il analysait parfois le bouton pendant l'état « Redirection… » au premier passage à froid).
+
+## Rapport de fin de session
+
+### Pages créées et modifiées, avec leur requête cible
+
+| Page | Requête visée | Statut |
+|---|---|---|
+| `/` (accueil) | calculateur taille pénis | modifiée (titre, H1, sous-titre, percentile en tête, repères) |
+| `/taille-moyenne-penis` (ex `/taille-moyenne-penis-france`, redirigée) | taille moyenne pénis | renommée, élargie en pilier |
+| `/taille-penis-normale` | taille pénis normale | créée (pilier) |
+| `/percentile-penis` | percentile pénis | créée (pilier) |
+| `/a-propos` | Bitomètre | créée |
+| `/taille-penis-10-cm` … `/taille-penis-20-cm` (11 pages) | pénis 10 cm … pénis 20 cm | créées |
+| `/taille-penis-par-pays` | taille pénis par pays | retitrée, liens, date |
+| `/comment-mesurer-son-penis` | comment mesurer son pénis | retitrée, liens, date |
+| `/circonference-moyenne-penis` | circonférence moyenne pénis | retitrée, percentiles calculés, liens |
+| `/courbure-penis-normale` | courbure pénis normale | H1, liens, vocabulaire |
+| `/taille-repos-erection` | taille pénis repos érection | H1, exemple calculé, liens |
+| `/etudes-taille-penis` | études taille pénis | retitrée, rangs calculés, liens |
+| `/faq` | Bitomètre fonctionnement | H1, liens, vocabulaire |
+| `/presse` | (page de ressources) | créée |
+
+### Commits (tous poussés sur fmanat/NMB ; `npm run verify` vert et compilation de production réussie pour chacun, vérifiés dans une copie de travail séparée)
+- `17c3226` SEO bloc 1 : publication par défaut, données structurées, fil d'Ariane, images de partage par page, parcours des liens
+- `34caede` SEO bloc 2 : accueil orienté calculateur, percentile en tête du rapport d'exemple
+- `6fdc3c8` SEO bloc 3 : les 8 guides retravaillés, page pilier « taille moyenne du pénis »
+- `4ed7a94` SEO bloc 4 : pages piliers « taille normale », « percentile », « à propos »
+- `b4f5a98` SEO bloc 5 : 11 pages par centimètre (10 à 20 cm)
+- `32977c1` SEO bloc 6 : page presse et kit de relations presse
+- « SEO bloc 7 » : contrôle (captures, Lighthouse), lien /cgv en bêta, réponse courte avant le sommaire, rapport
+
+### Ce qui n'est pas fait
+- **Déclaration à Google Search Console et Bing** : à faire par vous (`docs/SEARCH-CONSOLE.md`, pas à pas). Tant que le site de test est protégé par mot de passe, aucune page ne peut être indexée.
+- **Planificateur de mots-clés** : non consulté (demande un compte Google Ads, que je n'ouvre pas). Les requêtes visées sont des choix raisonnés, pas mesurés.
+- **Recoupements entre vos guides d'origine** : 24 paragraphes repris d'un guide à l'autre (plus de 30 % de mots communs). Signalés par `npm run seo:check`, non réécrits (vos textes).
+- **Kit presse** : prêt, rien n'a été envoyé.
+- **Lighthouse** : mesuré en local sur une version de production ; les chiffres réels dépendront de l'hébergement (Railway, Cloudflare).
+
+### Points d'attention
+- **Rang affiché** : « 65e percentile » pour l'exemple de 13,8 cm (percentile exact 65,9), et non « 66e » comme dans la consigne : le site ne flatte jamais un rang (règle déjà appliquée à « Au-dessus de X % »). Le bandeau scanner de l'accueil, qui affichait « Percentile 66 », est désormais aligné.
+- **Publication** : activée par défaut dans le code (je ne pouvais pas modifier la variable Railway). `SEO_PUBLISH=off` la coupe.
+- **Postgres.app** : une fenêtre de permission est apparue pendant la nuit pour une connexion lancée d'une certaine manière ; aucune conséquence, mais si une fenêtre « Postgres.app » vous attend, elle concerne cette connexion de test.
+
+### Questions (QCM, avec ma recommandation)
+
+**1. Rang affiché pour l'exemple de 13,8 cm (percentile exact 65,9)**
+- A. Garder « 65e percentile » : partie entière, jamais arrondi à la hausse, cohérent avec « Au-dessus de 65 % » (**recommandé**)
+- B. Passer à l'arrondi (« 66e percentile ») partout, y compris « Au-dessus de 66 % »
+- C. Afficher la décimale (« 65,9e percentile »)
+
+**2. Animation 3D de l'accueil (performance mobile 71, contre 95 à 97 sur les autres pages)**
+- A. Sur mobile, n'afficher que l'image fixe et lancer l'animation au premier contact (toucher ou glisser) (**recommandé** : gain attendu important sur la note, aspect inchangé au chargement)
+- B. Retarder le démarrage de l'animation de quelques secondes après le chargement
+- C. Laisser tel quel
+
+**3. Recoupements dans vos guides d'origine (24 paragraphes repris d'un guide à l'autre)**
+- A. Je reformule ces passages en gardant exactement le sens et les sources, puis vous relisez (**recommandé** : Google pénalise les pages trop semblables)
+- B. Vous les reformulez vous-même (liste dans `npm run seo:check`)
+- C. Laisser tel quel
+
+**4. Ouverture du site aux moteurs de recherche**
+- A. Retirer le mot de passe du site (variable `SITE_PASSWORD` sur Railway) dès que vous êtes prêt, puis suivre `docs/SEARCH-CONSOLE.md` (**recommandé** : tant que le site est protégé, aucune page ne peut être indexée)
+- B. Garder le mot de passe et déclarer quand même le domaine (vérification DNS possible, indexation impossible)
+- C. Attendre la phase suivante
+
+**5. Phase 2 du référencement**
+- A. Pages par circonférence (9 à 15 cm), sur le même modèle que les pages par centimètre (**recommandé**)
+- B. Pages au repos (longueur au repos par centimètre)
+- C. Articles de fond (mythes, âge, taille et pointure) avant de nouvelles pages chiffrées

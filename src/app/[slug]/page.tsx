@@ -80,6 +80,11 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const all = loadSeoPages();
   const placed = new Set(page.segments.flatMap((s) => (s.type === "block" ? [s.name] : [])));
   const toc = page.headings.filter((h) => h.depth === 2);
+  // Premier paragraphe du corps, affiché avant le sommaire ; le reste du corps suit le sommaire.
+  const first = page.segments[0];
+  const cut = first?.type === "html" && first.html.startsWith("<p>") ? first.html.indexOf("</p>") + 4 : -1;
+  const lead = cut > 3 && first?.type === "html" ? first.html.slice(0, cut) : null;
+  const segments = lead && first?.type === "html" ? [{ ...first, html: first.html.slice(cut) }, ...page.segments.slice(1)] : page.segments;
   const faq = faqJsonLd(page);
   const articleLd = toJsonLd(article({ path: `/${page.slug}`, headline: page.h1, description: page.metaDescription, verified: page.verified, image: ogImagePath(page.slug) }));
 
@@ -109,6 +114,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
       {page.cm && <CmAnswer cm={page.cm} />}
 
+      {/* Le premier paragraphe (la réponse courte) vient avant le sommaire. */}
+      {lead && <div className="prose-lab mt-6" dangerouslySetInnerHTML={{ __html: lead }} />}
+
       {toc.length >= 3 && (
         <nav aria-label="Sommaire" className="card !p-4 mt-6 text-sm">
           <p className="text-muted mb-2">Sommaire</p>
@@ -123,7 +131,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       )}
 
       <div className="prose-lab mt-6">
-        {page.segments.map((s, i) =>
+        {segments.map((s, i) =>
           s.type === "html" ? <div key={i} dangerouslySetInnerHTML={{ __html: s.html }} /> : <Fragment key={i}><Block name={s.name} page={page} /></Fragment>,
         )}
       </div>

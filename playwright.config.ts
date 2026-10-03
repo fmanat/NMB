@@ -59,7 +59,7 @@ export default defineConfig({
     // Bêta photo (FREE_BETA=on, PHOTO_BETA=on), sans mot de passe : copie dédiée sur le port 3205.
     { name: "photo-beta", testMatch: /formule-photo.spec.ts/, use: { browserName: "chromium", baseURL: E2E.photoBetaUrl } },
     // Mode bêta gratuite, site protégé par mot de passe (authentification HTTP) : copie dédiée sur le port 3204.
-    { name: "beta", testMatch: /(beta|accessibilite|mobile).spec.ts/, use: { browserName: "chromium", baseURL: E2E.betaUrl, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword } } },
+    { name: "beta", testMatch: /(beta|accessibilite|mobile|liens).spec.ts/, use: { browserName: "chromium", baseURL: E2E.betaUrl, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword } } },
   ],
   webServer: [
     { command: "npx next dev -p 3201", url: E2E.okUrl, env: env("ok", ".next-e2e-ok"), reuseExistingServer: false, timeout: 180_000 },

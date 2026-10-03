@@ -125,7 +125,8 @@ Les statistiques durables (journal anonyme, paiements) sont conservées même ap
 | `npm run db:migrate` | Crée ou met à jour les tables. |
 | `npm run db:purge` | Purge (voir partie 4). |
 | `node scripts/reset-test-data.mjs` | Remet à zéro les données d'un site de TEST (refuse sans `RESET_TEST_DATA=oui-effacer-les-donnees-de-test` et refuse si la base contient un vrai paiement). **Jamais sur un site réel.** |
-| `npm run seo:check` | Contrôle les pages de contenu (`-- --urls` : contrôle aussi le site en ligne). |
+| `npm run seo:check` | Contrôle les pages de contenu (`-- --urls` : contrôle aussi le site en ligne). Signale aussi les mots interdits et les paragraphes partagés entre pages. |
+| `npm run presse:chiffres` | Recalcule les chiffres du kit presse (`docs/PRESSE/`) avec les fonctions du site. |
 | `npm run admin:hash` | Fabrique les réglages de l'accès administrateur. |
 | `npm run stats:webhook` | Envoie les agrégats anonymes. |
 | `npm run geometry:report` | Rapport d'exactitude de la géométrie sur des prises de vue simulées. |

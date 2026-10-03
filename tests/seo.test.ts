@@ -83,6 +83,20 @@ describe("chargeur de pages : corps Markdown", () => {
     expect(r.pending).toEqual([]);
   });
 
+  it("bêta gratuite : les CGV n'existent pas, le lien devient du texte simple", () => {
+    const before = process.env.FREE_BETA;
+    process.env.FREE_BETA = "on";
+    try {
+      const r = renderBody("Voir les [conditions générales de vente](/cgv).", "f.md", ex);
+      expect(r.html).not.toContain('href="/cgv"');
+      expect(r.html).toContain("conditions générales de vente");
+    } finally {
+      if (before === undefined) delete process.env.FREE_BETA;
+      else process.env.FREE_BETA = before;
+    }
+    expect(renderBody("[CGV](/cgv)", "f.md", ex).html).toContain('href="/cgv"');
+  });
+
   it("refuse un lien interne inconnu ou un schéma dangereux", () => {
     expect(() => renderBody("[x](page-inconnue)", "f.md", ex)).toThrow(/lien interne inconnu/);
     expect(() => renderBody("[x](/r/abc)", "f.md", ex)).toThrow(/lien interne inconnu/);

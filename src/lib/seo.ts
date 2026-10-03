@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { Marked, type Token, type Tokens } from "marked";
 
 import { FigureError, resolveFigureTokens } from "./seoFigures";
+import { isFreeBeta } from "./mode";
 
 /**
  * Pages de contenu. Le nom du fichier est <slug>.md. La nature d'une page (pilier, guide, information, page par centimètre)
@@ -260,6 +261,8 @@ export function renderBody(
         // Page de contenu pas encore présente : le texte reste, sans lien (aucun lien cassé sur le site), et la page est signalée.
         const target = href.replace(/^\/+/, "").split("#")[0];
         if (isSlug(target) && !existingSlugs.has(target)) return this.parser.parseInline(tokens);
+        // Bêta gratuite : les CGV n'existent pas (404) ; le texte reste, sans lien.
+        if (target === "cgv" && isFreeBeta()) return this.parser.parseInline(tokens);
         const external = /^https?:\/\//i.test(resolved);
         const t = title ? ` title="${title.replace(/"/g, "&quot;")}"` : "";
         const rel = external ? ' rel="noopener nofollow" target="_blank"' : "";
