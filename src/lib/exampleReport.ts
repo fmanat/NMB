@@ -1,4 +1,4 @@
-import { buildQuestionnaireReport, type QuestionnaireInput, type ReportResults } from "./reportCore";
+import { buildQuestionnaireReport, type QuestionnaireInput, type QuestionnaireResults } from "./reportCore";
 
 /**
  * Rapport d'EXEMPLE FICTIF de l'accueil : des mesures inventées pour illustrer, passées dans les vraies fonctions de calcul du site
@@ -6,6 +6,6 @@ import { buildQuestionnaireReport, type QuestionnaireInput, type ReportResults }
  */
 export const EXAMPLE_INPUT: QuestionnaireInput = { state: "erect", length: 13.8, girth: 11.9, curvature: "light", direction: "left" };
 
-export function exampleReport(): ReportResults {
+export function exampleReport(): QuestionnaireResults {
   return buildQuestionnaireReport(EXAMPLE_INPUT);
 }

@@ -45,7 +45,7 @@ describe("contenu de la carte de partage", () => {
     expect(topPercent(50)).toBe(50);
     const c = buildCardContent(resultsA, "x".repeat(43), { mode: "percentiles", percentiles: ["length", "girth"] });
     expect(c.percentiles.map((p) => p.label)).toEqual(["Longueur", "Circonférence"]);
-    expect(c.percentiles[0].topPct).toBe(topPercent(resultsA.length.percentile));
+    expect(c.percentiles[0].topPct).toBe(topPercent(resultsA.length.percentile!));
   });
 
   it("refuse 0 percentile, des doublons sont ignorés, option inconnue refusée", () => {

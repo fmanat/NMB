@@ -54,7 +54,9 @@ export default function Page() {
         permet pas de le retrouver. Les paiements (montant, date, référence du prestataire de paiement) sont conservés pendant la
         durée exigée par les obligations comptables, sans lien avec le contenu de votre rapport. Des agrégats quotidiens anonymes
         (nombre d&apos;analyses, score moyen, répartition) peuvent être transmis à un outil de publication ; aucun groupe de moins
-        de 5 rapports n&apos;y est détaillé.
+        de 5 rapports n&apos;y est détaillé. Lorsqu&apos;une photo comporte une carte de référence exploitable, nous conservons aussi, pour
+        vérifier la justesse des estimations du modèle, quatre nombres : la longueur et la circonférence mesurées sur la carte et celles
+        estimées par le modèle sans la carte. Rien d&apos;autre (ni date, ni rapport, ni identifiant) n&apos;y est associé.
       </p>
 
       <h2>Adresse IP</h2>
@@ -109,8 +111,9 @@ function BetaPolicy() {
             abus, xAI conserve les requêtes envoyées à son API, images comprises, pendant 30 jours, puis les supprime automatiquement. Selon sa
             documentation, xAI ne les utilise pas pour entraîner ses modèles sans autorisation explicite. Notre site ne peut pas effacer ces copies
             avant ce délai. Cet envoi constitue un transfert hors de l&apos;Union européenne, qui n&apos;a lieu qu&apos;avec votre consentement explicite.
-            Le modèle ne reçoit que la photo pour repérer des points et des indicateurs calculés pour rédiger un commentaire ; les mesures sont
-            calculées par notre programme.
+            Le modèle reçoit la photo pour en estimer les dimensions et la forme (et, si une carte de référence est posée à côté, y repérer des
+            points à partir desquels notre programme calcule la longueur et la circonférence), puis, sans la photo, les valeurs calculées par notre
+            programme pour rédiger le rapport. Ses observations descriptives ne sont ni enregistrées ni journalisées : seul le rapport final est conservé.
           </p>
           <h2>Filtrage d&apos;images déjà répertoriées</h2>
           <p>
@@ -137,7 +140,9 @@ function BetaPolicy() {
       <p>
         Nous conservons un journal anonyme : pour chaque rapport créé, la date, la formule et le score. Il ne contient ni
         l&apos;adresse de votre rapport, ni adresse IP, ni donnée d&apos;identité ; il n&apos;est pas effacé quand vous supprimez votre
-        rapport et ne permet pas de le retrouver. Des agrégats quotidiens anonymes peuvent être transmis à un outil interne ; aucun
+        rapport et ne permet pas de le retrouver.{photo
+          ? " Lorsqu'une photo comporte une carte de référence exploitable, nous conservons aussi, pour vérifier la justesse des estimations du modèle, quatre nombres : la longueur et la circonférence mesurées sur la carte et celles estimées par le modèle sans la carte. Rien d'autre (ni date, ni rapport, ni identifiant) n'y est associé."
+          : ""} Des agrégats quotidiens anonymes peuvent être transmis à un outil interne ; aucun
         groupe de moins de 5 rapports n&apos;y est détaillé.
       </p>
 

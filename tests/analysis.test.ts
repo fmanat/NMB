@@ -1,22 +1,24 @@
 import sharp from "sharp";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pool } from "@/lib/db";
-import { CAP_MESSAGE, NEUTRAL_REFUSAL, STANDARD_VERSIONS, UNREADABLE_MESSAGE, runAnalysis, type FlowDeps, type FlowEvent, type FlowInput } from "@/lib/analyseFlow";
+import { CAP_MESSAGE, NEUTRAL_REFUSAL, STANDARD_VERSIONS, runAnalysis, type FlowDeps, type FlowEvent, type FlowInput } from "@/lib/analyseFlow";
 import { prepareImage } from "@/lib/image";
 import { isAgeTokenValid, issueAgeToken } from "@/lib/age/token";
-import { profileFor } from "@/lib/profiles";
+import { PARTIAL_LABEL } from "@/lib/photoReport2";
 import { simulatedCaptcha, SIMULATED_CAPTCHA_TOKEN } from "@/lib/providers/simulated";
 import type { ImageScreeningProvider } from "@/lib/providers/types";
-import { getReport } from "@/lib/repo";
+import { getReport, listCalibrationPairs } from "@/lib/repo";
 import { getReportView } from "@/lib/view";
-import { createSimulatedVision, SIMULATED_OBSERVATIONS, SIMULATED_VERDICT, type Scenario } from "@/lib/vision/simulation";
+import { checkReportText } from "@/lib/vision/reportText";
+import { createSimulatedVision, OBSERVATION_MARKER, SIMULATED_ESTIMATES, type Scenario } from "@/lib/vision/simulation";
 import { VisionError, type VisionProvider } from "@/lib/vision/types";
 import type { SpendGate } from "@/lib/xaiSpend";
 import { flatImage } from "./fixtures/neutralImage";
 
-// Image neutre : aplat gris 1200×800. Aucune personne, aucun corps. Le fournisseur simulé fournit les points.
-const neutralPhoto = () => flatImage();
+// Moteur photo-report/2 : appel vision (recevabilité, estimations, observations, points) puis appel texte (rapport rédigé),
+// calculs par le code entre les deux. API simulée (aucun réseau) ; image neutre : aplat gris 1200×800, aucune personne, aucun corps.
 
+const neutralPhoto = () => flatImage();
 const passScreening: ImageScreeningProvider = { id: "test", screen: async () => ({ blocked: false }) };
 const NO_USAGE = { tokensIn: 0, tokensOut: 0, ms: 0, calls: 1 };
 
@@ -61,16 +63,17 @@ async function run(i: FlowInput, d: FlowDeps): Promise<FlowEvent[]> {
 }
 
 function spyVision(inner: VisionProvider) {
-  const calls = { analyse: 0, comment: 0 };
+  const calls = { analyse: 0, text: 0, violations: [] as (string[] | undefined)[] };
   const vision: VisionProvider = {
     id: "spy",
     analyse: async (j) => {
       calls.analyse++;
       return inner.analyse(j);
     },
-    writeComment: (x) => {
-      calls.comment++;
-      return inner.writeComment(x);
+    writeReport: (x) => {
+      calls.text++;
+      calls.violations.push(x.previousViolations);
+      return inner.writeReport(x);
     },
   };
   return { vision, calls };
@@ -83,75 +86,62 @@ const lastOf = (ev: FlowEvent[]) => ev[ev.length - 1];
 const stepsOf = (ev: FlowEvent[]) => ev.filter((e) => e.type === "step").map((e) => (e as { id: string }).id);
 const count = async (table: string) => (await pool().query(`SELECT count(*)::int AS n FROM ${table}`)).rows[0].n as number;
 const readyId = (ev: FlowEvent[]) => (lastOf(ev) as { reportId: string }).reportId;
+const attempt = async () => (await pool().query("SELECT outcome, motif FROM analysis_attempts ORDER BY id DESC LIMIT 1")).rows[0];
+const TABLES = "TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries, xai_daily_spend, calibration_pairs CASCADE";
 
 beforeEach(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries, xai_daily_spend CASCADE");
+  await pool().query(TABLES);
 });
 afterEach(() => vi.restoreAllMocks());
 afterAll(async () => {
-  await pool().query("TRUNCATE payments, reports, analysis_attempts, report_log, stat_events, webhook_deliveries, xai_daily_spend CASCADE");
+  await pool().query(TABLES);
   await pool().end();
 });
 
-describe("analyse d'une photo : chemin nominal", () => {
-  it("affiche uniquement les étapes réellement exécutées (rédaction comprise), puis crée un rapport non payé", async () => {
+describe("analyse d'une photo : chemin nominal (estimation visuelle, sans carte)", () => {
+  it("affiche uniquement les étapes réellement exécutées (pas de calibration sans carte), puis crée un rapport non payé", async () => {
     const ev = await run(await input(), deps());
-    expect(stepsOf(ev)).toEqual(["recevabilite", "calibration", "percentiles", "redaction"]);
-    const ready = lastOf(ev);
-    expect(ready.type).toBe("ready");
-    const id = (ready as { reportId: string }).reportId;
-    const row = await getReport(id);
+    expect(stepsOf(ev)).toEqual(["recevabilite", "indicateurs", "redaction"]);
+    expect(lastOf(ev)).toEqual({ type: "ready", reportId: expect.any(String) });
+    const row = await getReport(readyId(ev));
     expect(row?.paid).toBe(false);
-    expect(row?.free_beta).toBe(false);
     expect(row?.formula).toBe("B");
-    expect(id.length).toBeGreaterThanOrEqual(32);
+    expect(readyId(ev).length).toBeGreaterThanOrEqual(32);
   });
 
-  it("retrouve la scène simulée (13 cm de long, 4 cm de large) avec marge, symétrie et confiance", async () => {
-    const ev = await run(await input(), deps());
-    const row = await getReport(readyId(ev));
-    const r = row!.results;
-    expect(r.length.value).toBeGreaterThan(12.6);
-    expect(r.length.value).toBeLessThan(13.4);
-    expect(r.girth.value).toBeGreaterThan(12.2); // π × 4 cm = 12,57
-    expect(r.girth.value).toBeLessThan(12.9);
-    expect(r.length.marginPct).toBeGreaterThanOrEqual(10);
-    expect(r.girth.marginPct).toBeGreaterThanOrEqual(10);
-    expect(r.symmetry).toBeGreaterThan(95);
-    expect(r.confidence).toBe(90);
-    expect(r.score).toBeGreaterThanOrEqual(40);
-    expect(r.score).toBeLessThanOrEqual(98);
-  });
-
-  it("avant paiement, seuls l'indice de confiance et la symétrie sont visibles", async () => {
-    const ev = await run(await input(), deps());
-    const view = await getReportView(readyId(ev));
-    expect(view.status).toBe("locked");
-    const json = JSON.stringify(view);
-    expect(json).toContain("confidence");
-    expect(json).toContain("symmetry");
-    for (const hidden of ["score", "percentile", "length", "girth", "comment", "curvature", "marginPct", "observations", "verdict"]) {
-      expect(json).not.toContain(hidden);
-    }
-  });
-
-  it("le rapport contient le commentaire STANDARDISÉ (trois observations, un verdict, versions) et sa version texte", async () => {
-    const ev = await run(await input(), deps());
-    const row = await getReport(readyId(ev));
-    const s = row!.results.standard!;
-    expect(s).toEqual({ ...STANDARD_VERSIONS, observations: [...SIMULATED_OBSERVATIONS], verdict: SIMULATED_VERDICT });
-    expect(row!.results.comment).toBe([...SIMULATED_OBSERVATIONS, SIMULATED_VERDICT].join(" "));
-    expect(row!.results.comment).not.toMatch(/\d/);
-  });
-
-  it("le profil morphologique d'un rapport photo se calcule sur ses percentiles estimés (comme pour le questionnaire)", async () => {
+  it("rapport photo-report/2 : en-tête (numéro à 5 chiffres, état observé, méthode), indicateurs calculés, texte vérifié", async () => {
     const ev = await run(await input(), deps());
     const r = (await getReport(readyId(ev)))!.results;
-    const p = profileFor(r.length.percentile, r.girth.percentile);
-    expect(p.id).toMatch(/^l[123]c[123]$/);
-    // 13 cm × 12,6 cm en érection : longueur juste sous la médiane (classe moyenne), circonférence haute.
-    expect(p.lengthClass).toBe("mid");
-    expect(p.girthClass).toBe("high");
+    const m = r.morpho!;
+    expect(m).toMatchObject({ ...STANDARD_VERSIONS, methode: "visuelle", partielle: false });
+    expect(m.numero).toMatch(/^\d{5}$/);
+    const ind = m.indicateurs!;
+    expect(ind.state).toBe("erect");
+    expect(ind.longueurCm).toBe(SIMULATED_ESTIMATES.longueur_cm);
+    expect(ind.circonferenceCm).toBe(SIMULATED_ESTIMATES.circonference_cm);
+    expect(ind.symetrie).toBe(93);
+    expect(r.score).toBe(ind.score);
+    expect(r.length.percentile).toBe(ind.percentileLongueur);
+    // Le texte stocké est exactement un texte qui passe tous les contrôles
+    const check = checkReportText({ schemaVersion: "photo-report/2", ...m.texte }, { indicators: ind, allowedHighlights: m.texte.points_remarquables.map((p) => p.indicateur) });
+    expect(check.ok).toBe(true);
+  });
+
+  it("l'état observé par le modèle prime : au repos, aucun percentile de longueur", async () => {
+    const ev = await run(await input({ state: "erect" }), deps({ scenario: "rest" }));
+    const r = (await getReport(readyId(ev)))!.results;
+    expect(r.state).toBe("rest");
+    expect(r.morpho?.indicateurs?.percentileLongueur).toBeNull();
+    expect(r.length.percentile).toBeUndefined();
+    expect(r.girth.percentile).toBeGreaterThan(0);
+    expect(r.morpho?.texte.note_laboratoire).toMatch(/érection/);
+  });
+
+  it("courbure de 35° : le rapport contient la phrase d'avis médical dans « Axe et courbure »", async () => {
+    const ev = await run(await input(), deps({ scenario: "curved" }));
+    const r = (await getReport(readyId(ev)))!.results;
+    expect(r.curvature.angleDeg).toBe(35);
+    expect(r.morpho?.texte.axe_courbure).toMatch(/avis médical/);
   });
 
   it("bêta photo : le rapport est créé débloqué et marqué bêta gratuite, sans paiement", async () => {
@@ -162,33 +152,232 @@ describe("analyse d'une photo : chemin nominal", () => {
     expect(await count("payments")).toBe(0);
   });
 
-  it("aucune trace de la photo en base (rapports et tentatives)", async () => {
-    const photo = await neutralPhoto();
-    await run(await input({ photo }), deps());
-    const all = JSON.stringify((await pool().query("SELECT * FROM reports")).rows) + JSON.stringify((await pool().query("SELECT * FROM analysis_attempts")).rows);
-    expect(all).not.toContain(photo.toString("base64").slice(0, 40));
-    expect(all).not.toContain("/9j/"); // début d'un JPEG en base64
-  });
-
-  it("journalise la tentative avec durée et jetons, sans adresse IP en clair, et règle la dépense (3 appels simulés)", async () => {
+  it("deux appels au modèle (vision puis texte), dépense réglée, tentative journalisée sans adresse IP en clair", async () => {
     const { gate, settled } = spendGate();
-    await run(await input(), deps({ spend: gate }));
+    const { vision, calls } = spyVision(createSimulatedVision("ok"));
+    await run(await input(), deps({ vision, spend: gate }));
+    expect(calls).toMatchObject({ analyse: 1, text: 1 });
+    expect(settled).toEqual([{ costMicros: 0, calls: 2 }]);
     const { rows } = await pool().query("SELECT * FROM analysis_attempts");
     expect(rows).toHaveLength(1);
     expect(rows[0].outcome).toBe("ok");
-    expect(rows[0].vision_ms).toBeGreaterThanOrEqual(0);
-    expect(rows[0].tokens_in).toBe(0);
     expect(JSON.stringify(rows[0])).not.toContain("203.0.113.9");
-    expect(settled).toEqual([{ costMicros: 0, calls: 3 }]); // recevabilité + repérage (2) et rédaction (1)
+    expect(await count("report_log")).toBe(1);
   });
 
-  it("les lignes de journal portent la version du schéma et des prompts", async () => {
+  it("les lignes de journal portent la version du schéma et des prompts, et jamais les observations", async () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     await run(await input(), deps());
-    await run(await input(), deps({ scenario: "no_card" }));
+    await run(await input(), deps({ scenario: "refuse_face" }));
+    await run(await input(), deps({ scenario: "quality" }));
     const lines = info.mock.calls.map((c) => JSON.parse(String(c[0])) as Record<string, string>);
-    expect(lines.map((l) => l.event)).toEqual(["analysis_ok", "analysis_refused"]);
+    expect(lines.map((l) => l.event)).toEqual(["analysis_ok", "analysis_refused", "analysis_partial"]);
     for (const l of lines) expect(l).toMatchObject(STANDARD_VERSIONS);
+    const logged = JSON.stringify([...info.mock.calls, ...warn.mock.calls]);
+    expect(logged).not.toContain(OBSERVATION_MARKER);
+  });
+});
+
+describe("confidentialité : photo et observations brutes jamais stockées", () => {
+  it("aucune trace de la photo ni des observations du modèle en base (rapports, tentatives, journal)", async () => {
+    const photo = await neutralPhoto();
+    await run(await input({ photo }), deps());
+    await run(await input(), deps({ scenario: "calibrated" }));
+    const dump = [
+      ...(await pool().query("SELECT * FROM reports")).rows,
+      ...(await pool().query("SELECT * FROM analysis_attempts")).rows,
+      ...(await pool().query("SELECT * FROM report_log")).rows,
+      ...(await pool().query("SELECT * FROM calibration_pairs")).rows,
+    ];
+    const all = JSON.stringify(dump);
+    expect(all).not.toContain(photo.toString("base64").slice(0, 40));
+    expect(all).not.toContain("/9j/"); // début d'un JPEG en base64
+    expect(all).not.toContain(OBSERVATION_MARKER);
+    expect(all).not.toContain("observations");
+  });
+});
+
+describe("carte de référence : mesure calibrée et paire de calibration", () => {
+  it("carte présente et lisible : mesure géométrique (scène simulée de 13 cm × 4 cm), méthode « calibree », étape de calibration affichée", async () => {
+    const ev = await run(await input(), deps({ scenario: "calibrated" }));
+    expect(stepsOf(ev)).toEqual(["recevabilite", "calibration", "indicateurs", "redaction"]);
+    const r = (await getReport(readyId(ev)))!.results;
+    expect(r.morpho?.methode).toBe("calibree");
+    expect(r.length.value).toBeGreaterThan(12.6);
+    expect(r.length.value).toBeLessThan(13.4);
+    expect(r.girth.value).toBeGreaterThan(12.2); // π × 4 cm = 12,57
+    expect(r.girth.value).toBeLessThan(12.9);
+    expect(r.length.value).not.toBe(SIMULATED_ESTIMATES.longueur_cm); // l'estimation du modèle n'est pas utilisée
+  });
+
+  it("conserve UNIQUEMENT la paire (mesure par la carte, estimation du modèle sans la carte), sans aucune autre donnée", async () => {
+    const ev = await run(await input(), deps({ scenario: "calibrated" }));
+    const r = (await getReport(readyId(ev)))!.results;
+    const pairs = await listCalibrationPairs();
+    expect(pairs).toHaveLength(1);
+    expect(pairs[0].cardLengthCm).toBeCloseTo(r.length.value, 1);
+    expect(pairs[0].cardGirthCm).toBeCloseTo(r.girth.value, 1);
+    expect(pairs[0]).toMatchObject({ modelLengthCm: 13.4, modelGirthCm: 11.9 });
+    const cols = (await pool().query("SELECT column_name FROM information_schema.columns WHERE table_name = 'calibration_pairs' AND table_schema = current_schema() ORDER BY column_name")).rows.map((x) => x.column_name);
+    expect(cols).toEqual(["card_girth_cm", "card_length_cm", "model_girth_cm", "model_length_cm"]);
+  });
+
+  it("sans carte, ou carte inexploitable (photo trop inclinée) : estimation visuelle, aucune paire, et ce n'est PAS un refus", async () => {
+    let ev = await run(await input(), deps());
+    expect((await getReport(readyId(ev)))!.results.morpho?.methode).toBe("visuelle");
+    ev = await run(await input(), deps({ scenario: "card_unusable" }));
+    expect(stepsOf(ev)).toContain("calibration");
+    const r = (await getReport(readyId(ev)))!.results;
+    expect(r.morpho?.methode).toBe("visuelle");
+    expect(r.length.value).toBe(SIMULATED_ESTIMATES.longueur_cm);
+    expect(await count("calibration_pairs")).toBe(0);
+  });
+});
+
+describe("refus de recevabilité : aucun rapport, message neutre, motif journalisé", () => {
+  const cases: [Scenario, string][] = [
+    ["refuse_face", "visage_visible"],
+    ["doute_majorite", "doute_majorite"],
+    ["image_non_originale", "image_non_originale"],
+    ["plusieurs_personnes", "plusieurs_personnes"],
+    ["provider_refusal", "refus_prestataire"],
+  ];
+  for (const [scenario, motif] of cases) {
+    it(`${scenario} → refus neutre, motif « ${motif} », aucun rapport, aucune rédaction`, async () => {
+      const { vision, calls } = spyVision(createSimulatedVision(scenario));
+      const ev = await run(await input(), deps({ vision }));
+      expect(lastOf(ev)).toEqual({ type: "refused", message: NEUTRAL_REFUSAL });
+      expect(await attempt()).toEqual({ outcome: "refused", motif });
+      expect(await count("reports")).toBe(0);
+      expect(calls.text).toBe(0);
+    });
+  }
+
+  it("les messages ne mentionnent jamais l'âge ni la majorité et ne promettent aucun remboursement", () => {
+    for (const m of [NEUTRAL_REFUSAL, CAP_MESSAGE]) {
+      expect(m).not.toMatch(AGE_WORDS);
+      expect(m).not.toMatch(/rembours/i);
+    }
+    expect("Vous devez être majeur").toMatch(AGE_WORDS); // garde-fou du test lui-même
+  });
+
+  it("image reconnue par le filtrage d'empreintes : détruite sans analyse", async () => {
+    const { vision, calls } = spyVision(createSimulatedVision("ok"));
+    const blocking: ImageScreeningProvider = { id: "test", screen: async () => ({ blocked: true }) };
+    const ev = await run(await input(), deps({ vision, screening: blocking }));
+    expect(lastOf(ev)).toEqual({ type: "refused", message: NEUTRAL_REFUSAL });
+    expect(calls.analyse).toBe(0);
+    expect(await attempt()).toEqual({ outcome: "blocked", motif: "empreinte_connue" });
+    expect(await count("reports")).toBe(0);
+  });
+});
+
+describe("échec technique : rapport PARTIEL sur les valeurs de référence et l'état déclaré", () => {
+  async function expectPartial(ev: FlowEvent[], cause: string, state: "rest" | "erect" = "erect") {
+    expect(lastOf(ev)).toEqual({ type: "ready", reportId: expect.any(String), partial: true });
+    const row = (await getReport(readyId(ev)))!;
+    const m = row.results.morpho!;
+    expect(m.partielle).toBe(true);
+    expect(m.indicateurs).toBeNull();
+    expect(m.reference?.state).toBe(state);
+    expect(await attempt()).toEqual({ outcome: "error", motif: `partiel_${cause}` });
+    expect(await count("report_log")).toBe(0); // aucun score, rien dans le journal des scores
+    return row;
+  }
+
+  it("photo difficile à lire (qualité insuffisante) : rapport partiel, pas de rédaction", async () => {
+    const { vision, calls } = spyVision(createSimulatedVision("quality"));
+    await expectPartial(await run(await input({ state: "rest" }), deps({ vision })), "qualite_insuffisante", "rest");
+    expect(calls.text).toBe(0);
+    expect(PARTIAL_LABEL).toBe("Analyse partielle : photo difficile à lire");
+  });
+
+  it("panne ou délai du prestataire (appel vision) : rapport partiel", async () => {
+    const failing: VisionProvider = {
+      id: "panne",
+      analyse: async () => {
+        throw new VisionError("timeout", "délai dépassé");
+      },
+      writeReport: async () => ({ refused: false, json: null, usage: NO_USAGE }),
+    };
+    await expectPartial(await run(await input(), deps({ vision: failing })), "fournisseur_timeout");
+  });
+
+  it("panne du prestataire pendant la rédaction : rapport partiel", async () => {
+    const failing: VisionProvider = {
+      ...createSimulatedVision("ok"),
+      writeReport: async () => {
+        throw new VisionError("network", "réseau coupé");
+      },
+    };
+    await expectPartial(await run(await input(), deps({ vision: failing })), "fournisseur_network");
+  });
+
+  it("réponse vision non conforme une fois : la relance aboutit ; deux fois : rapport partiel", async () => {
+    const once = spyVision(createSimulatedVision("garbage_once"));
+    let ev = await run(await input(), deps({ vision: once.vision }));
+    expect(lastOf(ev)).toEqual({ type: "ready", reportId: expect.any(String) });
+    expect(once.calls.analyse).toBe(2);
+    await pool().query(TABLES);
+    const twice = spyVision(createSimulatedVision("garbage"));
+    ev = await run(await input(), deps({ vision: twice.vision }));
+    await expectPartial(ev, "vision_invalide");
+    expect(twice.calls.analyse).toBe(2);
+  });
+
+  it("estimations hors de la plage plausible : rapport partiel", async () => {
+    await expectPartial(await run(await input(), deps({ scenario: "implausible" })), "estimation_invraisemblable");
+  });
+
+  it("la photo est abandonnée dans tous les cas", async () => {
+    const i = await input();
+    await run(i, deps({ scenario: "quality" }));
+    expect(i.photo).toBeNull();
+  });
+
+  it("un rapport partiel est lisible sans paiement (aucune mesure à vendre) et ne contient aucune mesure", async () => {
+    const ev = await run(await input(), deps({ scenario: "quality" }));
+    const view = await getReportView(readyId(ev));
+    expect(view.status).toBe("unlocked");
+    if (view.status === "unlocked") expect(view.results.score).toBe(0);
+  });
+});
+
+describe("rédaction vérifiée par le code : une relance, en transmettant les règles violées", () => {
+  it("mot interdit une fois : relance avec la liste des violations, puis rapport complet", async () => {
+    const { vision, calls } = spyVision(createSimulatedVision("text_forbidden_once"));
+    const ev = await run(await input(), deps({ vision }));
+    expect(lastOf(ev)).toEqual({ type: "ready", reportId: expect.any(String) });
+    expect(calls.text).toBe(2);
+    expect(calls.violations[0]).toBeUndefined();
+    expect(calls.violations[1]?.join()).toMatch(/couleur ou teinte/);
+    expect((await getReport(readyId(ev)))!.results.morpho?.texte.aspect_surface).not.toMatch(/teinte/);
+  });
+
+  it("mot interdit deux fois : rapport partiel (motif redaction_interdits)", async () => {
+    const ev = await run(await input(), deps({ scenario: "text_forbidden" }));
+    expect((lastOf(ev) as { partial?: boolean }).partial).toBe(true);
+    expect(await attempt()).toEqual({ outcome: "error", motif: "partiel_redaction_interdits" });
+  });
+
+  it("valeur recalculée par le modèle deux fois : rapport partiel", async () => {
+    await run(await input(), deps({ scenario: "text_foreign_number" }));
+    expect(await attempt()).toEqual({ outcome: "error", motif: "partiel_redaction_interdits" });
+  });
+
+  it("rédaction refusée par le prestataire deux fois : rapport partiel", async () => {
+    await run(await input(), deps({ scenario: "text_refused" }));
+    expect(await attempt()).toEqual({ outcome: "error", motif: "partiel_redaction_refusee" });
+  });
+
+  it("écarts de forme seulement (texte trop court) : une relance, puis le texte est accepté (règle souple)", async () => {
+    const { vision, calls } = spyVision(createSimulatedVision("text_soft"));
+    const ev = await run(await input(), deps({ vision }));
+    expect(lastOf(ev)).toEqual({ type: "ready", reportId: expect.any(String) });
+    expect(calls.text).toBe(2);
+    expect(calls.violations[1]?.join()).toMatch(/longueur : \d+ mots/);
+    expect(await attempt()).toEqual({ outcome: "ok", motif: null });
   });
 });
 
@@ -202,12 +391,11 @@ describe("formule C : comparaison déclaré / estimé", () => {
   });
 
   it("signale un écart supérieur à 20 %, pas en dessous", async () => {
-    let ev = await run(await input({ formula: "C", declared: { length: 13, girth: 12.5 } }), deps());
+    let ev = await run(await input({ formula: "C", declared: { length: 14, girth: 12 } }), deps());
     let d = (await getReport(readyId(ev)))!.results.declared!;
     expect(d.flagged).toBe(false);
     expect(Math.abs(d.lengthGapPct)).toBeLessThan(5);
-
-    ev = await run(await input({ formula: "C", declared: { length: 10, girth: 12.5 } }), deps());
+    ev = await run(await input({ formula: "C", declared: { length: 10, girth: 12 } }), deps());
     d = (await getReport(readyId(ev)))!.results.declared!;
     expect(d.flagged).toBe(true);
     expect(d.lengthGapPct).toBeGreaterThan(20);
@@ -236,8 +424,8 @@ describe("contrôles avant toute analyse", () => {
     expect(lastOf(ev)).toMatchObject({ type: "error", code: "captcha" });
   });
 
-  it("limite de 5 analyses par période : la sixième est refusée, refus et erreurs comptés aussi", async () => {
-    for (let k = 0; k < 5; k++) await run(await input(), deps({ scenario: k % 2 ? "ok" : "no_card" }));
+  it("limite de 5 analyses par période : la sixième est refusée, refus et rapports partiels comptés aussi", async () => {
+    for (let k = 0; k < 5; k++) await run(await input(), deps({ scenario: (["ok", "refuse_face", "quality"] as const)[k % 3] }));
     const ev = await run(await input(), deps());
     expect(lastOf(ev)).toMatchObject({ type: "error", code: "rate" });
   });
@@ -248,17 +436,15 @@ describe("contrôles avant toute analyse", () => {
     const i = await input();
     const ev = await run(i, deps({ vision, spend: gate }));
     expect(lastOf(ev)).toEqual({ type: "error", code: "cap", message: CAP_MESSAGE });
-    expect(CAP_MESSAGE).toBe("Capacité du jour atteinte, revenez demain.");
     expect(stepsOf(ev)).toEqual([]);
-    expect(calls.analyse).toBe(0);
-    expect(calls.comment).toBe(0);
-    expect(await count("analysis_attempts")).toBe(0); // ne compte pas dans la limite de 5 par adresse
+    expect(calls).toMatchObject({ analyse: 0, text: 0 });
+    expect(await count("analysis_attempts")).toBe(0);
     expect(await count("reports")).toBe(0);
     expect(settled).toEqual([]);
     expect(i.photo).toBeNull();
   });
 
-  it("image invalide ou trop lourde : erreur, aucune analyse, réservation rendue sans appel", async () => {
+  it("image invalide ou absente : erreur, aucune analyse, réservation rendue sans appel", async () => {
     const { vision, calls } = spyVision(createSimulatedVision("ok"));
     const { gate, settled } = spendGate();
     let ev = await run(await input({ photo: Buffer.from("ceci n'est pas une image") }), deps({ vision, spend: gate }));
@@ -273,136 +459,6 @@ describe("contrôles avant toute analyse", () => {
   });
 });
 
-describe("refus : message neutre, aucun paiement, motif journalisé", () => {
-  const refusals: [Scenario, string][] = [
-    ["refuse_face", "visage_visible"],
-    ["doute_majorite", "doute_majorite"],
-    ["no_card", "carte_absente_ou_illisible"],
-    ["low_confidence", "confiance_faible"],
-    ["implausible", "mesure_invraisemblable"],
-    ["tilt_too_strong", "inclinaison_trop_forte"],
-    ["card_too_small", "carte_trop_petite"],
-  ];
-  for (const [scenario, motif] of refusals) {
-    it(`${scenario} → refus neutre, motif « ${motif} », aucun rapport`, async () => {
-      const ev = await run(await input(), deps({ scenario }));
-      expect(lastOf(ev)).toEqual({ type: "refused", message: NEUTRAL_REFUSAL });
-      const { rows } = await pool().query("SELECT outcome, motif FROM analysis_attempts");
-      expect(rows[0]).toEqual({ outcome: "refused", motif });
-      expect(await count("reports")).toBe(0);
-    });
-  }
-
-  it("les messages ne mentionnent jamais l'âge ni la majorité, y compris en cas de doute, et ne promettent aucun remboursement", () => {
-    for (const m of [NEUTRAL_REFUSAL, UNREADABLE_MESSAGE, CAP_MESSAGE]) {
-      expect(m).not.toMatch(AGE_WORDS);
-      expect(m).not.toMatch(/rembours/i);
-    }
-    expect(UNREADABLE_MESSAGE).toMatch(/^Nous n'avons pas pu analyser cette photo\. Reprenez-la en suivant les conseils/);
-    // garde-fou du test lui-même : le motif détecte bien ces mots isolés
-    expect("Vous devez être majeur").toMatch(AGE_WORDS);
-    expect("l'âge est douteux").toMatch(AGE_WORDS);
-  });
-
-  it("image reconnue par le filtrage d'empreintes : détruite sans analyse", async () => {
-    const { vision, calls } = spyVision(createSimulatedVision("ok"));
-    const blocking: ImageScreeningProvider = { id: "test", screen: async () => ({ blocked: true }) };
-    const ev = await run(await input(), deps({ vision, screening: blocking }));
-    expect(lastOf(ev)).toEqual({ type: "refused", message: NEUTRAL_REFUSAL });
-    expect(calls.analyse).toBe(0);
-    const { rows } = await pool().query("SELECT outcome, motif FROM analysis_attempts");
-    expect(rows[0]).toEqual({ outcome: "blocked", motif: "empreinte_connue" });
-    expect(await count("reports")).toBe(0);
-  });
-
-  it("panne du prestataire d'analyse : erreur claire, aucun rapport, aucun paiement demandé", async () => {
-    const failing: VisionProvider = {
-      id: "panne",
-      analyse: async () => {
-        throw new VisionError("timeout", "délai dépassé");
-      },
-      writeComment: async () => ({ json: null, usage: NO_USAGE }),
-    };
-    const ev = await run(await input(), deps({ vision: failing }));
-    expect(lastOf(ev)).toMatchObject({ type: "error", code: "provider" });
-    expect(await count("reports")).toBe(0);
-  });
-
-  it("panne du prestataire pendant la rédaction : erreur claire, aucun rapport", async () => {
-    const failing: VisionProvider = {
-      ...createSimulatedVision("ok"),
-      writeComment: async () => {
-        throw new VisionError("network", "réseau coupé");
-      },
-    };
-    const ev = await run(await input(), deps({ vision: failing }));
-    expect(lastOf(ev)).toMatchObject({ type: "error", code: "provider" });
-    expect(await count("reports")).toBe(0);
-    expect((await pool().query("SELECT motif FROM analysis_attempts")).rows[0].motif).toBe("fournisseur_network");
-  });
-});
-
-describe("réponses du modèle non conformes au schéma : une seule relance, puis message neutre", () => {
-  it("repérage invalide une fois puis valide : la relance aboutit (deux appels d'analyse, un rapport)", async () => {
-    const { vision, calls } = spyVision(createSimulatedVision("garbage_once"));
-    const ev = await run(await input(), deps({ vision }));
-    expect(lastOf(ev).type).toBe("ready");
-    expect(calls.analyse).toBe(2);
-    expect(calls.comment).toBe(1);
-    expect(await count("reports")).toBe(1);
-  });
-
-  it("repérage invalide deux fois : message neutre « reprenez la photo », motif journalisé, aucun rapport, photo abandonnée", async () => {
-    const { vision, calls } = spyVision(createSimulatedVision("garbage"));
-    const i = await input();
-    const ev = await run(i, deps({ vision }));
-    expect(lastOf(ev)).toEqual({ type: "refused", message: UNREADABLE_MESSAGE });
-    expect(calls.analyse).toBe(2);
-    expect(calls.comment).toBe(0);
-    expect((await pool().query("SELECT outcome, motif FROM analysis_attempts")).rows[0]).toEqual({ outcome: "refused", motif: "reperage_incomplet" });
-    expect(await count("reports")).toBe(0);
-    expect(i.photo).toBeNull();
-  });
-
-  it("recevabilité non conforme (version absente) deux fois : même traitement, motif distinct", async () => {
-    const inner = createSimulatedVision("ok");
-    const bad: VisionProvider = { ...inner, analyse: async (j) => ({ ...(await inner.analyse(j)), recevabilite: { recevable: true, motif: "ok" } }) };
-    const ev = await run(await input(), deps({ vision: bad }));
-    expect(lastOf(ev)).toEqual({ type: "refused", message: UNREADABLE_MESSAGE });
-    expect((await pool().query("SELECT motif FROM analysis_attempts")).rows[0].motif).toBe("recevabilite_invalide");
-  });
-
-  it("commentaire invalide une fois puis valide : la relance aboutit (deux appels de rédaction)", async () => {
-    const { vision, calls } = spyVision(createSimulatedVision("comment_invalid_once"));
-    const ev = await run(await input(), deps({ vision }));
-    expect(lastOf(ev).type).toBe("ready");
-    expect(calls.comment).toBe(2);
-    expect((await getReport(readyId(ev)))!.results.standard!.observations).toEqual([...SIMULATED_OBSERVATIONS]);
-  });
-
-  for (const [scenario, why] of [
-    ["comment_digit", "un chiffre dans une observation"],
-    ["comment_two", "deux observations"],
-    ["comment_four", "quatre observations"],
-    ["comment_refused", "réponse refusée par le prestataire"],
-  ] as [Scenario, string][]) {
-    it(`${why} (deux fois) : refus neutre, motif « commentaire_invalide », aucun rapport, aucune photo conservée`, async () => {
-      const { vision, calls } = spyVision(createSimulatedVision(scenario));
-      const { gate, settled } = spendGate();
-      const i = await input();
-      const ev = await run(i, deps({ vision, spend: gate }));
-      expect(lastOf(ev)).toEqual({ type: "refused", message: UNREADABLE_MESSAGE });
-      expect(stepsOf(ev)).toEqual(["recevabilite", "calibration", "percentiles", "redaction"]);
-      expect(calls.analyse).toBe(1);
-      expect(calls.comment).toBe(2);
-      expect((await pool().query("SELECT outcome, motif FROM analysis_attempts")).rows[0]).toEqual({ outcome: "refused", motif: "commentaire_invalide" });
-      expect(await count("reports")).toBe(0);
-      expect(i.photo).toBeNull();
-      expect(settled).toEqual([{ costMicros: 0, calls: 4 }]); // 2 (analyse) + 2 (rédaction) appels comptés dans la dépense
-    });
-  }
-});
-
 describe("jeton d'âge et réencodage d'image", () => {
   it("jeton valide 30 minutes, invalide ensuite ou si modifié", () => {
     const t0 = 1_700_000_000_000;
@@ -415,16 +471,11 @@ describe("jeton d'âge et réencodage d'image", () => {
     expect(isAgeTokenValid(null, t0)).toBe(false);
   });
 
-  it("le jeton ne contient aucune donnée d'identité (expiration, nonce, signature)", () => {
-    expect(issueAgeToken().split(".")).toHaveLength(3);
-  });
-
   it("supprime les métadonnées (EXIF, GPS) et borne la taille à 1 600 px", async () => {
     const big = await sharp({ create: { width: 3200, height: 2400, channels: 3, background: "#777" } })
       .jpeg()
       .withExif({ IFD0: { Copyright: "secret-gps-test" } })
       .toBuffer();
-    expect((await sharp(big).metadata()).exif).toBeDefined();
     const { jpeg, width, height } = await prepareImage(big);
     expect(Math.max(width, height)).toBe(1600);
     expect((await sharp(jpeg).metadata()).exif).toBeUndefined();

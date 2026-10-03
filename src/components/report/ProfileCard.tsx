@@ -32,6 +32,8 @@ export function ProfileMark({ profile, size = 14 }: { profile: Profile; size?: n
  * du rapport (aucun calcul supplémentaire). Sert au rapport réel et à l'exemple fictif de l'accueil (`example`).
  */
 export function ProfileCard({ results: r, example = false }: { results: ReportResults; example?: boolean }) {
+  // Profil : il faut les deux percentiles (rapport photo au repos : pas de percentile de longueur, donc pas de profil).
+  if (r.length.percentile === undefined || r.girth.percentile === undefined) return null;
   const profile = profileFor(r.length.percentile, r.girth.percentile);
   return (
     <Card as="section" soft className="!p-6 md:!p-8">

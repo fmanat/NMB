@@ -143,6 +143,25 @@ export const ESTIMATE_LIMITS = {
 // Circonférence estimée = π × largeur maximale (essais : meilleur que la largeur moyenne).
 export const GIRTH_FROM: "max" | "mean" = "max";
 
+// ---------- Rapport morphométrique photo, version 2 (photo-report/2) ----------
+// Indices sur 100 calculés par le code à partir des estimations (src/lib/morpho.ts), affichés dans le tableau des indicateurs.
+export const MORPHO = {
+  // Indice de typicité : moyenne de 100 − 2 × |percentile − 50| sur les percentiles disponibles.
+  // Libellés : « morphotype classique » à partir de classicFrom, « distinctif » à partir de distinctiveFrom, « singulier » en dessous.
+  typicality: { classicFrom: 70, distinctiveFrom: 40 },
+  // Index de conicité distale : 100 × (1 − |rapport − 1| / zeroAtDeviation), borné entre 0 et 100
+  // (rapport = largeur sous le gland / largeur à la base ; 1 = tige de largeur constante).
+  conicity: { zeroAtDeviation: 0.5 },
+  // Un indicateur est « favorable » (points remarquables, ouverture de la synthèse) à partir de cette valeur sur 100
+  // (percentile pour la longueur et la circonférence, valeur de l'indice pour les autres).
+  favourableFrom: 50,
+  // Percentile de longueur ou de circonférence en dessous duquel la valeur est dite basse : une seule mention « gabarit compact ».
+  lowPercentileBelow: 25,
+  // Longueur visée du rapport rédigé (mots). Hors de la plage : une relance ; après la relance, le texte est accepté s'il ne viole
+  // aucun interdit (voir src/lib/vision/reportText.ts, règles « souples »).
+  reportWords: { min: 600, max: 800 },
+} as const;
+
 // ---------- Administration (étape 6) ----------
 
 // Finances. Les prix affichés sont TTC. Revenu net = prix TTC − TVA − commission du prestataire de paiement.

@@ -1,7 +1,7 @@
 // Kit de test photo du propriétaire (bloc 7 de la session de nuit 4) : logique de `npm run photo:test` et `npm run photo:supprimer`.
 //
-// Principe : exécuter, EN LOCAL, la chaîne réelle de la formule B (mêmes modules que le site : réencodage, recevabilité, repérage,
-// calculs par le code, rédaction standardisée photo-report/1, profil, validation, relance unique) sur UNE photo posée dans
+// Principe : exécuter, EN LOCAL, la chaîne réelle de la formule B (mêmes modules que le site, moteur photo-report/2 : réencodage,
+// appel vision, mesure calibrée sur la carte ou estimation, calculs par le code, rédaction vérifiée, relances uniques) sur UNE photo posée dans
 // photos-test/ (dossier ignoré par git), et n'afficher que du TEXTE.
 //
 // Garanties (testées par tests/photo-test.test.ts) :
@@ -20,13 +20,15 @@ import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { aiPricing, LIMITS, MARGIN } from "@/config/site";
-import { runAnalysis, STANDARD_VERSIONS, type FlowDeps, type FlowEvent, type FlowInput, type FlowStore } from "@/lib/analyseFlow";
-import { aboveText } from "@/lib/format";
+import { runAnalysis, STANDARD_VERSIONS, type CalibrationPair, type FlowDeps, type FlowEvent, type FlowInput, type FlowStore } from "@/lib/analyseFlow";
+import { INDICATOR_KEYS, INDICATOR_LABELS, indicatorValue } from "@/lib/morpho";
+import { PARTIAL_LABEL } from "@/lib/photoReport2";
 import { profileFor } from "@/lib/profiles";
+import { SECTION_KEYS, SECTION_TITLES, reportWordCount } from "@/lib/vision/reportText";
 import type { ReportResults } from "@/lib/reportCore";
 import { createSimulatedVision } from "@/lib/vision/simulation";
 import { VisionError, type Usage, type VisionProvider } from "@/lib/vision/types";
-import { xaiVision } from "@/lib/vision/xai";
+import { DEFAULT_TEXT_MODEL, xaiVision } from "@/lib/vision/xai";
 import { dailyCapUsd, ESTIMATED_ANALYSIS_USD, parisDay, toMicros, usageCostMicros, type Reservation, type SpendGate } from "@/lib/xaiSpend";
 import type { BodyState } from "@/lib/stats";
 import sharp from "sharp";
@@ -329,7 +331,7 @@ export function instrumentVision(inner: VisionProvider, pricing: { inPerM: numbe
   const vision: VisionProvider = {
     id: inner.id,
     analyse: (jpeg) => wrap("analyse", () => inner.analyse(jpeg)),
-    writeComment: (input) => wrap("redaction", () => inner.writeComment(input)),
+    writeReport: (input) => wrap("redaction", () => inner.writeReport(input)),
   };
   return { vision, calls };
 }
@@ -346,6 +348,10 @@ export type PhotoTestResult = {
   motif?: string;
   message?: string;
   results?: ReportResults;
+  /** Paire de calibration (mesure par la carte, estimation sans la carte) si la mesure a été calibrée. */
+  pair?: CalibrationPair;
+  /** Carte présente et lisible mais écartée par le calcul (motif technique) : la taille reste estimée visuellement. */
+  calibrationSkipped?: string;
   steps: StepTiming[];
   calls: CallRecord[];
   totalMs: number;
@@ -356,7 +362,7 @@ export type PhotoTestResult = {
   costMicros: number;
 };
 
-type Captured = { results?: ReportResults; motif?: string; outcome?: string };
+type Captured = { results?: ReportResults; motif?: string; outcome?: string; pair?: CalibrationPair; calibrationSkipped?: string };
 
 /** Magasin en mémoire : le flux d'analyse n'écrit rien en base ; on capture seulement le résultat et le motif de refus. */
 function memoryStore(captured: Captured): FlowStore {
@@ -371,6 +377,9 @@ function memoryStore(captured: Captured): FlowStore {
     createReport: async (args) => {
       captured.results = args.results;
       return "rapport-local";
+    },
+    saveCalibrationPair: async (p) => {
+      captured.pair = p;
     },
   };
 }
@@ -407,7 +416,16 @@ export async function runPhotoTest(args: {
   const t0 = now();
   // Le flux journalise des événements techniques (motifs, versions) : on les retient hors de la sortie du script.
   const saved = { info: console.info, warn: console.warn, log: console.log };
-  console.info = console.warn = console.log = () => {};
+  console.warn = console.log = () => {};
+  // Seul le motif d'une carte écartée est retenu (pour l'affichage) ; rien d'autre n'est lu ni affiché.
+  console.info = (line?: unknown) => {
+    try {
+      const j = JSON.parse(String(line)) as { event?: string; motif?: string };
+      if (j.event === "calibration_skipped" && typeof j.motif === "string") captured.calibrationSkipped = j.motif;
+    } catch {
+      /* ligne non JSON : ignorée */
+    }
+  };
   try {
     for await (const e of runAnalysis(input, deps)) events.push({ e, t: now() });
   } finally {
@@ -448,6 +466,8 @@ export async function runPhotoTest(args: {
     motif,
     message,
     results: captured.results,
+    pair: captured.pair,
+    calibrationSkipped: captured.calibrationSkipped,
     steps,
     calls,
     totalMs: end - t0,
@@ -496,31 +516,48 @@ export function formatReport(args: {
   out.push(`Schéma ${STANDARD_VERSIONS.schemaVersion} · prompts ${STANDARD_VERSIONS.promptVersion} · ${args.modelLabel} · état déclaré : ${stateLabel}`);
   out.push("");
 
-  if (r.status === "ok" && r.results) {
-    const x = r.results;
-    out.push("MESURES CALCULÉES PAR LE CODE (à partir des points repérés par le modèle)");
-    out.push(`  Longueur : ${f1(x.length.value)} cm (marge ± ${f1(x.length.marginPct ?? 0)} %) · percentile ${f1(x.length.percentile)} · ${aboveText(x.length.percentile)}`);
-    out.push(`  Circonférence : ${f1(x.girth.value)} cm (marge ± ${f1(x.girth.marginPct ?? 0)} %) · percentile ${f1(x.girth.percentile)} · ${aboveText(x.girth.percentile)}`);
-    out.push(`  Courbure : ${x.curvature.angleDeg}° (${x.curvature.category === "none" ? "aucune" : x.curvature.category === "light" ? "légère" : "marquée"}) · symétrie ${f1(x.symmetry ?? 0)}/100 · confiance du repérage ${x.confidence ?? 0}/100 · score ${x.score}/100`);
-    const p = profileFor(x.length.percentile, x.girth.percentile);
-    out.push(`  Profil morphologique : ${p.name}. ${p.description}`);
+  const morpho = r.results?.morpho;
+  if (r.status === "ok" && morpho?.partielle) {
+    out.push(`RÉSULTAT : RAPPORT PARTIEL (« ${PARTIAL_LABEL} »)`);
+    if (r.motif) out.push(`  Cause technique : ${r.motif}`);
+    out.push("  Le site afficherait un rapport générique construit sur les valeurs de référence de l'état déclaré, sans aucune mesure, avec un conseil de reprise.");
+    out.push("");
+  } else if (r.status === "ok" && morpho?.indicateurs) {
+    const ind = morpho.indicateurs;
+    const t = morpho.texte;
+    out.push(`RAPPORT D'ANALYSE MORPHOMÉTRIQUE N° ${morpho.numero}`);
+    out.push(
+      `  État observé : ${ind.state === "rest" ? "repos" : "érection"} · méthode : ${morpho.methode === "calibree" ? "mesure calibrée (badge « Taille calibrée »)" : "estimation visuelle"}${
+        r.calibrationSkipped ? ` (carte détectée mais écartée par le calcul : ${r.calibrationSkipped})` : ""
+      }`,
+    );
+    out.push(`  Score global : ${ind.score}/100${ind.percentileLongueur !== null ? ` · profil morphologique : ${profileFor(ind.percentileLongueur, ind.percentileCirconference).name}` : " · pas de profil au repos (aucun percentile de longueur)"}`);
     out.push("");
 
     if (args.rulerLength !== undefined || args.rulerGirth !== undefined) {
       out.push("ÉCART AVEC VOS MESURES À LA RÈGLE (estimé − règle ; % de la mesure à la règle)");
       const line = (label: string, g: RulerGap) =>
-        out.push(
-          `  ${label} : estimée ${f1(g.estimated)} cm · règle ${f1(g.ruler)} cm · écart ${signed(g.gapCm)} cm (${signed(g.gapPct)} %) · dans la marge affichée de ± ${f1(g.marginPct)} % : ${g.withinMargin ? "oui" : "NON"}`,
-        );
-      if (args.rulerLength !== undefined) line("Longueur", compareToRuler(x.length.value, args.rulerLength, x.length.marginPct ?? MARGIN.floorPct));
-      if (args.rulerGirth !== undefined) line("Circonférence", compareToRuler(x.girth.value, args.rulerGirth, x.girth.marginPct ?? MARGIN.floorPct));
+        out.push(`  ${label} : ${morpho.methode === "calibree" ? "mesurée" : "estimée"} ${f1(g.estimated)} cm · règle ${f1(g.ruler)} cm · écart ${signed(g.gapCm)} cm (${signed(g.gapPct)} %) · dans ± ${f1(g.marginPct)} % : ${g.withinMargin ? "oui" : "NON"}`);
+      if (args.rulerLength !== undefined) line("Longueur", compareToRuler(ind.longueurCm, args.rulerLength, MARGIN.floorPct));
+      if (args.rulerGirth !== undefined) line("Circonférence", compareToRuler(ind.circonferenceCm, args.rulerGirth, MARGIN.floorPct));
+      if (r.pair) {
+        out.push(`  Estimation du modèle SANS la carte : longueur ${f1(r.pair.modelLengthCm)} cm, circonférence ${f1(r.pair.modelGirthCm)} cm (paire de calibration ; le site la conserverait, sans rien d'autre)`);
+        if (args.rulerLength !== undefined) line("Longueur sans carte", compareToRuler(r.pair.modelLengthCm, args.rulerLength, MARGIN.floorPct));
+        if (args.rulerGirth !== undefined) line("Circonférence sans carte", compareToRuler(r.pair.modelGirthCm, args.rulerGirth, MARGIN.floorPct));
+      }
       out.push("  Rappel : votre propre mesure à la règle a une incertitude de quelques millimètres ; un seul essai ne prouve rien (voir docs/CALIBRATION.md).");
       out.push("");
     }
 
-    out.push("RAPPORT STANDARDISÉ (3 observations et un verdict, rédigés par le modèle sans aucun chiffre)");
-    x.standard?.observations.forEach((o, i) => out.push(`  ${i + 1}. ${o}`));
-    out.push(`  Verdict : ${x.standard?.verdict ?? "(absent)"}`);
+    out.push(`RAPPORT RÉDIGÉ (${reportWordCount(t)} mots ; vérifié par le code : interdits, valeurs, structure)`);
+    out.push(`  Synthèse : ${t.synthese}`);
+    out.push("  Tableau des indicateurs :");
+    for (const k of INDICATOR_KEYS) out.push(`    ${INDICATOR_LABELS[k]} : ${indicatorValue(ind, k)} — ${t.appreciations[k]}`);
+    for (const k of SECTION_KEYS) out.push(`  ${SECTION_TITLES[k]} : ${t[k]}`);
+    out.push("  Points remarquables :");
+    t.points_remarquables.forEach((p) => out.push(`    - ${p.texte}`));
+    out.push(`  Conclusion : ${t.conclusion}`);
+    out.push(`  Note du laboratoire : ${t.note_laboratoire}`);
     out.push("");
   } else if (r.status === "refused") {
     out.push("RÉSULTAT : ANALYSE REFUSÉE (aucun rapport n'aurait été créé)");
@@ -535,9 +572,9 @@ export function formatReport(args: {
   }
 
   out.push("APPELS, DURÉE ET COÛT");
-  out.push(`  Appels à l'API : ${r.requests} (recevabilité et repérage partent en parallèle ; relances : ${r.retries})`);
+  out.push(`  Appels à l'API : ${r.requests} (appel vision avec la photo, puis rédaction sans la photo ; relances : ${r.retries})`);
   r.calls.forEach((c, i) => {
-    const what = c.kind === "analyse" ? "analyse de la photo (recevabilité + repérage)" : "rédaction (texte seul)";
+    const what = c.kind === "analyse" ? "appel vision (recevabilité, estimations, observations, points)" : "rédaction (texte seul, sans la photo)";
     out.push(
       c.usage
         ? `    ${i + 1}. ${what} : ${sec(c.ms)} · ${c.usage.tokensIn} jetons en entrée, ${c.usage.tokensOut} en sortie · ${usd(c.costMicros)}`
@@ -635,7 +672,7 @@ export async function runPhotoTestCli(argv: string[], io: CliIO): Promise<number
       if (!cap.ok) throw new PhotoTestError("plafond", cap.message);
       vision = io.realVision ?? xaiVision;
       spend = ledgerGate(ledgerPath, capUsd, io.now);
-      modelLabel = `modèle ${env.XAI_MODEL || "grok-4.7"} (raisonnement ${env.XAI_EFFORT === undefined ? "low" : env.XAI_EFFORT || "par défaut"})`;
+      modelLabel = `vision : ${env.XAI_MODEL || "grok-4.7"} (raisonnement ${env.XAI_EFFORT === undefined ? "low" : env.XAI_EFFORT || "par défaut"}) · rédaction : ${env.XAI_TEXT_MODEL || DEFAULT_TEXT_MODEL}`;
     }
 
     if (photoPath) photo = readFileSync(photoPath);
@@ -670,7 +707,7 @@ export async function runPhotoTestCli(argv: string[], io: CliIO): Promise<number
       out(line);
     }
     if (opts.delete && !opts.file) out("Aucune photo à supprimer (essai à blanc sans fichier).");
-    return result.status === "ok" ? 0 : 1;
+    return result.status === "ok" && !result.results?.morpho?.partielle ? 0 : 1;
   } catch (e) {
     photo?.fill(0);
     if (e instanceof PhotoTestError) {

@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
-import { SIMULATED_OBSERVATIONS, SIMULATED_VERDICT } from "../src/lib/vision/simulation";
+import { OBSERVATION_MARKER } from "../src/lib/vision/simulation";
 import { E2E, expect, fakeIp, neutralImage, reportIdFrom, sendPhoto, test, withDb } from "./helpers";
 import { layoutProblems } from "./layout";
 
@@ -19,7 +19,7 @@ async function axeLines(page: Page): Promise<string[]> {
 /** Parcours B complet jusqu'au rapport débloqué ; renvoie l'identifiant du rapport. */
 async function photoReport(page: Page): Promise<string> {
   await sendPhoto(page, { formula: "B", image: await neutralImage() });
-  await expect(page.getByRole("heading", { name: "Rapport morphologique" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: /Rapport d'analyse morphométrique/ })).toBeVisible({ timeout: 60_000 });
   return reportIdFrom(page.url());
 }
 
@@ -31,7 +31,7 @@ async function submitFromPhotoPage(page: Page): Promise<void> {
   await page.getByLabel(/Je consens au traitement de cette donnée sensible/).check();
   await page.getByLabel(/Je ne suis pas un robot/).check();
   await page.getByRole("button", { name: "Lancer l'analyse" }).click();
-  await expect(page.getByRole("heading", { name: "Rapport morphologique" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: /Rapport d'analyse morphométrique/ })).toBeVisible({ timeout: 60_000 });
 }
 
 test.describe("Bêta photo : choix et libellés vrais", () => {
@@ -44,7 +44,8 @@ test.describe("Bêta photo : choix et libellés vrais", () => {
     const text = await page.locator("main").innerText();
     expect(text).not.toMatch(/€|PROTOCOLE C|paiement unique|Recommandé/i);
     expect(text).toMatch(/Gratuit/);
-    expect(text).toMatch(/marge d'erreur d'au moins ± 10 %/);
+    expect(text).toMatch(/estimation visuelle, ou mesure calibrée si une carte au format bancaire figure sur la photo/);
+    expect(text).not.toMatch(/± 10 %/);
     expect(text).toMatch(/Vérification d'âge par un prestataire tiers/);
     expect(text).toMatch(/jamais enregistrée par Bitomètre/);
     expect(text).toMatch(/30 jours/);
@@ -62,7 +63,8 @@ test.describe("Bêta photo : choix et libellés vrais", () => {
     await page.goto("/methode");
     const methode = await page.locator("main").innerText();
     expect(methode).toContain("Mesures estimées à partir d'une photo");
-    expect(methode).toContain("trois observations courtes et un verdict");
+    expect(methode).toContain("deux appels au modèle d'analyse");
+    expect(methode).toContain("Taille calibrée");
     await page.goto("/confidentialite");
     const priv = await page.locator("main").innerText();
     expect(priv).toContain("SpaceXAI LLC");
@@ -104,29 +106,32 @@ test.describe("Bêta photo : choix et libellés vrais", () => {
 });
 
 test.describe("Bêta photo : parcours B complet (image neutre, moteurs simulés)", () => {
-  test("rapport débloqué sans paiement, commentaire standardisé, profil morphologique, aucune photo conservée", async ({ page }) => {
+  test("rapport débloqué sans paiement, compte rendu complet, profil morphologique, aucune photo ni observation conservée", async ({ page }) => {
     const id = await photoReport(page);
     // Débloqué directement : pas d'aperçu verrouillé, aucun prix.
     await expect(page.getByText("BÊTA GRATUITE", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: /Débloquer/ })).toHaveCount(0);
     const body = await page.locator("body").innerText();
     expect(body).not.toMatch(/€|paiement|payer/i);
-    // Modèle FIXE : trois observations, un verdict, aucun chiffre dans ces textes.
-    const obs = page.locator("[data-observation]");
-    await expect(obs).toHaveCount(3);
-    for (let i = 0; i < 3; i++) await expect(obs.nth(i)).toHaveText(SIMULATED_OBSERVATIONS[i]);
-    await expect(page.locator("[data-verdict]")).toHaveText(SIMULATED_VERDICT);
-    expect(await page.locator("[data-standard-comment]").getAttribute("data-standard-comment")).toBe("photo-report/1");
-    for (const t of await page.locator("[data-observation], [data-verdict]").allInnerTexts()) expect(t).not.toMatch(/\d/);
-    // Mesures estimées calculées par le code (marge affichée), symétrie, conicité, confiance.
-    await expect(page.getByRole("cell", { name: /cm$/ }).first()).toBeVisible();
-    await expect(page.getByText("Conicité")).toBeVisible();
-    expect(body).toMatch(/± \d+ %/);
-    // Profil morphologique calculé sur les percentiles estimés.
+    // Compte rendu photo-report/2 : en-tête, synthèse, tableau des sept indicateurs, six rubriques, trois points remarquables, conclusion, note.
+    expect(await page.locator("[data-morpho-report]").getAttribute("data-morpho-report")).toBe("photo-report/2");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Rapport d'analyse morphométrique n°\s\d{5}$/);
+    expect(body).toMatch(/Méthode\s*Estimation visuelle/);
+    expect(body).toMatch(/État observé\s*Érection/);
+    for (const h of ["Synthèse", "Tableau des indicateurs", "Morphologie générale", "Profil du gland et de la couronne", "Axe et courbure", "Symétrie et équilibre", "Aspect de surface", "Positionnement statistique", "Points remarquables", "Conclusion"]) {
+      await expect(page.getByRole("heading", { name: h, exact: true })).toBeVisible();
+    }
+    await expect(page.locator("[data-indicator]")).toHaveCount(7);
+    await expect(page.locator("[data-indicator=longueur]")).toContainText("14,2 cm");
+    await expect(page.locator("[data-indicator=typicite]")).toContainText(/morphotype (classique|distinctif|singulier)/);
+    await expect(page.locator("[data-highlight]")).toHaveCount(3);
+    await expect(page.locator("[data-note]")).toBeVisible();
+    // Les observations brutes du modèle de vision n'apparaissent jamais.
+    expect(body).not.toContain(OBSERVATION_MARKER);
+    // Profil morphologique calculé sur les percentiles estimés (en érection).
     const profile = page.locator("[data-profile]");
     await expect(profile).toHaveCount(1);
-    await expect(profile.getByText("Profil morphologique", { exact: true })).toBeVisible();
-    await expect(profile.getByText("Exemple fictif")).toHaveCount(0);
+    await expect(page.getByText("Exemple fictif")).toHaveCount(0);
     // Base : débloqué, marqué bêta, aucun paiement ; aucune colonne binaire ; aucun octet de JPEG dans les tables.
     await withDb(async (db) => {
       expect((await db.query("SELECT paid, free_beta, formula FROM reports WHERE id = $1", [id])).rows[0]).toEqual({ paid: true, free_beta: true, formula: "B" });
@@ -135,6 +140,7 @@ test.describe("Bêta photo : parcours B complet (image neutre, moteurs simulés)
       expect(cols.rowCount).toBe(0);
       const dump = await db.query("SELECT input::text AS i, results::text AS r FROM reports WHERE id = $1", [id]);
       expect(dump.rows[0].i + dump.rows[0].r).not.toContain("/9j/");
+      expect(dump.rows[0].r).not.toContain(OBSERVATION_MARKER);
       const att = await db.query("SELECT outcome FROM analysis_attempts ORDER BY id DESC LIMIT 1");
       expect(att.rows[0].outcome).toBe("ok");
       const spend = await db.query("SELECT analyses, calls FROM xai_daily_spend");

@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       let open = true;
       try {
         for await (const event of runAnalysis(input, { vision: getVision(), screening: getScreening(), captcha: getCaptcha() })) {
-          if (event.type === "ready" && challengeId) await attachFriend(challengeId, event.reportId);
+          if (event.type === "ready" && challengeId && !event.partial) await attachFriend(challengeId, event.reportId); // un rapport partiel ne relève pas un défi
           if (!open) continue; // le client est parti : on laisse le traitement se terminer (commentaire rédigé)
           try {
             controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));

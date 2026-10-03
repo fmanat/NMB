@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ReportResults } from "@/lib/report";
+import type { QuestionnaireResults } from "@/lib/report";
 import { DIRECTION_FR } from "@/lib/report";
 import { f1 } from "@/lib/format";
 import { CAMERA_DISTANCE, CYLINDER, STATIC_VIEW, generateCylinderPoints, project, ringHeights, ringPolyline, type View } from "@/lib/scanner3d";
@@ -66,7 +66,7 @@ function Stat({ pos, label, value, sub }: { pos: string; label: string; value: R
   );
 }
 
-export function ScannerBand({ ex }: { ex: ReportResults }) {
+export function ScannerBand({ ex }: { ex: QuestionnaireResults }) {
   const dir = ex.curvature.direction !== "none" ? DIRECTION_FR[ex.curvature.direction] : "sans direction";
   return (
     <ScannerShell

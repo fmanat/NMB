@@ -1,6 +1,6 @@
 import { LIMITS } from "@/config/site";
 import { EXAMPLE_INPUT } from "./exampleReport";
-import { buildQuestionnaireReport, isOutOfReferenceRange, type QuestionnaireInput, type ReportResults } from "./reportCore";
+import { buildQuestionnaireReport, isOutOfReferenceRange, type QuestionnaireInput, type QuestionnaireResults } from "./reportCore";
 import type { BodyState } from "./stats";
 
 // Simulation « Essayez » de l'accueil : pur, sans réseau, sans stockage, sans dépendance serveur (utilisable dans le navigateur).
@@ -30,7 +30,7 @@ export function snap(dim: "length" | "girth", v: number): number {
   return Math.round(Math.min(max, Math.max(min, v)) * 10) / 10;
 }
 
-export type TryOutcome = { kind: "ok"; input: QuestionnaireInput; results: ReportResults } | { kind: "outOfRange"; input: QuestionnaireInput };
+export type TryOutcome = { kind: "ok"; input: QuestionnaireInput; results: QuestionnaireResults } | { kind: "outOfRange"; input: QuestionnaireInput };
 
 /**
  * Même chaîne que le questionnaire : bornes de saisie, plage plausible (MAX_SIGMA), puis `buildQuestionnaireReport`.

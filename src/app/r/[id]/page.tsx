@@ -4,13 +4,14 @@ import { REPORT_ACCESS, SITE, formatEur } from "@/config/site";
 import { BETA, isFreeBeta } from "@/lib/mode";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { f1 } from "@/lib/format";
-import { DIRECTION_FR } from "@/lib/report";
+import { DIRECTION_FR, type ReportResults } from "@/lib/report";
 import { getReportView } from "@/lib/view";
 import { Accordion } from "@/components/ui/Accordion";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
+import { MorphoReport } from "@/components/report/MorphoReport";
 import { ReportDashboard } from "@/components/report/ReportDashboard";
 import { TrackView } from "@/components/TrackView";
 import { AwaitPayment } from "./AwaitPayment";
@@ -21,6 +22,9 @@ export const metadata = {
   robots: { index: false, follow: false, nocache: true },
   ...PRIVATE_SOCIAL,
 };
+
+/** Percentile affiché, ou « — » s'il n'est pas calculé. */
+const pf = (p: number | undefined) => (p === undefined ? "—" : f1(p));
 
 const CURVE = { none: "Aucune", light: "Légère", marked: "Marquée" } as const;
 
@@ -49,14 +53,12 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           <h1 className="t-h1 !text-[30px] !leading-[34px] md:!text-[40px] md:!leading-[44px]">Votre rapport est prêt</h1>
           {view.preview && (
             <div className="grid grid-cols-2 gap-3 text-left">
-              <div className="rounded-[10px] bg-[var(--bm-blue-050)] border border-[var(--bm-blue-100)] p-4">
-                <p className="t-small text-muted">Indice de confiance</p>
-                <p className="num t-data-l text-accent">{view.preview.confidence}<span className="text-[16px] text-muted"> / 100</span></p>
-              </div>
-              <div className="rounded-[10px] bg-[var(--bm-blue-050)] border border-[var(--bm-blue-100)] p-4">
-                <p className="t-small text-muted">Symétrie</p>
-                <p className="num t-data-l text-accent">{Math.round(view.preview.symmetry)}<span className="text-[16px] text-muted"> / 100</span></p>
-              </div>
+              {view.preview.map((p) => (
+                <div key={p.label} className="rounded-[10px] bg-[var(--bm-blue-050)] border border-[var(--bm-blue-100)] p-4">
+                  <p className="t-small text-muted">{p.label}</p>
+                  <p className="num t-data-l text-accent">{Math.round(p.value)}<span className="text-[16px] text-muted"> / 100</span></p>
+                </div>
+              ))}
             </div>
           )}
           <div className="grid grid-cols-3 gap-3 select-none" aria-hidden="true">
@@ -86,6 +88,37 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   const r = view.results;
   const dateFr = view.createdAt.toLocaleDateString("fr-FR", { timeZone: "UTC" });
+
+  // Formule photo, version 2 : compte rendu morphométrique (en-tête, tableau, rubriques, points remarquables, conclusion, note).
+  if (r.morpho) {
+    const partial = r.morpho.partielle;
+    return (
+      <div className="container-bm container-narrow py-8 md:py-14 space-y-8">
+        <TrackView event="report_view" once={id} />
+        {banner}
+        <MorphoReport results={r} date={dateFr} beta={view.freeBeta} />
+        {r.declared && <DeclaredComparison results={r} />}
+        <section aria-label="Actions" className="space-y-4 no-print">
+          {!partial && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button href={`/r/${id}/partager`} fullOnMobile>Partager ma carte</Button>
+              <Button href={`/r/${id}/defi`} variant="secondary" fullOnMobile>Défier un ami</Button>
+            </div>
+          )}
+          {partial && <Button href="/analyse/photo?f=B" fullOnMobile arrow>Reprendre la photo</Button>}
+          <ReportActions id={id} />
+          <p className="t-small text-muted">
+            {view.freeBeta
+              ? `Bêta gratuite : ce rapport est conservé ${BETA.reportTtlDays} jours au plus, sans garantie. Téléchargez-le en PDF pour le garder.`
+              : partial
+                ? "Rapport partiel, sans paiement : téléchargez-le en PDF si vous souhaitez le garder."
+                : `Ce rapport reste accessible par son lien pendant au moins ${REPORT_ACCESS.minYears} ans et téléchargeable en PDF à tout moment.`}{" "}
+            <Link href="/methode" className="text-accent underline">Voir la méthode</Link>.
+          </p>
+        </section>
+      </div>
+    );
+  }
   const state = r.state === "rest" ? "Au repos" : "En érection";
   const declared = r.formula === "A";
 
@@ -107,20 +140,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
       <ReportDashboard results={r} />
 
-      {r.declared && (
-        <Card as="section" soft className="space-y-1 t-small">
-          <h2 className="t-h4 !text-[16px]">Comparaison déclaré / estimé</h2>
-          <p className="num">
-            Longueur : déclarée {f1(r.declared.declaredLength)} cm · estimée {f1(r.length.value)} cm · écart {r.declared.lengthGapPct > 0 ? "+" : ""}
-            {f1(r.declared.lengthGapPct)} %
-          </p>
-          <p className="num">
-            Circonférence : déclarée {f1(r.declared.declaredGirth)} cm · estimée {f1(r.girth.value)} cm · écart {r.declared.girthGapPct > 0 ? "+" : ""}
-            {f1(r.declared.girthGapPct)} %
-          </p>
-          {r.declared.flagged && <p className="font-semibold" style={{ color: "var(--bm-warning-text)" }}>Écart important : vérifiez votre méthode de mesure.</p>}
-        </Card>
-      )}
+      {r.declared && <DeclaredComparison results={r} />}
 
       {/* Détail des valeurs (tableau de données) */}
       <section aria-labelledby="detail" className="space-y-3">
@@ -128,8 +148,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         {/* Mobile : le tableau devient une liste de cartes (charte, section 34) */}
         <ul className="md:hidden space-y-3">
           {[
-            { l: "Longueur", v: `${f1(r.length.value)} cm`, m: r.length.marginPct ? `± ${r.length.marginPct} %` : "déclarée", p: f1(r.length.percentile), med: `${f1(r.length.referenceMedian)} cm` },
-            { l: "Circonférence", v: `${f1(r.girth.value)} cm`, m: r.girth.marginPct ? `± ${r.girth.marginPct} %` : "déclarée", p: f1(r.girth.percentile), med: `${f1(r.girth.referenceMedian)} cm` },
+            { l: "Longueur", v: `${f1(r.length.value)} cm`, m: r.length.marginPct ? `± ${r.length.marginPct} %` : "déclarée", p: pf(r.length.percentile), med: `${f1(r.length.referenceMedian)} cm` },
+            { l: "Circonférence", v: `${f1(r.girth.value)} cm`, m: r.girth.marginPct ? `± ${r.girth.marginPct} %` : "déclarée", p: pf(r.girth.percentile), med: `${f1(r.girth.referenceMedian)} cm` },
           ].map((x) => (
             <li key={x.l} className="card !p-4">
               <p className="font-semibold">{x.l}</p>
@@ -158,14 +178,14 @@ export default async function Page({ params, searchParams }: { params: Promise<{
                 <th scope="row" className="font-normal">Longueur</th>
                 <td className="right">{f1(r.length.value)} cm</td>
                 <td className="right text-muted">{r.length.marginPct ? `± ${r.length.marginPct} %` : "déclarée"}</td>
-                <td className="right font-semibold text-accent">{f1(r.length.percentile)}</td>
+                <td className="right font-semibold text-accent">{pf(r.length.percentile)}</td>
                 <td className="right">{f1(r.length.referenceMedian)} cm</td>
               </tr>
               <tr>
                 <th scope="row" className="font-normal">Circonférence</th>
                 <td className="right">{f1(r.girth.value)} cm</td>
                 <td className="right text-muted">{r.girth.marginPct ? `± ${r.girth.marginPct} %` : "déclarée"}</td>
-                <td className="right font-semibold text-accent">{f1(r.girth.percentile)}</td>
+                <td className="right font-semibold text-accent">{pf(r.girth.percentile)}</td>
                 <td className="right">{f1(r.girth.referenceMedian)} cm</td>
               </tr>
               <tr>
@@ -255,5 +275,24 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         )}
       </section>
     </div>
+  );
+}
+
+/** Formule C : comparaison déclaré / estimé (au-delà de 20 % d'écart, invitation à vérifier la méthode de mesure). */
+function DeclaredComparison({ results: r }: { results: ReportResults }) {
+  if (!r.declared) return null;
+  return (
+    <Card as="section" soft className="space-y-1 t-small">
+      <h2 className="t-h4 !text-[16px]">Comparaison déclaré / estimé</h2>
+      <p className="num">
+        Longueur : déclarée {f1(r.declared.declaredLength)} cm · estimée {f1(r.length.value)} cm · écart {r.declared.lengthGapPct > 0 ? "+" : ""}
+        {f1(r.declared.lengthGapPct)} %
+      </p>
+      <p className="num">
+        Circonférence : déclarée {f1(r.declared.declaredGirth)} cm · estimée {f1(r.girth.value)} cm · écart {r.declared.girthGapPct > 0 ? "+" : ""}
+        {f1(r.declared.girthGapPct)} %
+      </p>
+      {r.declared.flagged && <p className="font-semibold" style={{ color: "var(--bm-warning-text)" }}>Écart important : vérifiez votre méthode de mesure.</p>}
+    </Card>
   );
 }

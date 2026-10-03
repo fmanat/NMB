@@ -74,7 +74,8 @@ export async function payReport(page: Page) {
   await page.getByLabel(/Je demande l'accès immédiat/).check();
   await page.getByRole("button", { name: /^Payer/ }).click();
   await page.getByRole("button", { name: "Simuler un paiement réussi" }).click();
-  await expect(page.getByRole("heading", { name: "Rapport morphologique" })).toBeVisible();
+  // Questionnaire : « Rapport morphologique » ; photo (photo-report/2) : « Rapport d'analyse morphométrique n° … ».
+  await expect(page.getByRole("heading", { name: /Rapport morphologique|Rapport d'analyse morphométrique/ })).toBeVisible();
 }
 
 /** Parcours photo : vérification d'âge simulée, cases, captcha simulé, envoi d'une image neutre. */

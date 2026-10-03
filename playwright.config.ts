@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 import { hashPassword } from "./src/lib/admin/auth";
 
 // Tests de bout en bout : deux copies du site, sur un schéma dédié (e2e) de la base de tests, avec les moteurs SIMULÉS.
-//  - port 3201 : scénario de vision « ok » ;  port 3202 : scénario « confiance basse ».
+//  - port 3201 : scénario de vision « ok » ;  port 3202 : scénario « visage visible » (refus de recevabilité).
 // Aucun appel xAI, aucun prestataire réel. Le mot de passe d'administration ci-dessous n'existe que pour ces tests.
 export const E2E = {
   // Schéma « e2e » dans la base de tests : le rôle nmb n'a pas le droit de créer une base, et les tests unitaires (schéma public) restent intacts.
@@ -75,7 +75,8 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 180_000,
     },
-    { command: "npx next dev -p 3202", url: E2E.lowUrl, env: env("low_confidence", ".next-e2e-low"), reuseExistingServer: false, timeout: 180_000 },
+    // Copie dont le moteur simulé refuse la photo (visage visible) : refus de recevabilité, aucun rapport.
+    { command: "npx next dev -p 3202", url: E2E.lowUrl, env: env("refuse_face", ".next-e2e-low"), reuseExistingServer: false, timeout: 180_000 },
     {
       command: "npx next dev -p 3205",
       url: E2E.photoBetaUrl + "/api/health",

@@ -203,27 +203,29 @@ describe("mode simulation : même circuit, texte seulement", () => {
     expect(await counts()).toEqual(before); // aucune écriture en base
   });
 
-  it("analyse une photo neutre du dossier, affiche mesures, écart, rapport standardisé, appels, durées et coût", async () => {
+  it("analyse une photo neutre du dossier, affiche le rapport complet, l'écart avec la règle, les appels, les durées et le coût", async () => {
     const root = fakeProject();
     await addPhoto(root);
     const c = io(root);
     const infoBefore = console.info;
-    const code = await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection", "--longueur", "14,2", "--circonference", "12,1", "--simulation"], c);
+    const code = await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection", "--longueur", "13,0", "--circonference", "12,6", "--simulation"], c);
     expect(console.info).toBe(infoBefore); // la console est rendue
     expect(code).toBe(0);
     const t = text(c.lines);
     expect(t).toContain("mode SIMULATION");
-    expect(t).toContain("photo-report/1");
-    expect(t).toMatch(/Longueur : 13,0 cm \(marge ± 10,0 %\) · percentile \d/);
-    expect(t).toMatch(/Circonférence : 12,6 cm/);
-    expect(t).toContain("Profil morphologique : ");
-    // Écart : 13,0 estimé contre 14,2 saisi (−1,2 cm, −8,5 %), 12,6 contre 12,1 (+0,5 cm, +4,1 %).
-    expect(t).toContain("Longueur : estimée 13,0 cm · règle 14,2 cm · écart −1,2 cm (−8,5 %)");
-    expect(t).toContain("Circonférence : estimée 12,6 cm · règle 12,1 cm · écart +0,5 cm (+4,1 %)");
-    expect(t).toMatch(/1\. .+\n\s+2\. .+\n\s+3\. .+\n\s+Verdict : /);
-    expect(t).toMatch(/Appels à l'API : 3 \(.*relances : 0\)/);
+    expect(t).toContain("photo-report/2");
+    expect(t).toMatch(/RAPPORT D'ANALYSE MORPHOMÉTRIQUE N° \d{5}/);
+    expect(t).toContain("État observé : érection · méthode : estimation visuelle");
+    expect(t).toContain("profil morphologique : ");
+    expect(t).toMatch(/Longueur : 14,2 cm · percentile \d+ — /);
+    expect(t).toMatch(/Indice de typicité : \d+ \/ 100 · morphotype /);
+    // Écart : 14,2 estimé contre 13,0 à la règle (+1,2 cm, +9,2 %), 12,1 contre 12,6 (−0,5 cm, −4,0 %).
+    expect(t).toContain("Longueur : estimée 14,2 cm · règle 13,0 cm · écart +1,2 cm (+9,2 %)");
+    expect(t).toContain("Circonférence : estimée 12,1 cm · règle 12,6 cm · écart −0,5 cm (−4,0 %)");
+    for (const h of ["Synthèse : ", "Morphologie générale : ", "Profil du gland et de la couronne : ", "Axe et courbure : ", "Symétrie et équilibre : ", "Aspect de surface : ", "Positionnement statistique : ", "Points remarquables :", "Conclusion : ", "Note du laboratoire : "]) expect(t).toContain(h);
+    expect(t).toMatch(/Appels à l'API : 2 \(.*relances : 0\)/);
     expect(t).toContain("Durée totale :");
-    expect(t).toContain("Rédaction des observations :");
+    expect(t).toContain("Rédaction du rapport :");
     expect(t).toContain("Coût de cette analyse : 0,0000 $");
     expect(t).toContain("simulation, aucun appel réel");
     // La photo n'est pas supprimée sans --supprimer ; rien n'a été créé dans le projet (ni cumul de dépense, ni copie).
@@ -273,36 +275,36 @@ describe("mode simulation : même circuit, texte seulement", () => {
     const root = fakeProject();
     await addPhoto(root);
     const c = io(root);
-    // Moteur simulé réglé sur « carte absente » : on passe par runPhotoTest via le mode réel factice (aucun réseau).
+    // Moteur simulé réglé sur « visage visible » : on passe par runPhotoTest via le mode réel factice (aucun réseau).
     const code = await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection"], {
       ...c,
       env: { XAI_API_KEY: "cle-factice-test", XAI_DAILY_CAP_USD: "5" },
-      realVision: createSimulatedVision("no_card"),
+      realVision: createSimulatedVision("refuse_face"),
       pricing: { inPerM: 2, outPerM: 6 },
     });
     expect(code).toBe(1);
     const t = text(c.lines);
     expect(t).toContain("ANALYSE REFUSÉE");
-    expect(t).toContain("Motif technique : carte_absente_ou_illisible");
+    expect(t).toContain("Motif technique : visage_visible");
     expect(t).toContain("Message qu'afficherait le site");
-    expect(t).not.toContain("MESURES CALCULÉES");
+    expect(t).not.toContain("RAPPORT D'ANALYSE");
   });
 });
 
 /** Moteur « réel » factice : le simulé, avec une consommation de jetons réaliste (mesurée le 02/10/2026) ; compte les appels. */
 function fakeRealVision(scenario: Scenario = "ok") {
   const inner = createSimulatedVision(scenario);
-  const calls = { analyse: 0, comment: 0 };
+  const calls = { analyse: 0, text: 0 };
   const vision: VisionProvider = {
     id: "xai-factice",
     analyse: async (j) => {
       calls.analyse++;
       const r = await inner.analyse(j);
-      return { ...r, usage: { tokensIn: 5589, tokensOut: 641, ms: 23000, calls: 2 } };
+      return { ...r, usage: { tokensIn: 5589, tokensOut: 641, ms: 23000, calls: 1 } };
     },
-    writeComment: async (i) => {
-      calls.comment++;
-      const r = await inner.writeComment(i);
+    writeReport: async (i) => {
+      calls.text++;
+      const r = await inner.writeReport(i);
       return { ...r, usage: { tokensIn: 1748, tokensOut: 123, ms: 18000, calls: 1 } };
     },
   };
@@ -324,7 +326,7 @@ describe("mode réel (moteur factice, aucun réseau) : plafond, clé, coût, cum
     const c2 = base(root, { loadEnv: () => false, realVision: vision });
     expect(await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection", "--supprimer"], c2)).toBe(2);
     expect(text(c2.lines)).toMatch(/\.env introuvable/);
-    expect(calls).toEqual({ analyse: 0, comment: 0 });
+    expect(calls).toEqual({ analyse: 0, text: 0 });
     expect(existsSync(path)).toBe(true);
   });
 
@@ -343,7 +345,7 @@ describe("mode réel (moteur factice, aucun réseau) : plafond, clé, coût, cum
     expect(await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection", "--supprimer"], c)).toBe(2);
     expect(text(c.lines)).toMatch(/au-delà du plafond XAI_DAILY_CAP_USD/);
     expect(text(c.lines)).toMatch(/Aucun appel n'a été envoyé/);
-    expect(calls).toEqual({ analyse: 0, comment: 0 });
+    expect(calls).toEqual({ analyse: 0, text: 0 });
     expect(existsSync(path)).toBe(true); // ni envoyée ni supprimée
     expect(existsSync(join(root, LEDGER_FILE))).toBe(false);
 
@@ -351,11 +353,11 @@ describe("mode réel (moteur factice, aucun réseau) : plafond, clé, coût, cum
     writeFileSync(join(root, LEDGER_FILE), JSON.stringify({ days: { "2026-10-03": { spentMicros: 4_980_000, analyses: 200 }, "2026-10-02": { spentMicros: 1, analyses: 1 } } }));
     const c2 = base(root, { realVision: vision });
     expect(await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection"], c2)).toBe(2);
-    expect(calls).toEqual({ analyse: 0, comment: 0 });
+    expect(calls).toEqual({ analyse: 0, text: 0 });
     writeFileSync(join(root, LEDGER_FILE), JSON.stringify({ days: { "2026-10-02": { spentMicros: 4_990_000, analyses: 200 } } }));
     const c3 = base(root, { realVision: vision });
     expect(await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection"], c3)).toBe(0);
-    expect(calls).toEqual({ analyse: 1, comment: 1 });
+    expect(calls).toEqual({ analyse: 1, text: 1 });
   });
 
   it("analyse réelle (factice) : coût d'après jetons × tarif, cumul du jour mis à jour, plafond affiché, photo supprimée sur demande", async () => {
@@ -370,11 +372,11 @@ describe("mode réel (moteur factice, aucun réseau) : plafond, clé, coût, cum
     expect(t).toContain("mode RÉEL");
     expect(t).toContain("Coût de cette analyse : 0,0193 $");
     expect(t).toContain("Jetons : 7337 en entrée, 764 en sortie");
-    expect(t).toMatch(/Appels à l'API : 3 /);
+    expect(t).toMatch(/Appels à l'API : 2 /);
     expect(t).toContain("Cumul du jour (jour civil, Paris) : 0,0193 $ sur un plafond XAI_DAILY_CAP_USD de 5,0000 $ (reste 4,9807 $)");
     expect(t).toContain("0,0150 $"); // coût de l'appel d'analyse
     expect(t).not.toContain("cle-factice-test");
-    expect(calls).toEqual({ analyse: 1, comment: 1 });
+    expect(calls).toEqual({ analyse: 1, text: 1 });
     expect(existsSync(path)).toBe(false);
     const ledger = JSON.parse(readFileSync(join(root, LEDGER_FILE), "utf8"));
     expect(ledger.days["2026-10-03"]).toEqual({ spentMicros: 19_258, analyses: 1 });
@@ -385,28 +387,28 @@ describe("mode réel (moteur factice, aucun réseau) : plafond, clé, coût, cum
     expect(text(c2.lines)).toContain("Cumul du jour (jour civil, Paris) : 0,0385 $");
   });
 
-  it("une relance unique (commentaire invalide une fois) est comptée, coûtée et affichée", async () => {
+  it("une relance unique (rédaction rejetée une fois) est comptée, coûtée et affichée", async () => {
     const root = fakeProject();
     await addPhoto(root);
-    const { vision, calls } = fakeRealVision("comment_invalid_once");
+    const { vision, calls } = fakeRealVision("text_forbidden_once");
     const c = base(root, { realVision: vision });
     expect(await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection"], c)).toBe(0);
-    expect(calls).toEqual({ analyse: 1, comment: 2 });
+    expect(calls).toEqual({ analyse: 1, text: 2 });
     const t = text(c.lines);
-    expect(t).toMatch(/Appels à l'API : 4 \(.*relances : 1\)/);
+    expect(t).toMatch(/Appels à l'API : 3 \(.*relances : 1\)/);
     expect(t).toContain("Coût de cette analyse : 0,0235 $"); // 19 258 + 4 234 micro-dollars
   });
 
-  it("une réponse invalide deux fois donne le message neutre, un code de sortie 1 et un coût compté", async () => {
+  it("une rédaction rejetée deux fois donne un rapport partiel, un code de sortie 1 et un coût compté", async () => {
     const root = fakeProject();
     await addPhoto(root);
-    const { vision } = fakeRealVision("comment_digit");
+    const { vision } = fakeRealVision("text_forbidden");
     const c = base(root, { realVision: vision });
     expect(await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection"], c)).toBe(1);
     const t = text(c.lines);
-    expect(t).toContain("ANALYSE REFUSÉE");
-    expect(t).toContain("commentaire_invalide");
-    expect(t).toContain("Nous n'avons pas pu analyser cette photo");
+    expect(t).toContain("RAPPORT PARTIEL");
+    expect(t).toContain("Analyse partielle : photo difficile à lire");
+    expect(t).toContain("Cause technique : partiel_redaction_interdits");
     expect(t).toMatch(/relances : 1/);
   });
 
@@ -418,15 +420,16 @@ describe("mode réel (moteur factice, aucun réseau) : plafond, clé, coût, cum
       analyse: async () => {
         throw new (await import("@/lib/vision/types")).VisionError("network", "ECONNRESET api.x.ai");
       },
-      writeComment: async () => {
+      writeReport: async () => {
         throw new Error("jamais appelé");
       },
     };
     const c = base(root, { realVision: down });
     expect(await runPhotoTestCli(["photos-test/ma-photo-secrete.jpg", "--etat", "erection"], c)).toBe(1);
     const t = text(c.lines);
-    expect(t).toContain("RÉSULTAT : ERREUR");
-    expect(t).toContain("momentanément indisponible");
+    expect(t).toContain("RAPPORT PARTIEL");
+    expect(t).toContain("Cause technique : partiel_fournisseur_network");
+    expect(t).not.toContain("ECONNRESET");
     expect(t).toContain("échec (network)");
     expect(existsSync(path)).toBe(true);
   });
@@ -506,9 +509,11 @@ describe("docs/TEST-PHOTO.md est cohérent avec les commandes", () => {
     expect(doc).toContain("npm run photo:supprimer -- --verifier");
   });
   it("les motifs de refus cités existent dans le code ; les sections demandées sont présentes", () => {
-    const schema = readFileSync(join(REPO, "src", "lib", "vision", "schema.ts"), "utf8");
+    const schema = readFileSync(join(REPO, "src", "lib", "vision", "schema2.ts"), "utf8");
     const flow = readFileSync(join(REPO, "src", "lib", "analyseFlow.ts"), "utf8");
-    const cited = [...doc.matchAll(/`([a-z_]{8,})`/g)].map((m) => m[1]).filter((m) => /^(carte_|visage_|plusieurs_|sujet_|image_|doute_|inclinaison_|confiance_|mesure_|calcul_|recevabilite_|reperage_|commentaire_)/.test(m));
+    const cited = [...doc.matchAll(/`([a-z_]{8,})`/g)]
+      .map((m) => m[1].replace(/^partiel_/, ""))
+      .filter((m) => /^(carte_|visage_|plusieurs_|sujet_|image_|doute_|qualite_|refus_|vision_|estimation_|redaction_|inclinaison_|confiance_|mesure_|calcul_)/.test(m));
     expect(cited.length).toBeGreaterThanOrEqual(10);
     for (const m of cited) expect(schema + flow, m).toContain(m);
     for (const h of ["## 1. Avant la photo", "## 2. Faire la photo", "## 3. Les commandes", "## 4. Lire le résultat", "## 5. Supprimer la photo", "## 6. Ce que vous me renvoyez"]) expect(doc).toContain(h);

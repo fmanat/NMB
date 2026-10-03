@@ -59,9 +59,11 @@ export function buildCardContent(results: ReportResults, reportId: string, optio
     const wanted = [...new Set(options.percentiles ?? [])];
     if (wanted.length === 0 || wanted.length > 2) throw new ShareError("Choisissez un ou deux percentiles.");
     for (const w of wanted) {
-      if (w === "length") content.percentiles.push({ label: "Longueur", topPct: topPercent(results.length.percentile) });
-      else if (w === "girth") content.percentiles.push({ label: "Circonférence", topPct: topPercent(results.girth.percentile) });
-      else throw new ShareError("Option inconnue.");
+      const p = w === "length" ? results.length.percentile : w === "girth" ? results.girth.percentile : null;
+      if (p === null) throw new ShareError("Option inconnue.");
+      // Rapport photo au repos : aucun percentile de longueur n'est calculé, il ne peut donc pas être partagé.
+      if (p === undefined) throw new ShareError("Ce percentile n'est pas calculé pour ce rapport (état de repos).");
+      content.percentiles.push({ label: w === "length" ? "Longueur" : "Circonférence", topPct: topPercent(p) });
     }
   } else if (options.mode === "landmark") {
     const item = results.landmarks.find((l) => l.label === options.landmark);
@@ -70,7 +72,10 @@ export function buildCardContent(results: ReportResults, reportId: string, optio
   } else if (options.mode !== "score") {
     throw new ShareError("Option inconnue.");
   }
-  if (options.profile === true) content.profile = profileFor(results.length.percentile, results.girth.percentile).id;
+  if (options.profile === true) {
+    if (results.length.percentile === undefined || results.girth.percentile === undefined) throw new ShareError("Le profil morphologique n'est pas calculé pour ce rapport (état de repos).");
+    content.profile = profileFor(results.length.percentile, results.girth.percentile).id;
+  }
   return content;
 }
 
@@ -78,6 +83,8 @@ export async function createCard(reportId: string, options: CardOptions): Promis
   const report = await getReport(reportId);
   if (!report) throw new ShareError("Rapport introuvable.");
   if (!report.paid) throw new ShareError("Débloquez d'abord votre rapport.");
+  // Rapport partiel (photo difficile à lire) : construit sur des valeurs de référence, il n'a rien de personnel à partager.
+  if (report.results.morpho?.partielle) throw new ShareError("Un rapport partiel ne peut pas être partagé : reprenez la photo.");
   const { rows } = await pool().query("SELECT count(*)::int AS n FROM cards WHERE report_id = $1", [reportId]);
   if (rows[0].n >= MAX_CARDS_PER_REPORT) throw new ShareError(`Limite de ${MAX_CARDS_PER_REPORT} cartes par rapport atteinte.`);
   const content = buildCardContent(report.results, reportId, options);

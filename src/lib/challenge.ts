@@ -8,8 +8,9 @@ export const CHALLENGE_COOKIE = "nmb_defi";
 
 export type Side = {
   score: number;
-  lengthPercentile: number;
-  girthPercentile: number;
+  /** null : non calculé (rapport photo au repos, sans percentile de longueur). */
+  lengthPercentile: number | null;
+  girthPercentile: number | null;
   /** « declared » : valeurs déclarées (formule A) ; « photo » : estimées (formules B et C). */
   basis: "declared" | "photo";
 };
@@ -27,6 +28,7 @@ export async function createChallenge(reportId: string): Promise<string> {
   const report = await getReport(reportId);
   if (!report) throw new ChallengeError("Rapport introuvable.");
   if (!report.paid) throw new ChallengeError("Débloquez d'abord votre rapport.");
+  if (report.results.morpho?.partielle) throw new ChallengeError("Un rapport partiel ne peut pas servir de défi : reprenez la photo.");
   const existing = await pool().query("SELECT id FROM challenges WHERE creator_report_id = $1", [reportId]);
   if (existing.rows[0]) return existing.rows[0].id;
   const id = randomBytes(16).toString("base64url"); // 22 caractères
@@ -81,15 +83,15 @@ type Row = {
   creator_withdrawn: boolean;
   friend_withdrawn: boolean;
   creator_paid: boolean;
-  creator_results: { score: number; length: { percentile: number }; girth: { percentile: number }; formula: string };
+  creator_results: { score: number; length: { percentile?: number }; girth: { percentile?: number }; formula: string };
   friend_paid: boolean | null;
   friend_results: Row["creator_results"] | null;
 };
 
 const side = (r: Row["creator_results"]): Side => ({
   score: r.score,
-  lengthPercentile: r.length.percentile,
-  girthPercentile: r.girth.percentile,
+  lengthPercentile: r.length.percentile ?? null,
+  girthPercentile: r.girth.percentile ?? null,
   basis: r.formula === "A" ? "declared" : "photo",
 });
 

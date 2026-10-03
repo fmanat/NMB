@@ -1,6 +1,6 @@
 # Tester la formule photo avec VOTRE photo (5 minutes, sur votre Mac)
 
-But : lancer l'analyse photo complète du site, **en local sur votre Mac** (pas sur bitometre.com), avec votre propre photo, voir le résultat en texte, puis **supprimer la photo**. Ce document est écrit pour être suivi pas à pas, sans connaissance technique.
+But : lancer l'analyse photo complète du site, **moteur photo-report/2** (le rapport d'analyse morphométrique complet, 600 à 800 mots), **en local sur votre Mac** (pas sur bitometre.com), avec votre propre photo, voir le résultat en texte, puis **supprimer la photo**. Ce document est écrit pour être suivi pas à pas, sans connaissance technique.
 
 Ce qui se passe, en clair :
 - Votre photo reste dans le dossier `photos-test/` du projet. Ce dossier est **ignoré par git** : elle ne peut pas être envoyée sur GitHub par erreur.
@@ -25,8 +25,8 @@ Faites ces mesures **juste avant** la photo, dans **le même état** (au repos o
 
 | Mesure | Comment | Ce que fait le site |
 |---|---|---|
-| **Longueur** (cm) | Règle rigide, **sur le dessus, de la base à l'extrémité** (définition du questionnaire du site). Posez la règle **sans appuyer** : démarrez là où la peau commence, comme le fait la photo, qui ne voit que la partie visible. | La photo donne la longueur le long de la ligne médiane visible. |
-| **Circonférence** (cm) | Mètre ruban souple (ou ficelle puis règle), **au milieu, tour complet**, sans serrer (définition du questionnaire). | La photo donne π × la **largeur maximale** vue sur l'image (hypothèse de section circulaire, c'est une estimation). |
+| **Longueur** (cm) | Règle rigide, **sur le dessus (côté dorsal), du pubis à l'extrémité**, comme dans vos essais dans Grok. Notez si vous appuyez ou non au départ (voir la règle 2). | Sans carte : le modèle estime la longueur « du pubis à l'extrémité, côté dorsal » (consigne du prompt). Avec une carte exploitable : notre code mesure la longueur le long de la ligne médiane visible. |
+| **Circonférence** (cm) | Mètre ruban souple (ou ficelle puis règle), **à mi-tige, tour complet**, sans serrer. | Sans carte : le modèle estime la circonférence **à mi-tige**. Avec une carte : notre code calcule π × la **largeur maximale** vue sur l'image (hypothèse de section circulaire). |
 
 Règles de méthode (reprises de `docs/CALIBRATION.md`) :
 1. **Mesurez deux fois, gardez la moyenne**, avec une décimale. Votre propre mesure a une incertitude d'environ ± 3 à 5 mm : un écart de cet ordre entre la règle et la photo ne prouve rien.
@@ -36,14 +36,13 @@ Règles de méthode (reprises de `docs/CALIBRATION.md`) :
 
 ## 2. Faire la photo
 
-Conseils du site, sur la page d'envoi, plus les seuils réellement appliqués par le code (une photo qui ne les respecte pas est **refusée**) :
+Ce que demande le site sur la page d'envoi, et ce que fait réellement le code :
 
-- **Une carte au format bancaire** (85,6 × 54 mm) posée **à côté**, **à plat**, **entière, avec ses 4 coins visibles**. Choisissez de préférence une carte de fidélité ou un ancien badge, sans numéro sensible ; si c'est une carte bancaire, côté verso et numéros masqués, comme le demande le site.
-- **Carte et sujet sur la même surface plane** (table, plan de travail), à côté l'un de l'autre. Le calcul suppose un sujet **posé** sur la surface, pas tenu en l'air, et une carte non pliée.
-- **Vue de dessus de préférence** (appareil à la verticale : inclinaison 0°). Au-delà de **50°** d'inclinaison, la photo est refusée.
-- **La carte doit occuper au moins 15 % du grand côté de l'image** : approchez-vous ; **sans zoom** et avec l'**objectif principal** de l'appareil (pas de grand-angle, pas de mode portrait).
-- Bonne lumière, image **nette**, **pas de reflet** sur la carte.
-- **Aucun visage, ni élément identifiant** (tatouage reconnaissable, bijou, pièce reconnaissable, papier avec une adresse) dans l'image.
+- **En érection de préférence.** Au repos, le rapport est établi, mais la longueur n'est pas positionnée par un percentile (seule la circonférence l'est) et le profil morphologique n'est pas calculé.
+- **Une carte au format bancaire posée à côté : facultative mais conseillée.** Sans carte, la longueur et la circonférence sont les **estimations visuelles** du modèle. Avec une carte exploitable, c'est **notre code** qui les calcule à partir de points repérés sur la carte (badge « Taille calibrée »), et le site conserve la **paire de calibration** (mesure par la carte, estimation du modèle sans la carte : quatre nombres, rien d'autre). Pour tester la précision des estimations, **faites de préférence la photo avec la carte** : le script affiche alors les deux (mesure par la carte et estimation sans la carte), toutes deux comparées à votre règle.
+- Si vous posez une carte : une carte de fidélité ou un ancien badge, sans numéro sensible (carte bancaire : côté verso, numéros masqués), **à plat, entière, ses 4 coins visibles**, **sur la même surface plane que le sujet**, à côté de lui ; **vue de dessus de préférence** ; la carte occupe **au moins 15 % du grand côté de l'image** ; **sans zoom**, objectif principal, pas de mode portrait. Si la photo est trop inclinée (plus de **50°**), la carte trop petite ou les points peu sûrs, la carte est **écartée** (le script l'indique) et la taille reste estimée visuellement : ce n'est pas un refus.
+- Bonne lumière, image **nette**, sujet **entier**. Une photo floue, sombre ou coupée donne un **rapport partiel** (« Analyse partielle : photo difficile à lire »), pas un refus.
+- **Aucun visage, ni élément identifiant** (tatouage reconnaissable, bijou, pièce reconnaissable, papier avec une adresse) dans l'image : un visage visible entraîne un **refus**.
 - **Format** : JPEG ou PNG, **8 Mo au plus** (le script ne réduit pas la photo avant de la lire ; au-delà, réduisez-la avec la commande `sips -Z 3000` de la section 3). Une photo d'iPhone au format HEIC doit d'abord être convertie : voir la commande `sips` de la section 3.
 
 ## 3. Les commandes, pas à pas
@@ -85,7 +84,7 @@ sips -Z 3000 photos-test/ma-photo.jpg
 npm run photo:test -- --simulation --etat erection
 ```
 
-L'API et la photo sont simulées (aucune photo n'est lue, aucun coût). Vous voyez à quoi ressemble le résultat. Les valeurs affichées dans ce mode sont fixes (un objet simulé de 13 cm) : elles ne veulent rien dire.
+L'API et la photo sont simulées (aucune photo n'est lue, aucun coût). Vous voyez à quoi ressemble le résultat : en-tête, tableau des indicateurs et rapport rédigé complet. Les valeurs affichées dans ce mode sont fixes (estimations simulées de 14,2 cm et 12,1 cm) et le texte est un texte type du moteur simulé : ils ne veulent rien dire.
 
 **3.4 Le vrai test, avec votre photo**
 
@@ -99,7 +98,7 @@ npm run photo:test -- photos-test/ma-photo.jpg --etat erection --longueur 14,2 -
 - `--longueur` et `--circonference` sont facultatifs : sans eux, pas de comparaison avec la règle.
 - `--supprimer` efface la photo (écrasement puis suppression) **dès que l'analyse a été tentée, même si elle est refusée**. Si vous voulez pouvoir relancer sur la même photo, retirez `--supprimer` et supprimez à la main ensuite (3.5). Chaque lancement envoie la photo à xAI : un seul envoi suffit en général.
 - Le script **refuse de démarrer** si la photo n'est pas dans `photos-test/`, si ce dossier n'est pas ignoré par git, si la clé est vide, ou si le **plafond du jour** serait dépassé (dépensé aujourd'hui + 0,03 $ estimés pour cette analyse > `XAI_DAILY_CAP_USD`). Dans tous ces cas, aucun appel n'est envoyé et la photo n'est ni envoyée ni supprimée.
-- Comptez environ une minute d'attente (mesures précédentes : de 40 à 70 secondes ; la durée de bout en bout est à confirmer, voir la section 4).
+- Comptez environ une minute d'attente (deux appels successifs : l'appel avec la photo, puis la rédaction du rapport ; la durée réelle de bout en bout est à confirmer, voir la section 4).
 
 **3.5 Supprimer la photo (si vous n'avez pas mis `--supprimer`)**
 
@@ -119,24 +118,27 @@ Le script affiche « photos-test/ est vide. Il ne reste aucune photo. » quand c
 
 Le résultat s'affiche en texte, en cinq blocs.
 
-**a) Mesures calculées par le code.** Longueur et circonférence **estimées** (le modèle ne mesure rien : il place des points, le calcul est fait par notre code), la **marge** affichée (± 10 % au minimum : c'est le plancher du site), les **percentiles** (comparaison avec l'étude de référence Veale et al., 2015), la courbure, la symétrie, la **confiance du repérage** (sur 100), le score et le **profil morphologique**.
+**a) En-tête du rapport.** « Rapport d'analyse morphométrique n° » suivi d'un numéro à 5 chiffres, l'**état observé** par le modèle (repos ou érection), la **méthode** (« estimation visuelle » ou « mesure calibrée », avec la raison si une carte a été détectée puis écartée), le score global et le profil morphologique (en érection seulement).
 
-**b) Écart avec vos mesures à la règle.** Pour chaque mesure : valeur estimée, valeur à la règle, **écart en cm et en %** (estimé − règle, en % de la règle), et « dans la marge affichée : oui / NON ».
+**b) Écart avec vos mesures à la règle.** Pour chaque mesure : valeur retenue par le site, valeur à la règle, **écart en cm et en %** (retenu − règle, en % de la règle), et « dans ± 10 % : oui / NON » (repère seulement : le rapport n'affiche plus de marge). Si la carte a servi, deux lignes de plus donnent l'**estimation du modèle sans la carte** comparée à la règle : c'est exactement la paire de calibration que le site conserverait.
 
 | Si… | Alors… |
 |---|---|
-| L'écart est **dans la marge affichée** | C'est le comportement attendu (la marge est justement faite pour cela). Ce n'est **pas** une preuve de précision avec un seul essai. |
-| L'écart est **hors de la marge** (« NON ») | Signal à noter : la marge annoncée serait trop optimiste pour cette photo. Relevez aussi la confiance, la taille de la carte et l'inclinaison. **Ne tirez aucune conclusion d'un seul essai.** |
-| Un **grand** écart avec une **faible confiance** | Probablement un problème de prise de vue (flou, carte mal visible, pose). Refaire la photo en suivant la section 2. |
-| Une circonférence plus petite ou plus grande que la règle, longueur correcte | Pensez à la différence « milieu » (règle) contre « largeur maximale » (photo), section 1. |
+| L'écart est **dans ± 10 %** | Résultat cohérent avec vos essais dans Grok (« à quelques pour cent »). Un seul essai ne prouve rien. |
+| L'écart est **hors de ± 10 %** (« NON ») | Signal à noter, avec la méthode (carte ou non) et l'état. **Ne tirez aucune conclusion d'un seul essai.** |
+| Mesure par la carte juste, estimation sans la carte éloignée | La carte joue son rôle : c'est ce que le graphique de calibration de l'administration permettra de suivre. |
+| Une circonférence plus petite ou plus grande que la règle, longueur correcte | Le modèle estime la circonférence **à mi-tige** ; la mesure par la carte utilise la **largeur maximale** (π × largeur). Comparez avec la mesure de la section 1 qui correspond. |
 
-**Quel écart est « normal » ? Le site n'a pas de seuil établi** et ce document n'en invente pas. Ce qui existe : la marge affichée (± 10 % minimum) ; en **simulation** (repérage parfait), l'erreur maximale est de 6,1 % et le repérage bruité reste dans la marge dans 94 % des cas (`docs/CALIBRATION.md`) ; un premier essai réel avec règle, le 30/09/2026, a donné +6 % (longueur) et −9 % (circonférence), sur une seule photo (`docs/TEST-XAI.md`, section 6). **L'écart de référence reste à établir avec plusieurs essais** (objectif de `docs/CALIBRATION.md` : au moins 15 photos, dont des objets neutres ; la règle de décision du site est « 90 % ou plus dans la marge »). Chacun de vos essais est un point de plus.
+**Quel écart est « normal » ? Le site n'a pas de seuil établi** et ce document n'en invente pas. Ce qui existe : vos cinq essais dans Grok (estimations à quelques pour cent de la règle) ; en **simulation**, le calcul par la carte a une erreur maximale de 6,1 % (`docs/CALIBRATION.md`) ; un premier essai réel du moteur précédent, le 30/09/2026, avait donné +6 % (longueur) et −9 % (circonférence). **L'écart de référence reste à établir avec plusieurs essais** : chacun de vos essais est un point de plus.
 
-**c) Rapport standardisé.** **Trois observations** (qualité du repérage, cadrage, cohérence des estimations) et **un verdict d'une phrase**, rédigés par le modèle **sans aucun chiffre** (les chiffres viennent du code). Si le modèle répond d'une façon non conforme, le script **relance une seule fois** puis, si c'est encore invalide, affiche un refus (motif `commentaire_invalide`) : c'est le même comportement que le site.
+**c) Rapport rédigé.** La synthèse, le tableau des sept indicateurs (longueur, circonférence, courbure, Indice de rectitude axiale, Coefficient de symétrie bilatérale, Index de conicité distale, Indice de typicité) avec leurs appréciations, les six rubriques, les trois points remarquables, la conclusion et la Note du laboratoire, avec le **nombre de mots**. Tous les chiffres viennent du code ; le texte est **vérifié par le code** avant d'être accepté (mots interdits, couleurs, prépuce, parties voisines, éclairage et cadrage, précautions hors de la Note, avis médical à partir de 30°, valeurs non fournies). En cas de violation, le modèle est relancé **une fois** avec la liste des règles violées ; si le texte viole encore un interdit, le résultat est un **rapport partiel**.
 
-**d) Refus ou erreur.** Un refus affiche son **motif technique** parmi : `carte_absente_ou_illisible`, `visage_visible`, `plusieurs_personnes`, `sujet_non_conforme`, `image_non_originale`, `doute_majorite`, `inclinaison_trop_forte`, `carte_trop_petite`, `confiance_faible`, `mesure_invraisemblable`, `calcul_impossible`, `recevabilite_invalide`, `reperage_incomplet`, `commentaire_invalide`. (Le site, lui, n'affiche aux visiteurs qu'un message neutre.) Le 30/09/2026, la photo du premier essai avait été refusée pour `carte_absente_ou_illisible`.
+**d) Refus ou rapport partiel.**
+- **Refus** (aucun rapport, le site n'affiche qu'un message neutre) ; motif technique parmi : `visage_visible`, `plusieurs_personnes`, `sujet_non_conforme`, `image_non_originale`, `doute_majorite`, `refus_prestataire` (le prestataire a refusé de traiter l'image).
+- **Rapport partiel** (« Analyse partielle : photo difficile à lire » : rapport générique sur les valeurs de référence, sans aucune mesure, avec un conseil de reprise) ; cause technique parmi : `partiel_qualite_insuffisante` (photo floue, sombre ou coupée), `partiel_vision_invalide` (réponse non conforme deux fois), `partiel_estimation_invraisemblable`, `partiel_redaction_interdits` (rédaction qui viole un interdit deux fois), `partiel_redaction_refusee`, `partiel_fournisseur_timeout` ou `partiel_fournisseur_network` (panne ou délai du prestataire).
+- Carte détectée mais **écartée** (la taille reste estimée, le rapport est complet) : `inclinaison_trop_forte`, `carte_trop_petite`, `confiance_faible`, `mesure_invraisemblable`, `calcul_impossible`.
 
-**e) Appels, durée, coût.** Nombre d'appels à l'API (3 normalement : recevabilité et repérage en parallèle, puis rédaction ; **une relance de plus par réponse invalide**), détail par appel (durée, jetons, coût), durée par étape, jetons totaux, **coût en dollars** (jetons × `XAI_PRICE_IN_PER_M` / `XAI_PRICE_OUT_PER_M`) et **cumul du jour** par rapport au plafond `XAI_DAILY_CAP_USD`. Repères mesurés (non garantis) : environ 0,02 $ par analyse complète ; appel avec photo de 21 à 48 s, rédaction d'environ 19 s (`docs/TEST-XAI.md`, `docs/SESSION-NUIT-4.md`). **La durée de bout en bout avec le vrai moteur n'a pas encore été mesurée** : votre essai la donnera.
+**e) Appels, durée et coût.** Nombre d'appels à l'API (**2** normalement : l'appel avec la photo, puis la rédaction sans la photo ; **une relance de plus par réponse rejetée**), détail par appel (durée, jetons, coût), durée par étape, jetons totaux, **coût en dollars** (jetons × `XAI_PRICE_IN_PER_M` / `XAI_PRICE_OUT_PER_M`) et **cumul du jour** par rapport au plafond `XAI_DAILY_CAP_USD`. Repères mesurés sans photo le 03/10/2026 (`docs/SESSION-MOTEUR.md`) : voir le journal ; **la durée et le coût avec une vraie photo restent à mesurer** : votre essai les donnera.
 
 ## 5. Supprimer la photo à la fin et vérifier qu'il ne reste rien
 
@@ -160,10 +162,10 @@ Copiez **tout le texte affiché par le script** (il ne contient ni la photo, ni 
 
 Puis répondez aux questions (une lettre chacune) :
 
-1. Le test s'est-il déroulé… **A.** jusqu'au bout avec un résultat · **B.** refus de la photo (motif affiché) · **C.** erreur ou message du script · **D.** il n'a pas démarré.
+1. Le test s'est-il déroulé… **A.** jusqu'au bout avec un rapport complet · **B.** refus de la photo (motif affiché) · **C.** rapport partiel (cause affichée) · **D.** il n'a pas démarré.
 2. L'attente vous a semblé… **A.** acceptable (moins d'une minute et demie) · **B.** longue · **C.** trop longue pour un visiteur.
-3. Les trois observations et le verdict étaient… **A.** cohérents avec votre photo · **B.** trop génériques · **C.** hors sujet ou déplacés · **D.** je n'ai pas eu de rapport.
-4. Voulez-vous refaire un essai… **A.** avec un objet neutre (plus de points de calibration sans nouvelle photo intime) · **B.** avec la même prise de vue, autre éclairage · **C.** non, pas pour l'instant.
+3. Le rapport rédigé était… **A.** fidèle à votre photo et au ton demandé (clinique, valorisant) · **B.** juste mais trop générique ou répétitif · **C.** inexact ou déplacé par endroits (dites où) · **D.** je n'ai pas eu de rapport complet.
+4. Voulez-vous refaire un essai… **A.** avec la carte si vous n'en aviez pas (ou sans, si vous en aviez une), pour comparer les deux méthodes · **B.** avec la même prise de vue, autre éclairage · **C.** non, pas pour l'instant.
 5. Pour la longueur à la règle, vous avez mesuré… **A.** de la base visible à l'extrémité, sans appuyer · **B.** en appuyant au fond (méthode « os-extrémité ») · **C.** les deux (notez les deux valeurs).
 
 Cases à cocher, à me confirmer :
@@ -177,5 +179,6 @@ Cases à cocher, à me confirmer :
 ## Pour mémoire : fonctionnement technique
 
 - Commandes : `npm run photo:test` (`scripts/photo-test.mts`) et `npm run photo:supprimer` (`scripts/photo-supprimer.mts`), logique dans `scripts/lib/photoTest.ts`, testée par `tests/photo-test.test.ts` (API simulée, image neutre fabriquée, sans réseau).
-- La chaîne est **exactement** celle du site (`runAnalysis` de `src/lib/analyseFlow.ts`) : réencodage, filtrage (aucun : comme le site sans prestataire), recevabilité et repérage validés (une relance), calculs, rédaction validée (une relance), profil. Seules différences : les écritures en base sont remplacées par un magasin en mémoire (option « sans base », la seule disponible), le captcha et la vérification d'âge sont sans objet (test local du propriétaire), et la porte de dépense lit un petit fichier local au lieu de la base.
-- Mode simulation : `createSimulatedVision` (objet de 13 cm, scénario « ok »). Le mode réel utilise `xaiVision` et la clé de `.env`.
+- La chaîne est **exactement** celle du site (`runAnalysis` de `src/lib/analyseFlow.ts`, moteur photo-report/2) : réencodage, filtrage (aucun : comme le site sans prestataire), appel vision validé (une relance), mesure calibrée sur la carte ou estimation, calculs par le code (`src/lib/morpho.ts`), rédaction vérifiée (`src/lib/vision/reportText.ts`, une relance), rapport complet ou partiel. Prompts : `src/lib/vision/prompts/photo-report-v2.ts`. Seules différences : les écritures en base sont remplacées par un magasin en mémoire (option « sans base », la seule disponible ; la paire de calibration est affichée, pas enregistrée), le captcha et la vérification d'âge sont sans objet (test local du propriétaire), et la porte de dépense lit un petit fichier local au lieu de la base.
+- Les observations brutes du modèle ne sont jamais affichées par le script, ni stockées ou journalisées par le site : seul le rapport final l'est.
+- Mode simulation : `createSimulatedVision` (scénario « ok » : estimation visuelle sans carte, en érection). Le mode réel utilise `xaiVision` et la clé de `.env`.

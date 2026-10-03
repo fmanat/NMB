@@ -52,6 +52,8 @@ export async function createReport(args: {
   ipHash: string | null;
   /** Bêta gratuite : le rapport est débloqué sans paiement (et exclu des statistiques de conversion). */
   freeBeta?: boolean;
+  /** Faux pour un rapport photo PARTIEL (aucune mesure) : il n'entre pas dans le journal anonyme des scores. */
+  log?: boolean;
 }): Promise<string> {
   const id = newReportId();
   const client = await pool().connect();
@@ -64,12 +66,14 @@ export async function createReport(args: {
     );
     // Journal anonyme durable : survit à la suppression du rapport et à la purge des rapports non payés.
     // paid_at reste vide pour un rapport de la bêta gratuite : il n'a rien payé et ne compte ni dans la conversion ni dans le bandeau.
-    await client.query("INSERT INTO report_log (key, formula, score, created_at, free_beta) VALUES ($1, $2, $3, now(), $4)", [
-      reportKey(id),
-      args.formula,
-      args.results.score,
-      free,
-    ]);
+    if (args.log !== false) {
+      await client.query("INSERT INTO report_log (key, formula, score, created_at, free_beta) VALUES ($1, $2, $3, now(), $4)", [
+        reportKey(id),
+        args.formula,
+        args.results.score,
+        free,
+      ]);
+    }
     await client.query("COMMIT");
   } catch (e) {
     await client.query("ROLLBACK");
@@ -183,4 +187,23 @@ export async function addAttemptTokens(id: number, tokensIn: number, tokensOut: 
 
 export async function updateComment(reportId: string, comment: string): Promise<void> {
   await pool().query("UPDATE reports SET results = jsonb_set(results, '{comment}', to_jsonb($2::text)) WHERE id = $1", [reportId, comment]);
+}
+
+// ---------- Calibration du moteur photo (photo-report/2) ----------
+
+/** Paire (mesure par la carte, estimation du modèle sans la carte), en centimètres. Aucune autre donnée n'est conservée. */
+export type CalibrationPair = { cardLengthCm: number; modelLengthCm: number; cardGirthCm: number; modelGirthCm: number };
+
+export async function saveCalibrationPair(p: CalibrationPair): Promise<void> {
+  await pool().query("INSERT INTO calibration_pairs (card_length_cm, model_length_cm, card_girth_cm, model_girth_cm) VALUES ($1, $2, $3, $4)", [
+    p.cardLengthCm,
+    p.modelLengthCm,
+    p.cardGirthCm,
+    p.modelGirthCm,
+  ]);
+}
+
+export async function listCalibrationPairs(): Promise<CalibrationPair[]> {
+  const { rows } = await pool().query("SELECT card_length_cm, model_length_cm, card_girth_cm, model_girth_cm FROM calibration_pairs");
+  return rows.map((r) => ({ cardLengthCm: r.card_length_cm, modelLengthCm: r.model_length_cm, cardGirthCm: r.card_girth_cm, modelGirthCm: r.model_girth_cm }));
 }

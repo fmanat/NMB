@@ -17,7 +17,7 @@ export default function Page() {
       <p>
         Les valeurs sont des estimations statistiques. Elles ne constituent ni un diagnostic ni un avis médical. La
         circonférence est déduite de la largeur en supposant une section circulaire ; c&apos;est une hypothèse, pas une
-        mesure directe. La marge d&apos;erreur annoncée n&apos;est jamais inférieure à ± 10 %.
+        mesure directe.
       </p>
       <h2>Percentiles</h2>
       <p>
@@ -61,23 +61,27 @@ export default function Page() {
         <>
         <h2>Mesures estimées à partir d&apos;une photo</h2>
         <p>
-          Le modèle d&apos;analyse ne mesure rien : il repère des points (coins de la carte de référence, base et extrémité, ligne
-          médiane, bords). Tous les calculs sont faits par notre code : position et inclinaison de l&apos;appareil déduites de la carte
-          au format bancaire (85,60 × 53,98 mm), sous l&apos;hypothèse d&apos;un sujet posé sur la même surface que la carte, longueur le long de la ligne médiane, largeurs, circonférence estimée = π × largeur
-          maximale, courbure (angle entre les segments proximal et distal), symétrie (écart entre demi-largeurs gauche et droite,
-          100 = identiques) et conicité (largeur sous le gland / largeur à la base).
+          L&apos;analyse d&apos;une photo se fait en deux appels au modèle d&apos;analyse. Le premier, avec la photo, contrôle sa recevabilité
+          (une seule personne, aucun visage, sujet conforme, image originale, aucun doute sur la majorité, qualité suffisante) et renvoie des
+          estimations : état, longueur, circonférence à mi-tige, courbure, symétrie, proportions du gland et conicité, ainsi que des
+          observations descriptives. Le second, sans la photo, rédige le rapport à partir de ces observations et des valeurs calculées par le
+          site ; il ne calcule rien, et le site vérifie le texte (vocabulaire, valeurs citées, structure) avant de l&apos;afficher.
         </p>
         <p>
-          La marge d&apos;erreur de chaque mesure dépend de la confiance du repérage, de la taille de la carte dans l&apos;image et de
-          l&apos;inclinaison de l&apos;appareil ; elle n&apos;est jamais inférieure à ± 10 %. Une photo trop inclinée (plus de 50°) ou où
-          la carte est trop petite est refusée, car la précision serait insuffisante. La précision du calcul a été vérifiée sur des
-          prises de vue simulées ; elle n&apos;a pas encore été validée sur un grand nombre de photos réelles de référence.
+          Si une carte au format bancaire (85,60 × 53,98 mm) est posée à côté, entière et lisible, le modèle repère aussi des points (coins
+          de la carte, base, extrémité, ligne médiane, bords) et c&apos;est notre code qui calcule la longueur et la circonférence (position et
+          inclinaison de l&apos;appareil déduites de la carte, circonférence = π × largeur maximale) : le rapport porte alors le badge « Taille
+          calibrée ». Sans carte, ou si la photo est trop inclinée pour un calcul fiable, la longueur et la circonférence sont les estimations
+          visuelles du modèle. Dans les deux cas, ce sont des estimations ; leur écart avec des mesures à la règle n&apos;a été vérifié que sur
+          un petit nombre de photos.
         </p>
         <p>
-          Le commentaire d&apos;un rapport photo suit un modèle fixe : trois observations courtes et un verdict d&apos;une phrase, rédigés par le modèle
-          d&apos;analyse à partir d&apos;indicateurs calculés par le site (il ne reçoit aucune mesure en centimètres et n&apos;en fournit aucune), puis
-          vérifiés par le site : aucun chiffre, aucun jugement sur la personne, aucun vocabulaire médical. Une réponse non conforme est demandée une
-          seconde fois, puis l&apos;analyse est abandonnée et il vous est proposé de reprendre la photo.
+          Tous les autres chiffres sont calculés par le site : percentiles (au repos, seule la circonférence est positionnée), Indice de
+          rectitude axiale (100 à 0°, 0 à partir de 45°), Coefficient de symétrie bilatérale, Index de conicité distale (100 pour une
+          largeur constante), Indice de typicité (moyenne de 100 − 2 × |percentile − 50| : « morphotype classique » à partir de 70,
+          « distinctif » de 40 à 69, « singulier » en dessous) et score global. Si l&apos;analyse échoue pour une raison technique (photo
+          difficile à lire, panne ou réponse invalide du modèle après une seconde tentative), un rapport partiel est affiché : il ne contient
+          que les valeurs de référence de la population et vous invite à reprendre la photo.
         </p>
         <h2>Traitement de la photo</h2>
         <p>

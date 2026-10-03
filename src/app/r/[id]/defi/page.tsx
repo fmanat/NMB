@@ -25,12 +25,16 @@ function Row({ label, me, other }: { label: string; me: string; other: string })
   );
 }
 
+/** Percentile affiché, ou « — » s'il n'est pas calculé (rapport photo au repos). */
+const pct = (p: number | null) => (p === null ? "—" : f1(p));
+
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ erreur?: string }> }) {
   const { id } = await params;
   const { erreur } = await searchParams;
   const view = await getReportView(id);
   if (view.status === "not_found") notFound();
   if (view.status === "locked") redirect(`/r/${id}`);
+  if (view.results.morpho?.partielle) redirect(`/r/${id}`); // rapport partiel : pas de défi
   const state = await getChallengeState(id);
 
   const h = await headers();
@@ -90,8 +94,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
               </thead>
               <tbody>
                 <Row label="Score" me={`${state.me.score} / 100`} other={`${state.other.score} / 100`} />
-                <Row label="Percentile de longueur" me={f1(state.me.lengthPercentile)} other={f1(state.other.lengthPercentile)} />
-                <Row label="Percentile de circonférence" me={f1(state.me.girthPercentile)} other={f1(state.other.girthPercentile)} />
+                <Row label="Percentile de longueur" me={pct(state.me.lengthPercentile)} other={pct(state.other.lengthPercentile)} />
+                <Row label="Percentile de circonférence" me={pct(state.me.girthPercentile)} other={pct(state.other.girthPercentile)} />
                 <Row label="Base des valeurs" me={basisLabel(state.me)} other={basisLabel(state.other)} />
               </tbody>
             </table>

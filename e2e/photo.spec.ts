@@ -27,8 +27,10 @@ test.describe("Formules B et C (photo neutre, moteurs simulés)", () => {
     await sendPhoto(page, { formula: "B", image: big });
     // Étapes réellement exécutées puis rapport (verrouillé).
     await expect(page.getByRole("heading", { name: "Votre rapport est prêt" })).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByText("Indice de confiance")).toBeVisible();
-    await expect(page.getByText("Symétrie")).toBeVisible();
+    // Avant paiement, deux indicateurs seulement (photo-report/2) : symétrie bilatérale et rectitude axiale.
+    await expect(page.getByText("Coefficient de symétrie bilatérale")).toBeVisible();
+    await expect(page.getByText("Indice de rectitude axiale")).toBeVisible();
+    await expect(page.getByText(/Synthèse|Tableau des indicateurs|Note du laboratoire/)).toHaveCount(0);
 
     const b64 = await page.evaluate(() => (window as unknown as { __posted?: string }).__posted ?? null);
     expect(b64).not.toBeNull();
@@ -41,12 +43,14 @@ test.describe("Formules B et C (photo neutre, moteurs simulés)", () => {
     expect(body.includes(Buffer.from("METADONNEE-DE-TEST"))).toBe(false);
 
     await payReport(page);
-    await expect(page.getByRole("cell", { name: /cm$/ }).first()).toBeVisible();
-    await expect(page.getByText("Conicité")).toBeVisible();
-    // Commentaire standardisé (bloc 6) : trois observations et un verdict, sans chiffre.
-    await expect(page.locator("[data-observation]")).toHaveCount(3);
-    await expect(page.locator("[data-verdict]")).toBeVisible();
-    for (const t of await page.locator("[data-observation], [data-verdict]").allInnerTexts()) expect(t).not.toMatch(/\d/);
+    // Compte rendu photo-report/2 : en-tête numéroté, tableau des sept indicateurs, rubriques, trois points remarquables, conclusion, note.
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Rapport d'analyse morphométrique n°\s\d{5}$/);
+    await expect(page.locator("[data-indicator]")).toHaveCount(7);
+    await expect(page.getByRole("heading", { name: "Index de conicité distale" })).toHaveCount(0);
+    await expect(page.locator("[data-indicator=conicite]")).toContainText("Index de conicité distale");
+    await expect(page.locator("[data-section]")).toHaveCount(6);
+    await expect(page.locator("[data-highlight]")).toHaveCount(3);
+    await expect(page.locator("[data-note]")).toBeVisible();
 
     // La photo n'a laissé aucune trace en base : pas de colonne binaire, pas d'octets JPEG dans les tables.
     await withDb(async (db) => {
@@ -113,7 +117,7 @@ test.describe("Formules B et C (photo neutre, moteurs simulés)", () => {
     expect(after).toBe(before);
   });
 
-  test("confiance basse : refus neutre, aucun paiement demandé, aucun rapport créé", async ({ browser, ip }) => {
+  test("photo non recevable : refus neutre, aucun paiement demandé, aucun rapport créé", async ({ browser, ip }) => {
     const ctx = await browser.newContext({ baseURL: E2E.lowUrl, extraHTTPHeaders: { "x-forwarded-for": ip } });
     const page = await ctx.newPage();
     const before = await withDb(async (db) => (await db.query("SELECT count(*)::int AS n FROM reports")).rows[0].n);

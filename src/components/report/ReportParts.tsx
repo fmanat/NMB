@@ -15,11 +15,11 @@ export function PercentilePositions({ results: r, className = "mt-5" }: { result
     <div className={`${className} grid gap-3 text-left sm:grid-cols-2`}>
       <div className="rounded-[10px] bg-[var(--bm-blue-050)] border border-[var(--bm-blue-100)] p-4">
         <p className="t-caption text-muted uppercase tracking-[0.08em]">Longueur</p>
-        <p className="num font-semibold mt-1">{aboveText(r.length.percentile)}</p>
+        <p className="num font-semibold mt-1">{r.length.percentile !== undefined ? aboveText(r.length.percentile) : "Non positionnée au repos"}</p>
       </div>
       <div className="rounded-[10px] bg-[var(--bm-blue-050)] border border-[var(--bm-blue-100)] p-4">
         <p className="t-caption text-muted uppercase tracking-[0.08em]">Circonférence</p>
-        <p className="num font-semibold mt-1">{aboveText(r.girth.percentile)}</p>
+        <p className="num font-semibold mt-1">{r.girth.percentile !== undefined ? aboveText(r.girth.percentile) : "—"}</p>
       </div>
     </div>
   );
@@ -40,7 +40,7 @@ export function DimensionMetrics({ results: r, landmark = true }: { results: Rep
         unit="cm"
         interpretation={`${declared ? "Valeur déclarée" : `Estimation, marge ± ${r.length.marginPct} %`} · médiane de référence ${f1(r.length.referenceMedian)} cm`}
       >
-        <PercentileBar percentile={r.length.percentile} label="Percentile de longueur" />
+        {r.length.percentile !== undefined && <PercentileBar percentile={r.length.percentile} label="Percentile de longueur" />}
         <DistributionChart label="Longueur" value={r.length.value} mean={lenRef.mean} sd={lenRef.sd} />
       </MetricCard>
       <MetricCard
@@ -50,7 +50,7 @@ export function DimensionMetrics({ results: r, landmark = true }: { results: Rep
         unit="cm"
         interpretation={`${declared ? "Valeur déclarée" : `Estimation, marge ± ${r.girth.marginPct} %`} · médiane de référence ${f1(r.girth.referenceMedian)} cm`}
       >
-        <PercentileBar percentile={r.girth.percentile} label="Percentile de circonférence" />
+        {r.girth.percentile !== undefined && <PercentileBar percentile={r.girth.percentile} label="Percentile de circonférence" />}
         <DistributionChart label="Circonférence" value={r.girth.value} mean={girthRef.mean} sd={girthRef.sd} />
       </MetricCard>
     </>

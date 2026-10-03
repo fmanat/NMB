@@ -529,4 +529,7 @@ main:focus { outline: none !important; }
 @media print {
   .site-header, .site-footer, .no-print { display: none !important; }
   body { background: #fff; }
+  /* Compte rendu morphométrique (photo-report/2) : rubriques et lignes du tableau jamais coupées entre deux pages. */
+  .morpho-section, .morpho-table tr { break-inside: avoid; }
+  .morpho-table th, .morpho-table td { height: auto; padding: 6px 10px; }
 }

@@ -56,6 +56,7 @@ Un secret = une longue chaîne de caractères aléatoires (au moins 32), différ
 | `XAI_API_KEY` | Clé de l'API xAI. Reste sur le serveur, jamais envoyée au navigateur. | Si `xai` |
 | `XAI_MODEL` | Modèle xAI. Vide = `grok-4.7` (celui qui a été testé). | Non |
 | `XAI_EFFORT` | Effort de raisonnement : `low` (recommandé, le plus rapide). Ne pas laisser vide : 10 fois plus lent. | Non |
+| `XAI_TEXT_MODEL` | Modèle de la rédaction du rapport photo (appel sans la photo). Vide = `grok-4.20-0309-non-reasoning` (sans raisonnement : environ 9 s et 0,006 $ par rédaction, contre 199 s et 0,11 $ avec `grok-4.7`, mesuré le 03/10/2026). | Non |
 | `XAI_PRICE_IN_PER_M`, `XAI_PRICE_OUT_PER_M` | Tarifs xAI (dollars par million de jetons), pour calculer le coût réel d'une analyse dans l'administration. À mettre à jour si xAI change ses prix. | Non |
 | `AGE_PROVIDER` | Vérification d'âge : `simulation` en local ; en production `ageverif` (adaptateur prêt, jamais essayé avec le vrai prestataire) ; `yoti` : adaptateur **non écrit**, ne pas utiliser (voir docs/ACTIVATION-PHOTO.md). | Oui (B, C) |
 | `SCREENING_PROVIDER` | Filtrage des images par empreinte : **optionnel**. Vide = aucun filtrage (accepté partout, un avertissement est journalisé au démarrage et à chaque analyse ; le site ne prétend jamais qu'un filtrage a eu lieu) ; `simulation` ou `off` : local uniquement ; prestataire réel : aucun adaptateur disponible à ce jour. | Non |

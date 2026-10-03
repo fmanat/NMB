@@ -20,7 +20,7 @@ const NOTE = {
 // Bêta photo (bêta gratuite + PHOTO_BETA active) : deux protocoles gratuits, A et B ; libellés qui ne promettent que ce qui est fait.
 const BETA_NOTE = {
   A: "Mesures que vous déclarez, sans photo. Rapport immédiat.",
-  B: "Mesures estimées à partir de votre photo par un modèle d'analyse (xAI, États-Unis), marge d'erreur d'au moins ± 10 %. Vérification d'âge par un prestataire tiers avant l'envoi.",
+  B: "Rapport morphométrique établi à partir de votre photo par un modèle d'analyse (xAI, États-Unis) : estimation visuelle, ou mesure calibrée si une carte au format bancaire figure sur la photo. Vérification d'âge par un prestataire tiers avant l'envoi.",
 } as const;
 
 function BetaChoice() {

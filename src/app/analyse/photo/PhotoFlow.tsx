@@ -117,8 +117,12 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
         <h2 className="font-semibold">Consignes photo</h2>
         <GuidanceDiagram />
         <ul className="text-sm text-muted list-disc pl-5 space-y-1">
-          <li>Une carte au format bancaire posée à côté, côté verso visible (numéros masqués), entière, avec ses 4 coins visibles.</li>
-          <li>Vue de profil ou de dessus, bien éclairée, sujet et carte dans le même plan.</li>
+          <li>Photo en érection recommandée : elle permet une lecture complète des dimensions (au repos, la longueur n&apos;est pas positionnée par un percentile).</li>
+          <li>
+            Carte de référence facultative mais conseillée : une carte au format bancaire posée à côté, côté verso visible (numéros masqués), entière, avec
+            ses 4 coins visibles, dans le même plan que le sujet. Elle permet une mesure calibrée (badge « Taille calibrée »).
+          </li>
+          <li>Vue de profil ou de dessus, bien éclairée, sujet entier et net.</li>
           <li>Aucun visage ni autre élément identifiant.</li>
         </ul>
       </section>

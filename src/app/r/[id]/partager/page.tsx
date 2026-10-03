@@ -16,6 +16,10 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const view = await getReportView(id);
   if (view.status === "not_found") notFound();
   if (view.status === "locked") redirect(`/r/${id}`);
+  // Rapport partiel (photo difficile à lire) : rien de personnel à partager.
+  if (view.results.morpho?.partielle) redirect(`/r/${id}`);
+  // Rapport photo au repos : pas de percentile de longueur, donc ni percentile de longueur ni profil sur la carte.
+  const hasLength = view.results.length.percentile !== undefined;
   const cards = await listCards(id);
 
   return (
@@ -37,7 +41,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <span className="text-foreground">Score et un ou deux percentiles</span>
           </label>
           <div className="pl-6 flex gap-4 text-sm">
-            <label className="flex items-center gap-2"><input type="checkbox" name="p_length" className="accent-[var(--accent)]" /> Longueur</label>
+            {hasLength && <label className="flex items-center gap-2"><input type="checkbox" name="p_length" className="accent-[var(--accent)]" /> Longueur</label>}
             <label className="flex items-center gap-2"><input type="checkbox" name="p_girth" className="accent-[var(--accent)]" /> Circonférence</label>
           </div>
         </div>
@@ -52,15 +56,17 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             ))}
           </select>
         </div>
-        <div className="space-y-1 border-t border-border pt-4">
-          <label className="flex items-start gap-2 text-sm">
-            <input type="checkbox" name="profile" className="mt-1 accent-[var(--accent)]" aria-describedby="profil-aide" />
-            <span className="text-foreground">Ajouter mon profil morphologique</span>
-          </label>
-          <p id="profil-aide" className="pl-6 t-small text-muted">
-            Le nom du profil (pas sa description) apparaît sur la carte publique et ses images. Désactivé par défaut : sans cette case, la carte ne le montre pas.
-          </p>
-        </div>
+        {hasLength && (
+          <div className="space-y-1 border-t border-border pt-4">
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" name="profile" className="mt-1 accent-[var(--accent)]" aria-describedby="profil-aide" />
+              <span className="text-foreground">Ajouter mon profil morphologique</span>
+            </label>
+            <p id="profil-aide" className="pl-6 t-small text-muted">
+              Le nom du profil (pas sa description) apparaît sur la carte publique et ses images. Désactivé par défaut : sans cette case, la carte ne le montre pas.
+            </p>
+          </div>
+        )}
         <button type="submit" className="btn btn-primary btn-block-mobile">Créer la carte</button>
       </form>
 

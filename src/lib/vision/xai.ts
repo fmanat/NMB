@@ -1,13 +1,16 @@
-import { PROMPT_RECEVABILITE, PROMPT_REPERAGE, SYSTEM_COMMENT, SYSTEM_VISION, commentPrompt } from "./prompts";
-import { COMMENTAIRE_SCHEMA, RECEVABILITE_SCHEMA, REPERAGE_SCHEMA } from "./schema";
-import { VisionError, type CommentInput, type Usage, type VisionProvider, type VisionResult } from "./types";
+import { PROMPT_VISION_V2, SYSTEM_TEXT_V2, SYSTEM_VISION_V2, textPrompt } from "./prompts";
+import { reportTextJsonSchema } from "./reportText";
+import { VISION_SCHEMA_V2 } from "./schema2";
+import { VisionError, type ReportTextInput, type Usage, type VisionProvider } from "./types";
 
 const API_URL = "https://api.x.ai/v1/chat/completions";
 const TIMEOUT_MS = 150_000;
+/** Modèle de rédaction par défaut : sans raisonnement (réglable par XAI_TEXT_MODEL). */
+export const DEFAULT_TEXT_MODEL = "grok-4.20-0309-non-reasoning";
 
 type ChatResponse = {
   choices?: { message?: { content?: string; refusal?: string | null }; finish_reason?: string }[];
-  usage?: { prompt_tokens?: number; completion_tokens?: number };
+  usage?: { prompt_tokens?: number; completion_tokens?: number; completion_tokens_details?: { reasoning_tokens?: number } };
   error?: { message?: string } | string;
 };
 
@@ -17,6 +20,9 @@ function config() {
   return {
     key,
     model: process.env.XAI_MODEL || "grok-4.7",
+    // Modèle de la rédaction (appel texte, sans la photo) : sans raisonnement par défaut. Mesuré le 03/10/2026 avec grok-4.7
+    // (raisonnement « low ») : 199 s et environ 0,11 $ pour une rédaction, ce qui dépasse le délai de la page d'analyse.
+    textModel: process.env.XAI_TEXT_MODEL || DEFAULT_TEXT_MODEL,
     // Raisonnement réduit : mesuré le 01/10/2026 (docs/DECISIONS.md). Vide = réglage par défaut du modèle, beaucoup plus lent.
     effort: process.env.XAI_EFFORT === undefined ? "low" : process.env.XAI_EFFORT,
   };
@@ -57,7 +63,10 @@ async function chat(body: Record<string, unknown>): Promise<{ json: ChatResponse
 }
 
 function usageOf(json: ChatResponse, ms: number, calls: number): Usage {
-  return { tokensIn: json.usage?.prompt_tokens ?? 0, tokensOut: json.usage?.completion_tokens ?? 0, ms, calls };
+  // Les jetons de raisonnement sont facturés comme des jetons de sortie (documentation xAI) : ils sont comptés avec eux.
+  // Mesuré le 03/10/2026 : 16 132 jetons de raisonnement pour 1 487 jetons de texte sur une rédaction, soit l'essentiel du coût.
+  const out = (json.usage?.completion_tokens ?? 0) + (json.usage?.completion_tokens_details?.reasoning_tokens ?? 0);
+  return { tokensIn: json.usage?.prompt_tokens ?? 0, tokensOut: out, ms, calls };
 }
 
 function baseBody(system: string, content: unknown) {
@@ -95,7 +104,7 @@ type Parsed = { json: unknown; refused: boolean; usage: Usage };
  * Un appel en JSON strict (sortie structurée : schéma JSON versionné) ; si le format strict est rejeté par l'API, une requête
  * en « json_object » est tentée (la validation zod du flux d'analyse reste la garantie finale).
  */
-async function structuredCall(body: ReturnType<typeof baseBody>, name: string, schema: object): Promise<Parsed> {
+async function structuredCall(body: ReturnType<typeof baseBody> & { temperature?: number }, name: string, schema: object): Promise<Parsed> {
   let resp: { json: ChatResponse; ms: number };
   let calls = 1;
   try {
@@ -112,51 +121,37 @@ async function structuredCall(body: ReturnType<typeof baseBody>, name: string, s
   return { json: parseJson(choice?.message?.content ?? ""), refused: false, usage };
 }
 
-function visionCall(jpeg: Buffer, prompt: string, name: string, schema: object): Promise<Parsed> {
+function visionCall(jpeg: Buffer): Promise<Parsed> {
   const content = [
     { type: "image_url", image_url: { url: `data:image/jpeg;base64,${jpeg.toString("base64")}`, detail: "high" } },
-    { type: "text", text: prompt },
+    { type: "text", text: PROMPT_VISION_V2 },
   ];
-  return structuredCall(baseBody(SYSTEM_VISION, content), name, schema);
+  return structuredCall(baseBody(SYSTEM_VISION_V2, content), "analyse_photo", VISION_SCHEMA_V2);
 }
 
-const sumUsage = (parts: Usage[], ms: number): Usage => ({
-  tokensIn: parts.reduce((s, u) => s + u.tokensIn, 0),
-  tokensOut: parts.reduce((s, u) => s + u.tokensOut, 0),
-  calls: parts.reduce((s, u) => s + u.calls, 0),
-  ms,
-});
+/** Température de la rédaction : un peu de variété dans le vocabulaire (et une relance qui ne recopie pas la première réponse). */
+const TEXT_TEMPERATURE = 0.4;
 
 export const xaiVision: VisionProvider = {
   id: "xai",
 
   /**
-   * Recevabilité et repérage : deux appels distincts lancés EN MÊME TEMPS. Mesuré le 01/10/2026 : attente médiane de 17,7 s
-   * avec une confiance de repérage de 0,92 à 0,93, contre 34 s pour les mêmes appels à la suite et des confiances très
-   * instables (0,12 à 0,89) pour un appel unique fusionné. Inconvénient accepté : le repérage est payé même si la photo est refusée.
+   * Appel vision unique (photo-report/2) : recevabilité, estimations, observations et, si la carte est lisible, points de repérage.
+   * Un refus du prestataire d'analyser l'image est signalé (`refused`) : le flux le traite comme une image non recevable, sans détail.
    */
   async analyse(jpeg) {
-    const t0 = Date.now();
-    const [a, b] = await Promise.allSettled([
-      visionCall(jpeg, PROMPT_RECEVABILITE, "recevabilite", RECEVABILITE_SCHEMA),
-      visionCall(jpeg, PROMPT_REPERAGE, "reperage", REPERAGE_SCHEMA),
-    ]);
-    if (a.status === "rejected") throw a.reason;
-    const usage = () => sumUsage([a.value.usage, ...(b.status === "fulfilled" ? [b.value.usage] : [])], Date.now() - t0);
-
-    // Un refus du prestataire d'analyser l'image est traité comme une image non recevable, sans détail.
-    if (a.value.refused || (b.status === "fulfilled" && b.value.refused)) {
-      return { refused: true, recevabilite: null, reperage: null, usage: usage() } satisfies VisionResult;
-    }
-    const parsed = a.value.json as { recevable?: unknown } | null;
-    // Photo annoncée recevable : le repérage est indispensable ; sa panne (réseau, HTTP) remonte comme telle.
-    if (parsed?.recevable === true && b.status === "rejected") throw b.reason;
-    return { refused: false, recevabilite: a.value.json, reperage: b.status === "fulfilled" ? b.value.json : null, usage: usage() };
+    const r = await visionCall(jpeg);
+    return { refused: r.refused, json: r.refused ? null : r.json, usage: r.usage };
   },
 
-  /** Rédaction (texte seul, JSON strict) : trois observations et un verdict, validés ensuite par le flux d'analyse. */
-  async writeComment(input: CommentInput) {
-    const r = await structuredCall(baseBody(SYSTEM_COMMENT, commentPrompt(input)), "commentaire", COMMENTAIRE_SCHEMA);
-    return { json: r.refused ? null : r.json, usage: r.usage };
+  /** Appel texte (sans la photo) : rédaction du rapport en JSON strict, vérifiée ensuite par le flux d'analyse. */
+  async writeReport(input: ReportTextInput) {
+    const { textModel } = config();
+    const base = baseBody(SYSTEM_TEXT_V2, textPrompt(input));
+    // Un modèle sans raisonnement n'accepte pas de réglage de raisonnement : il n'est envoyé qu'aux modèles qui raisonnent.
+    const { reasoning_effort: effort, ...rest } = base as typeof base & { reasoning_effort?: string };
+    const body = { ...rest, model: textModel, temperature: TEXT_TEMPERATURE, ...(effort && !/non-reasoning/.test(textModel) ? { reasoning_effort: effort } : {}) };
+    const r = await structuredCall(body, "rapport", reportTextJsonSchema(input.allowedHighlights));
+    return { refused: r.refused, json: r.refused ? null : r.json, usage: r.usage };
   },
 };

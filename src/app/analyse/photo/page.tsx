@@ -23,8 +23,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
     <Doc title={`Protocole ${formula} : ${def.label.toLowerCase()} (${beta ? "gratuit pendant la bêta" : formatEur(def.priceEur)})`}>
       {beta && (
         <p className="mt-4 t-small text-muted">
-          Bêta : aucun paiement n&apos;est demandé. Les mesures sont estimées à partir de la photo par un modèle d&apos;analyse, avec une marge
-          d&apos;erreur d&apos;au moins ± 10 % ; le rapport s&apos;affiche directement.
+          Bêta : aucun paiement n&apos;est demandé. Les dimensions sont estimées à partir de la photo par un modèle d&apos;analyse, ou mesurées
+          sur une carte de référence si vous en posez une à côté ; le rapport s&apos;affiche directement.
         </p>
       )}
       <div className="mt-6">

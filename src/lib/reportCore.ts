@@ -1,5 +1,7 @@
 import { CURVATURE_ANGLE, EVERYDAY_OBJECTS, LANDMARKS, MAX_SIGMA, MEDICAL_ADVICE_ANGLE } from "@/config/site";
 import { globalScore, percentile, referenceFor, straightness, type BodyState, type Curvature } from "./stats";
+import type { MorphoIndicators } from "./morpho";
+import type { ReportText } from "./morphoText";
 
 // Calculs du rapport « questionnaire » (formule A) : fonctions pures, sans zod, sans accès serveur ni base.
 // Ce module est partagé par le serveur (rapport réel, validation du formulaire) et par le navigateur (simulation « Essayez » de l'accueil) :
@@ -27,7 +29,8 @@ export function isOutOfReferenceRange(input: Pick<QuestionnaireInput, "state" | 
 
 export type Measure = {
   value: number;
-  percentile: number;
+  /** Absent seulement pour la longueur d'un rapport photo version 2 au repos (aucun percentile de longueur au repos). */
+  percentile?: number;
   referenceMedian: number;
   /** Marge d'erreur en % (formules photo uniquement ; les valeurs déclarées n'ont pas de marge). */
   marginPct?: number;
@@ -71,6 +74,29 @@ export type ReportResults = {
   declared?: DeclaredComparison;
   /** Formules photo : commentaire standardisé (le champ `comment` en est la version texte, observations puis verdict). */
   standard?: StandardComment;
+  /** Formule photo, version 2 : rapport d'analyse morphométrique complet (en-tête, indicateurs, rubriques rédigées). */
+  morpho?: MorphoReport;
+};
+
+/**
+ * Rapport morphométrique photo, version 2 (photo-report/2). Les indicateurs sont calculés par le code ; le texte est rédigé par le modèle
+ * (appel texte, sans la photo) puis vérifié par le code, ou, pour un rapport partiel, construit par le code sur les valeurs de référence.
+ * Les observations brutes du modèle de vision n'y figurent jamais.
+ */
+export type MorphoReport = {
+  schemaVersion: string;
+  promptVersion: string;
+  /** Numéro du rapport, 5 chiffres, généré par le code (décoratif). */
+  numero: string;
+  /** « visuelle » : estimation visuelle ; « calibree » : mesure calibrée sur la carte (badge « Taille calibrée ») ; « reference » : rapport partiel. */
+  methode: "visuelle" | "calibree" | "reference";
+  /** Rapport partiel (échec technique) : construit sur les valeurs de référence et l'état déclaré, sans aucune mesure. */
+  partielle: boolean;
+  /** Indicateurs calculés ; null pour un rapport partiel (aucune mesure). */
+  indicateurs: MorphoIndicators | null;
+  /** Rapport partiel : valeurs de référence (médianes de la population de référence) pour l'état déclaré. */
+  reference?: { state: BodyState; longueurMedianeCm: number; circonferenceMedianeCm: number };
+  texte: ReportText;
 };
 
 export const DIRECTION_FR = {
@@ -86,12 +112,15 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 export const clampPercentile = (p: number) => Math.min(99.9, Math.max(0.1, round1(p)));
 const fmt = (n: number) => String(round1(n)).replace(".", ",");
 
-function measure(state: BodyState, dim: "length" | "girth", value: number): Measure {
+function measure(state: BodyState, dim: "length" | "girth", value: number): Measure & { percentile: number } {
   const ref = referenceFor(state, dim);
   return { value, percentile: clampPercentile(percentile(value, ref.mean, ref.sd)), referenceMedian: ref.mean };
 }
 
-export function buildQuestionnaireReport(input: QuestionnaireInput): ReportResults {
+/** Résultats d'un rapport du questionnaire : les deux percentiles sont toujours calculés. */
+export type QuestionnaireResults = ReportResults & { length: Measure & { percentile: number }; girth: Measure & { percentile: number } };
+
+export function buildQuestionnaireReport(input: QuestionnaireInput): QuestionnaireResults {
   const length = measure(input.state, "length", input.length);
   const girth = measure(input.state, "girth", input.girth);
   const angleDeg = CURVATURE_ANGLE[input.curvature];

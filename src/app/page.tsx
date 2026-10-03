@@ -152,10 +152,9 @@ export default async function Home() {
           </ul>
           <p className="t-small text-muted mt-6 max-w-[52rem]">
             {photoBeta
-              ? "Selon le protocole, les valeurs sont déclarées (non vérifiées) ou estimées à partir d'une photo par un modèle d'analyse. "
+              ? "Selon le protocole, les valeurs sont déclarées (non vérifiées) ou estimées à partir d'une photo par un modèle d'analyse (mesure calibrée lorsqu'une carte de référence figure sur la photo). "
               : "Les valeurs sont celles que vous déclarez : elles ne sont pas vérifiées. "}
-            Les percentiles reposent sur une loi normale et les références de Veale et al. (2015) ;
-            la marge d&apos;erreur d&apos;une estimation n&apos;est jamais inférieure à ± 10 %.{" "}
+            Les percentiles reposent sur une loi normale et les références de Veale et al. (2015).{" "}
             <Link href="/methode" className="text-accent underline">Lire la méthode</Link>.
           </p>
         </div>
@@ -211,7 +210,7 @@ export default async function Home() {
             </Accordion>
             <Accordion question="Quelle est la précision ?">
               {photoBeta
-                ? "Avec le questionnaire, les valeurs sont déclarées et non vérifiées ; avec une photo, elles sont estimées par un modèle d'analyse à partir d'une carte de référence, avec une marge d'erreur d'au moins ± 10 %. "
+                ? "Avec le questionnaire, les valeurs sont déclarées et non vérifiées ; avec une photo, elles sont estimées visuellement par un modèle d'analyse, ou mesurées par le site sur une carte de référence posée à côté (badge « Taille calibrée »). Dans les deux cas, ce sont des estimations. "
                 : "Les valeurs sont déclarées et non vérifiées. "}
               Les percentiles supposent une loi normale et les références de Veale et al. (2015). Le détail figure sur la page{" "}
               <Link href="/methode" className="text-accent underline">Précision et méthode</Link>.

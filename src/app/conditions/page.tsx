@@ -21,7 +21,7 @@ export default function Page() {
       <h2>Ce que fournit le service</h2>
       <p>
         {photo
-          ? "Un rapport calculé à partir des valeurs que vous déclarez (questionnaire) ou estimées à partir de votre photo par un modèle d'analyse (protocole photo, marge d'erreur d'au moins ± 10 %). Les valeurs déclarées ne sont pas vérifiées ; "
+          ? "Un rapport calculé à partir des valeurs que vous déclarez (questionnaire) ou estimées à partir de votre photo par un modèle d'analyse (protocole photo : estimation visuelle, ou mesure calibrée sur une carte de référence). Les valeurs déclarées ne sont pas vérifiées ; "
           : "Un rapport calculé à partir des valeurs que vous déclarez. Ces valeurs ne sont pas vérifiées ; "}
         les résultats sont des estimations statistiques, pas un avis médical (voir <Link href="/methode" className="underline">Précision et méthode</Link>).
         Le service est réservé aux personnes de 18 ans ou plus{photo ? " ; l'envoi d'une photo exige en plus une vérification d'âge par un prestataire tiers et votre consentement explicite, et la photo est envoyée au prestataire d'analyse décrit dans la politique de confidentialité" : ""}.
