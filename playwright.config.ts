@@ -13,6 +13,8 @@ export const E2E = {
   betaUrl: "http://localhost:3204",
   // Bêta gratuite + bêta de la formule photo (PHOTO_BETA=on), fournisseurs simulés : copie dédiée sur le port 3205.
   photoBetaUrl: "http://localhost:3205",
+  // Aperçu de la formule photo réservé à l'administration (FREE_BETA=on, PHOTO_BETA=admin) : copie dédiée sur le port 3206.
+  photoPreviewUrl: "http://localhost:3206",
   betaUser: "testeur-e2e",
   betaPassword: "mot-de-passe-de-protection-e2e",
   paymentSecret: "secret-e2e-paiement",
@@ -52,7 +54,8 @@ export default defineConfig({
   reporter: [["list"]],
   use: { baseURL: E2E.okUrl, locale: "fr-FR", trace: "retain-on-failure" },
   projects: [
-    { name: "chromium", testIgnore: /(beta|accessibilite|mobile|formule-photo).spec.ts/, use: { browserName: "chromium" } },
+    { name: "chromium", testIgnore: /(beta|accessibilite|mobile|formule-photo|apercu-photo).spec.ts/, use: { browserName: "chromium" } },
+    { name: "photo-preview", testMatch: /apercu-photo.spec.ts/, use: { browserName: "chromium", baseURL: E2E.photoPreviewUrl } },
     // Bêta photo (FREE_BETA=on, PHOTO_BETA=on), sans mot de passe : copie dédiée sur le port 3205.
     { name: "photo-beta", testMatch: /formule-photo.spec.ts/, use: { browserName: "chromium", baseURL: E2E.photoBetaUrl } },
     // Mode bêta gratuite, site protégé par mot de passe (authentification HTTP) : copie dédiée sur le port 3204.
@@ -81,6 +84,13 @@ export default defineConfig({
       command: "npx next dev -p 3205",
       url: E2E.photoBetaUrl + "/api/health",
       env: env("ok", ".next-e2e-photo", { FREE_BETA: "on", PHOTO_BETA: "on", SITE_URL: E2E.photoBetaUrl }),
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+    {
+      command: "npx next dev -p 3206",
+      url: E2E.photoPreviewUrl + "/api/health",
+      env: env("ok", ".next-e2e-apercu", { FREE_BETA: "on", PHOTO_BETA: "admin", SITE_URL: E2E.photoPreviewUrl }),
       reuseExistingServer: false,
       timeout: 180_000,
     },

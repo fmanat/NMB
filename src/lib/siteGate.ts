@@ -37,7 +37,8 @@ export function parseBasicAuth(header: string | null | undefined): { user: strin
   }
 }
 
-export function decideAccess(pathname: string, authorization: string | null, env: Env = process.env): GateDecision {
+/** `adminSession` : la requête porte une session d'administration valide (aperçu de la formule photo, PHOTO_BETA=admin). */
+export function decideAccess(pathname: string, authorization: string | null, env: Env = process.env, adminSession = false): GateDecision {
   if (pathname === HEALTH_PATH) return { action: "next", protectedSite: false };
 
   const password = env.SITE_PASSWORD ?? "";
@@ -54,6 +55,6 @@ export function decideAccess(pathname: string, authorization: string | null, env
     if (!(okUser && okPass)) return { action: "unauthorized" };
   }
 
-  if (isFreeBeta(env) ? isHiddenInBeta(pathname, env) : isBetaOnly(pathname)) return { action: "not_found" };
+  if (isFreeBeta(env) ? isHiddenInBeta(pathname, env, adminSession) : isBetaOnly(pathname)) return { action: "not_found" };
   return { action: "next", protectedSite: password !== "" && !signedByProvider };
 }

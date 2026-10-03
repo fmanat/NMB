@@ -233,3 +233,23 @@ Pour comparaison : hCaptcha collecte mouvements de souris, défilement et frappe
 | Documentation d'intégration | Client officiel public | API REST publique | Non lue |
 
 **Recommandation.** (1) Envoyer la demande à **Verotel** comme prévu (elle pose la question de la dérogation à l'historique). (2) **Envoyer en même temps une demande à CCBill** (offre PSP, société britannique, pas d'historique, taux, réserve, Apple Pay/Google Pay, acceptation du type de service) : c'est le repli le plus documenté publiquement. (3) **Segpay en troisième** : contact commercial seulement (son site est fermé aux outils automatiques), à lire à la main avant de s'engager. Décision finale sur **réponses écrites**, avec le critère déterminant : acceptation écrite du service par le prestataire. Les messages sont dans `docs/DEMANDES/ccbill.md` et `docs/DEMANDES/segpay.md`.
+
+---
+
+## Vérification d'âge par selfie, inscription en ligne immédiate (recherche du 03/10/2026)
+
+Recherche documentaire en lecture seule (aucun compte ouvert, aucun message). Résumés de pages lus par un outil : à relire sur la page avant décision. « Non trouvé » = information absente des pages lues.
+
+| Rang | Prestataire | Ouverture | Selfie | Prix publié | Usage adulte / intime | Documentation pour l'adaptateur |
+|---|---|---|---|---|---|---|
+| 1 | **AgeVerif** | Compte webmaster gratuit en ligne ; délai d'activation de la clé « live » : non trouvé | Oui, estimation sur l'appareil de l'utilisateur | Selfie, carte bancaire, compte AgeVerif : 0 € ; Pleenk 0,04 € ; AgeGO 0,015 € par vérification réussie | Service destiné aux sites interdits aux mineurs ; aucune clause sur le contenu intime ; « aucune donnée de vérification n'est transmise aux clients » (conditions webmaster, art. 7) | OAuth2 entièrement documenté (adaptateur écrit) |
+| 2 | **GO.cam** | Non trouvé | Oui, sur l'appareil | « Gratuit » | Soutient les sites adultes ; conditions non lues | Partielle (format du chiffrement et de la signature non documenté) |
+| 3 | **Didit** | Immédiate (inscription en 60 s, sans carte ni contact commercial) ; contrôle avant production : non trouvé | Oui (API d'estimation, parcours hébergé) | 0,10 $ par estimation | Conditions 6.4 : interdit l'usage « obscène » (formulation ambiguë, à faire confirmer par écrit) | Complète (session hébergée, webhook signé HMAC) |
+| 4 | Yoti | Compte en ligne, vérification de l'organisation annoncée en 2 à 4 h ; accord séparé à signer | Oui | Non publié | Pas d'interdiction lue | Insuffisante (adaptateur non écrit) |
+| 5 | Veriff | Essai de 15 jours en ligne | Produit séparé, prix non publié | Abonnements de 49 à 209 $/mois | Conditions non lues (404) | Non évaluée |
+| 6 | Persona | Offre gratuite de démarrage | Selfie avec pièce d'identité | 1 $ au-delà de 500/mois | Offre de démarrage : « adult entertainment » exclu (source secondaire) | Non évaluée |
+| — | Stripe Identity | En ligne | Selfie avec pièce d'identité | 1,50 $ | **Interdit** pour l'industrie adulte | Exclu |
+
+Sources : <https://docs.ageverif.com/oauth2.html>, <https://www.ageverif.com/webmaster-terms-of-use>, <https://www.ageverif.com/biometric-data-policy>, <https://go.cam/faq/>, <https://didit.me/pricing>, <https://didit.me/terms/business/>, <https://docs.didit.me>, <https://developers.yoti.com/age-verification/onboarding>, <https://www.veriff.com/self-serve>, <https://stripe.com/legal/identity>.
+
+**Choix : AgeVerif** (gratuit pour le selfie, conçu pour les sites réservés aux adultes, ne renvoie que « vérifié » et un seuil d'âge, OAuth2 documenté, adaptateur déjà écrit et corrigé le 03/10/2026). **Repli : Didit** (ouverture la plus rapide et documentation la plus complète, mais 0,10 $ par vérification, clause « obscène » à faire lever par écrit, et le selfie transite par ses serveurs). Aucun agrément Arcom nominatif n'a été trouvé pour aucun prestataire.

@@ -32,12 +32,13 @@ export async function login(_prev: LoginState, fd: FormData): Promise<LoginState
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     maxAge: ADMIN.sessionHours * 3600,
-    path: "/admin",
+    // Tout le site (et non plus /admin seulement) : l'aperçu de la formule photo (PHOTO_BETA=admin) lit cette session sur ses pages.
+    path: "/",
   });
   redirect("/admin");
 }
 
 export async function logout(): Promise<void> {
-  (await cookies()).delete({ name: ADMIN_COOKIE, path: "/admin" });
+  (await cookies()).delete({ name: ADMIN_COOKIE, path: "/" });
   redirect("/admin/connexion");
 }

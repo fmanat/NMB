@@ -219,3 +219,77 @@ describe("chemins : bêta photo active ou non", () => {
     }
   });
 });
+
+describe("PHOTO_BETA=admin : aperçu réservé aux sessions d'administration", () => {
+  const PROD_PREVIEW = {
+    NODE_ENV: "production",
+    FREE_BETA: "on",
+    PHOTO_BETA: "admin",
+    AGE_PROVIDER: "",
+    AGE_TOKEN_SECRET: "secret-fictif",
+    VISION_PROVIDER: "xai",
+    XAI_API_KEY: "cle-fictive",
+    CAPTCHA_PROVIDER: "altcha",
+    ALTCHA_HMAC_KEY: "cle-fictive-de-32-caracteres-au-moins",
+    SCREENING_PROVIDER: "",
+    ADMIN_PASSWORD_HASH: "scrypt:00:00",
+    ADMIN_SESSION_SECRET: "secret-fictif",
+  };
+
+  it("n'ouvre JAMAIS la bêta photo publique : sans session d'administration, la formule photo reste introuvable", async () => {
+    const { isPhotoAvailable } = await import("@/lib/mode");
+    expect(isPhotoBetaActive(PROD_PREVIEW)).toBe(false);
+    expect(isPhotoBeta(PROD_PREVIEW)).toBe(false);
+    expect(isPhotoAvailable(false, PROD_PREVIEW)).toBe(false);
+    for (const path of ["/analyse/photo", "/verification-age", "/api/analyse", "/api/age/callback", "/api/captcha/challenge"]) {
+      expect(decideAccess(path, null, PROD_PREVIEW).action, path).toBe("not_found");
+      expect(decideAccess(path, null, PROD_PREVIEW, false).action, path).toBe("not_found");
+      expect(decideAccess(path, null, PROD_PREVIEW, true).action, path).toBe("next");
+    }
+    // Paiement et CGV restent introuvables, même pour l'administration.
+    expect(decideAccess("/cgv", null, PROD_PREVIEW, true).action).toBe("not_found");
+    expect(decideAccess("/paiement/x", null, PROD_PREVIEW, true).action).toBe("not_found");
+  });
+
+  it("en production, sans prestataire d'âge réel : aperçu actif, la session d'administration en tient lieu (avertissement journalisé)", async () => {
+    const { isPhotoAvailable, isPhotoPreview } = await import("@/lib/mode");
+    const { photoPreviewDecision } = await import("@/lib/photoBeta");
+    expect(photoPreviewDecision(PROD_PREVIEW)).toEqual({ requested: true, active: true, reasons: [], realAgeProvider: false });
+    expect(isPhotoAvailable(true, PROD_PREVIEW)).toBe(true);
+    expect(isPhotoPreview(true, PROD_PREVIEW)).toBe(true);
+    expect(startupWarnings(PROD_PREVIEW).join(" ")).toMatch(/PHOTO_BETA=admin : aperçu réservé aux sessions d'administration/);
+  });
+
+  it("un prestataire d'âge réel prêt est utilisé même en aperçu", async () => {
+    const { photoPreviewDecision } = await import("@/lib/photoBeta");
+    const env = { ...PROD_PREVIEW, AGE_PROVIDER: "ageverif", AGEVERIF_CLIENT_ID: "id", AGEVERIF_CLIENT_SECRET: "s", SITE_URL: "https://exemple.test" };
+    expect(photoPreviewDecision(env).realAgeProvider).toBe(true);
+    expect(photoPreviewDecision({ ...env, AGEVERIF_CLIENT_SECRET: "" }).realAgeProvider).toBe(false);
+  });
+
+  it("mêmes garde-fous de production que la bêta photo (hors prestataire d'âge) : sinon aperçu refusé, avec la raison", async () => {
+    const { photoPreviewDecision } = await import("@/lib/photoBeta");
+    const cases: [Record<string, string>, RegExp][] = [
+      [{ VISION_PROVIDER: "simulation" }, /VISION_PROVIDER/],
+      [{ XAI_API_KEY: "" }, /XAI_API_KEY/],
+      [{ CAPTCHA_PROVIDER: "simulation" }, /CAPTCHA_PROVIDER/],
+      [{ SCREENING_PROVIDER: "simulation" }, /SCREENING_PROVIDER/],
+      [{ ADMIN_SESSION_SECRET: "" }, /Administration non configurée/],
+      [{ AGE_TOKEN_SECRET: "" }, /AGE_TOKEN_SECRET/],
+      [{ FREE_BETA: "" }, /FREE_BETA/],
+    ];
+    for (const [over, re] of cases) {
+      const d = photoPreviewDecision({ ...PROD_PREVIEW, ...over });
+      expect(d.active, JSON.stringify(over)).toBe(false);
+      expect(d.reasons.join(" ")).toMatch(re);
+      // (sans bêta gratuite, c'est la version payante : ses chemins photo existent de toute façon)
+      if (!("FREE_BETA" in over)) expect(decideAccess("/analyse/photo", null, { ...PROD_PREVIEW, ...over }, true).action).toBe("not_found");
+    }
+    expect(startupWarnings({ ...PROD_PREVIEW, XAI_API_KEY: "" }).join(" ")).toMatch(/PHOTO_BETA=admin ignorée/);
+  });
+
+  it("seules les valeurs exactes « on » et « admin » sont reconnues", async () => {
+    const { photoPreviewDecision } = await import("@/lib/photoBeta");
+    for (const v of ["Admin", "ADMIN", "admin ", "administrateur"]) expect(photoPreviewDecision({ ...PROD_PREVIEW, PHOTO_BETA: v }).requested, v).toBe(false);
+  });
+});

@@ -8,8 +8,9 @@ import type { AgeVerificationProvider } from "./types";
  *   - retour sur redirect_uri avec `code` et `state` ; le code est valable 10 minutes ;
  *   - échange du code : POST https://api.ageverif.com/v1/oauth2/token, authentification Basic base64(client_id:client_secret),
  *     corps grant_type=authorization_code, code, redirect_uri ; réponse access_token (jeton d'1 h) ;
- *   - confirmation : GET https://api.ageverif.com/v1/oauth2/resources avec « Bearer access_token » ; champs `verified` (booléen),
- *     `age_threshold` (entier, ex. 18), `assurance_level`, et des champs d'identifiant et de pays que ce site ne lit ni ne conserve.
+ *   - confirmation : GET https://api.ageverif.com/v1/oauth2/resources avec « Bearer access_token » ; réponse {"resources": {…}} (relu le
+ *     03/10/2026 : les champs sont IMBRIQUÉS sous « resources ») : `verified` (booléen), `age_threshold` (entier, ex. 18),
+ *     `assurance_level`, et des champs d'identifiant et de pays que ce site ne lit ni ne conserve.
  *
  * Le site ne garde que « majeur : oui / non » dans le jeton signé de 30 minutes. L'échange du code a lieu de serveur à serveur :
  * rien n'est à croire dans le navigateur. Désactivé tant que les variables ne sont pas renseignées.
@@ -102,7 +103,9 @@ export const ageVerifProvider: AgeVerificationProvider = {
 
     const resRes = await call(RESOURCES, { headers: { authorization: `Bearer ${accessToken}` } });
     if (!resRes.ok) return { adult: false };
-    const r = (await resRes.json().catch(() => ({}))) as { verified?: unknown; age_threshold?: unknown };
+    const body = (await resRes.json().catch(() => ({}))) as { resources?: { verified?: unknown; age_threshold?: unknown } };
+    // Format documenté : {"resources": {"verified": true, "age_threshold": 18, …}}. Tout autre format est refusé.
+    const r = body && typeof body.resources === "object" && body.resources !== null ? body.resources : {};
     // Seule information retenue : vérifié ET seuil d'âge d'au moins 18 ans. Le reste (identifiant, pays) est ignoré.
     const adult = r.verified === true && typeof r.age_threshold === "number" && r.age_threshold >= 18;
     return adult ? { adult: true, returnPath: state.returnPath } : { adult: false };

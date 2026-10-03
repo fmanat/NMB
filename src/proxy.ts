@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_COOKIE, isAdminTokenValid } from "@/lib/admin/auth";
 import { decideAccess } from "@/lib/siteGate";
 
 // Voir src/lib/siteGate.ts pour les règles. Tourne avant chaque requête (pages, API, fichiers statiques).
 export function proxy(request: NextRequest) {
-  const d = decideAccess(request.nextUrl.pathname, request.headers.get("authorization"));
+  // Session d'administration : seule l'aperçu de la formule photo (PHOTO_BETA=admin) en dépend. Le proxy tourne en Node.js (Next 16).
+  const adminSession = isAdminTokenValid(request.cookies.get(ADMIN_COOKIE)?.value);
+  const d = decideAccess(request.nextUrl.pathname, request.headers.get("authorization"), process.env, adminSession);
   switch (d.action) {
     case "unauthorized":
       return new NextResponse("Accès protégé : identifiants requis.", {

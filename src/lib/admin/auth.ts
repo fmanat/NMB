@@ -1,7 +1,9 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { ADMIN } from "@/config/site";
 
-export const ADMIN_COOKIE = "nmb_admin";
+// Session valable sur tout le site (chemin « / ») depuis l'aperçu de la formule photo (PHOTO_BETA=admin). Nom changé pour que les
+// anciennes sessions, limitées à /admin, soient ignorées (il suffit de se reconnecter).
+export const ADMIN_COOKIE = "nmb_admin_session";
 export const MIN_PASSWORD_LENGTH = 12;
 
 const SCRYPT = { N: 16384, r: 8, p: 1 } as const;

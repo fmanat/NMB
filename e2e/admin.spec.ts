@@ -40,7 +40,7 @@ test.describe("Administration", () => {
   });
 
   test("un cookie forgé ne donne pas accès", async ({ page, context, baseURL }) => {
-    await context.addCookies([{ name: "nmb_admin", value: "forge.0.abc", domain: new URL(baseURL!).hostname, path: "/admin" }]);
+    await context.addCookies([{ name: "nmb_admin_session", value: "forge.0.abc", domain: new URL(baseURL!).hostname, path: "/" }]);
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin\/connexion/);
   });

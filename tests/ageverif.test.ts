@@ -24,7 +24,7 @@ function stubApi(opts: { token?: Response; resources?: Response } = {}) {
     calls.push({ url, init });
     if (url.endsWith("/v1/oauth2/token")) return opts.token ?? new Response(JSON.stringify({ token_type: "Bearer", access_token: "jwt.abc", expires_in: 3600 }), { status: 200 });
     if (url.endsWith("/v1/oauth2/resources"))
-      return opts.resources ?? new Response(JSON.stringify({ verified: true, uid: "u1", country: "FR", assurance_level: "STANDARD", age_threshold: 18, reused: false }), { status: 200 });
+      return opts.resources ?? new Response(JSON.stringify({ resources: { verified: true, uid: "u1", country: "FR", assurance_level: "STANDARD", age_threshold: 18, reused: false } }), { status: 200 });
     throw new Error("URL inattendue " + url);
   });
   return calls;
@@ -120,7 +120,7 @@ describe("AgeVerif : retour et validation côté serveur", () => {
   it("non vérifié, seuil inférieur à 18, seuil absent ou mal typé : refus", async () => {
     const payloads = [{ verified: false, age_threshold: 18 }, { verified: true, age_threshold: 16 }, { verified: true }, { verified: "true", age_threshold: 18 }, { verified: true, age_threshold: "18" }, {}];
     for (const payload of payloads) {
-      stubApi({ resources: new Response(JSON.stringify(payload), { status: 200 }) });
+      stubApi({ resources: new Response(JSON.stringify({ resources: payload }), { status: 200 }) });
       expect(await ageVerifProvider.completeVerification(callbackReq(`code=abc&state=${state()}`)), JSON.stringify(payload)).toEqual({ adult: false });
     }
   });
@@ -130,6 +130,9 @@ describe("AgeVerif : retour et validation côté serveur", () => {
     expect(await ageVerifProvider.completeVerification(callbackReq(`code=abc&state=${state()}`))).toEqual({ adult: false });
     stubApi({ token: new Response("pas du json", { status: 200 }) });
     expect(await ageVerifProvider.completeVerification(callbackReq(`code=abc&state=${state()}`))).toEqual({ adult: false });
+    // Champs à la racine (ancien format supposé, non documenté) : refusé, seul le format documenté {"resources": {…}} est lu.
+    stubApi({ resources: new Response(JSON.stringify({ verified: true, age_threshold: 18 }), { status: 200 }) });
+    expect((await ageVerifProvider.completeVerification(callbackReq(`code=abc&state=${state()}`))).adult).toBe(false);
     stubApi({ resources: new Response("{}", { status: 401 }) });
     expect(await ageVerifProvider.completeVerification(callbackReq(`code=abc&state=${state()}`))).toEqual({ adult: false });
     stubApi({ resources: new Response("pas du json", { status: 200 }) });

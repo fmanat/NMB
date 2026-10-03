@@ -5,6 +5,7 @@ import { FINANCE, FORMULAS } from "@/config/site";
 import { ADMIN_COOKIE, isAdminTokenValid } from "@/lib/admin/auth";
 import { dashboardStats, type Finance, type FormulaKey } from "@/lib/admin/stats";
 import { computeFunnel, funnelCounts } from "@/lib/funnel";
+import { photoPreviewDecision } from "@/lib/photoBeta";
 import { calibrationSummary, type DimSummary } from "@/lib/admin/calibration";
 import { listCalibrationPairs } from "@/lib/repo";
 import { logout } from "./actions";
@@ -110,6 +111,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
         <div>
           <h1 className="text-3xl font-semibold">Tableau de bord</h1>
           <p className="text-xs text-muted">Chiffres réels, agrégés et anonymes. Période : {period.label.toLowerCase()}.</p>
+          {photoPreviewDecision().active && (
+            <p className="text-sm mt-1">
+              <Link href="/analyse" className="text-accent underline" data-photo-preview-link>Aperçu de la formule photo</Link>{" "}
+              <span className="text-xs text-muted">(PHOTO_BETA=admin : visible avec votre session uniquement)</span>
+            </p>
+          )}
         </div>
         <form action={logout}>
           <button type="submit" className="btn btn-secondary btn-sm">Se déconnecter</button>

@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/Card";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { ProgressStepper } from "@/components/analysis/ProgressStepper";
 import { FORMULAS, formatEur } from "@/config/site";
-import { isFreeBeta, isPhotoBeta } from "@/lib/mode";
+import { isFreeBeta } from "@/lib/mode";
+import { photoAccess } from "@/lib/photoAccess";
 import Link from "next/link";
 import { QuestionnairePage } from "./QuestionnairePage";
 
@@ -23,9 +24,16 @@ const BETA_NOTE = {
   B: "Rapport morphométrique établi à partir de votre photo par un modèle d'analyse (xAI, États-Unis) : estimation visuelle, ou mesure calibrée si une carte au format bancaire figure sur la photo. Vérification d'âge par un prestataire tiers avant l'envoi.",
 } as const;
 
-function BetaChoice() {
+function BetaChoice({ preview }: { preview: boolean }) {
   return (
     <div className="container-bm container-narrow py-8 md:py-14">
+      {preview && (
+        <div className="mb-6">
+          <p className="rounded-[10px] border border-[var(--bm-warning-text)] px-4 py-3 t-small" data-photo-preview>
+          <strong>Aperçu administrateur.</strong> La formule photo n&apos;est visible qu&apos;avec votre session d&apos;administration : le public ne la voit pas.
+        </p>
+        </div>
+      )}
       <ProgressStepper steps={["Méthode", "Mesures", "Rapport"]} current={0} />
       <h1 className="t-h1 mt-8 !text-[30px] !leading-[34px] md:!text-[40px] md:!leading-[44px]">Choisissez un protocole</h1>
       <p className="t-lead text-muted mt-3">Les deux protocoles sont gratuits pendant la bêta : aucun paiement n&apos;est demandé.</p>
@@ -60,9 +68,12 @@ function BetaChoice() {
   );
 }
 
-export default function Page() {
-  // Bêta gratuite : un seul protocole, donc pas de choix : /analyse est le questionnaire ; bêta photo : choix entre A et B.
-  if (isFreeBeta()) return isPhotoBeta() ? <BetaChoice /> : <QuestionnairePage />;
+export default async function Page() {
+  // Bêta gratuite : un seul protocole, donc pas de choix : /analyse est le questionnaire ; bêta photo (ou aperçu administrateur) : choix A ou B.
+  if (isFreeBeta()) {
+    const { available, preview } = await photoAccess();
+    return available ? <BetaChoice preview={preview} /> : <QuestionnairePage />;
+  }
   return (
     <div className="container-bm container-narrow py-8 md:py-14">
       <ProgressStepper steps={["Méthode", "Mesures", "Résultats", "Rapport"]} current={0} />

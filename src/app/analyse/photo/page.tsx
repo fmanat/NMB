@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Doc } from "@/components/Doc";
 import { FORMULAS, formatEur } from "@/config/site";
 import { AGE_COOKIE, isAgeTokenValid } from "@/lib/age/token";
-import { isPhotoBeta } from "@/lib/mode";
+import { photoAccess } from "@/lib/photoAccess";
 import { getCaptcha } from "@/lib/providers";
 import { PhotoFlow } from "./PhotoFlow";
 
@@ -12,7 +12,7 @@ export const metadata = { title: "Envoi de la photo", robots: { index: false, fo
 export default async function Page({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
   const { f } = await searchParams;
   const formula = f === "C" ? "C" : "B";
-  const beta = isPhotoBeta();
+  const { available: beta, preview } = await photoAccess();
   if (beta && formula === "C") notFound(); // bêta photo : la formule C reste masquée
   // Sans jeton de majorité valide, l'écran d'envoi est inaccessible (contrôle refait côté serveur à l'envoi).
   const store = await cookies();
@@ -21,6 +21,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   const def = FORMULAS[formula];
   return (
     <Doc title={`Protocole ${formula} : ${def.label.toLowerCase()} (${beta ? "gratuit pendant la bêta" : formatEur(def.priceEur)})`}>
+      {preview && <div className="mt-4"><p className="rounded-[10px] border border-[var(--bm-warning-text)] px-4 py-3 t-small" data-photo-preview>
+          <strong>Aperçu administrateur.</strong> La formule photo n&apos;est visible qu&apos;avec votre session d&apos;administration : le public ne la voit pas.
+        </p></div>}
       {beta && (
         <p className="mt-4 t-small text-muted">
           Bêta : aucun paiement n&apos;est demandé. Les dimensions sont estimées à partir de la photo par un modèle d&apos;analyse, ou mesurées

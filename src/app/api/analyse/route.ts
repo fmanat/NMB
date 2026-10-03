@@ -4,7 +4,7 @@ import { UPLOAD } from "@/config/site";
 import { AGE_COOKIE, isAgeTokenValid } from "@/lib/age/token";
 import { attachFriend, CHALLENGE_COOKIE } from "@/lib/challenge";
 import { runAnalysis, type FlowInput } from "@/lib/analyseFlow";
-import { isPhotoBeta } from "@/lib/mode";
+import { photoAccess } from "@/lib/photoAccess";
 import { getCaptcha, getScreening, getVision } from "@/lib/providers";
 
 export const runtime = "nodejs";
@@ -29,7 +29,8 @@ export async function POST(req: Request) {
   const formula = fd.get("formula") === "C" ? "C" : "B";
   const state = fd.get("state") === "rest" ? "rest" : "erect";
   // Bêta photo : formule B seule, gratuite (rapport débloqué sans paiement) ; la formule C n'existe pas.
-  const photoBeta = isPhotoBeta();
+  // Bêta photo publique, ou aperçu réservé à une session d'administration (PHOTO_BETA=admin ; le proxy a déjà filtré le chemin).
+  const photoBeta = (await photoAccess()).available;
   if (photoBeta && formula === "C") return new Response(null, { status: 404 });
 
   const store = await cookies();
