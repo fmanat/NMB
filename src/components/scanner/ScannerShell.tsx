@@ -8,7 +8,18 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  * Sans JavaScript, sans canvas 2D ou si le chargement échoue : le repli reste affiché, rien d'autre ne change.
  * Le canevas est décoratif (aria-hidden) ; les valeurs sont du texte réel fourni par le serveur (`labels`).
  */
-export function ScannerShell({ fallback, labels, footer }: { fallback: ReactNode; labels: ReactNode; footer: ReactNode }) {
+export function ScannerShell({
+  fallback,
+  labels,
+  footer,
+  curvature,
+}: {
+  fallback: ReactNode;
+  labels: ReactNode;
+  footer: ReactNode;
+  /** Courbure du rapport d'exemple (angle et direction), transmise au moteur animé seulement ; le repli ne l'utilise pas. */
+  curvature: { angleDeg: number; direction: "none" | "left" | "right" | "up" | "down" };
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [live, setLive] = useState(false);
 
@@ -23,7 +34,7 @@ export function ScannerShell({ fallback, labels, footer }: { fallback: ReactNode
         .then((m) => {
           const canvas = canvasRef.current;
           if (cancelled || !canvas) return;
-          const handle = m.startScanner(canvas, { onFirstFrame: () => !cancelled && setLive(true) });
+          const handle = m.startScanner(canvas, { curvature, onFirstFrame: () => !cancelled && setLive(true) });
           if (handle) stop = () => handle.destroy();
         })
         .catch(() => {
@@ -45,6 +56,8 @@ export function ScannerShell({ fallback, labels, footer }: { fallback: ReactNode
       if (timer) clearTimeout(timer);
       stop?.();
     };
+    // La courbure vient du rapport d'exemple (constante) : le moteur n'est démarré qu'une fois.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./helpers";
@@ -12,6 +13,25 @@ const live = (page: Page) => expect(band(page)).toHaveAttribute("data-scanner", 
 
 /** Contenu du canevas (image PNG encodée) : sert à savoir si le dessin change. */
 const snapshot = (page: Page) => canvas(page).evaluate((c: HTMLCanvasElement) => c.toDataURL());
+/** Étendue (largeur, hauteur en pixels du canevas) des pixels « allumés » : sert à reconnaître la forme dessinée. */
+const extent = (page: Page) =>
+  canvas(page).evaluate((c: HTMLCanvasElement) => {
+    const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+    let x0 = c.width;
+    let x1 = -1;
+    let y0 = c.height;
+    let y1 = -1;
+    for (let y = 0; y < c.height; y++)
+      for (let x = 0; x < c.width; x++) {
+        if (d[(y * c.width + x) * 4 + 2] > 70) {
+          if (x < x0) x0 = x;
+          if (x > x1) x1 = x;
+          if (y < y0) y0 = y;
+          if (y > y1) y1 = y;
+        }
+      }
+    return { w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  });
 /** Nombre de pixels « allumés » du canevas (points, anneaux, plan) : le fond du bandeau est un bleu très sombre (canal bleu d'environ 31). */
 const inked = (page: Page) =>
   canvas(page).evaluate((c: HTMLCanvasElement) => {
@@ -42,6 +62,16 @@ test.describe("Bandeau scanner : repli statique", () => {
       await expect(canvas(page)).toHaveCSS("opacity", "0");
       await expect(band(page).getByText("Faites glisser pour tourner")).toBeHidden(); // indication d'interaction : seulement si le moteur tourne
     });
+  });
+
+  test("le repli du serveur est exactement le cylindre abstrait d'avant (jamais la silhouette), avec ou sans moteur", async ({ page, request }) => {
+    const golden = readFileSync("tests/fixtures/scanner-fallback.svg", "utf8").trimEnd();
+    const html = await (await request.get("/")).text();
+    expect(html.match(/<svg viewBox="0 0 400 240"[\s\S]*?<\/svg>/)?.[0]).toBe(golden);
+    // Après chargement du moteur, le SVG du repli est toujours là, inchangé (il s'efface seulement par transparence).
+    await page.goto("/");
+    await live(page);
+    expect(await band(page).locator("svg").evaluate((el) => el.outerHTML.length)).toBeGreaterThan(5000);
   });
 
   test("moteur indisponible : le repli reste affiché, aucune erreur de page", async ({ page }) => {
@@ -86,6 +116,9 @@ test.describe("Bandeau scanner : animé", () => {
     await expect(band(page).getByText("Faites glisser pour tourner")).toBeVisible();
     expect(await inked(page)).toBeGreaterThan(500);
     await expectExampleValues(page);
+    // Le moteur dessine la silhouette allongée (plus haute que large), pas le cylindre trapu du repli.
+    const shape = await extent(page);
+    expect(shape.h).toBeGreaterThan(shape.w * 1.25);
 
     // Rotation et balayage automatiques : l'image change d'elle-même.
     const a = await snapshot(page);

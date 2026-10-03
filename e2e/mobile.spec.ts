@@ -115,7 +115,7 @@ test.describe("Petits écrans : le détecteur voit les vrais problèmes", () => 
   });
 });
 
-// Premier écran mobile : le bandeau « scanner » (cylindre abstrait et valeurs de l'exemple fictif) précède le bouton principal,
+// Premier écran mobile : le bandeau « scanner » (visualisation schématique et valeurs de l'exemple fictif) précède le bouton principal,
 // et le bouton reste entièrement visible sans défilement.
 for (const [w, h] of [[390, 844], [375, 700], [360, 740]] as const) {
   test.describe(`Premier écran de l'accueil : ${w} × ${h} px`, () => {

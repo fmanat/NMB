@@ -1,28 +1,36 @@
-// Moteur du bandeau « scanner » : dessin 2D (canvas) d'un nuage de points cylindrique abstrait avec projection 3D maison
-// (voir src/lib/scanner3d.ts). Aucune dépendance. Ce module n'est chargé que par import dynamique, après l'affichage de la page.
+// Moteur du bandeau « scanner » : dessin 2D (canvas) d'une silhouette stylisée en nuage de points (surface de révolution lisse, voir
+// src/lib/scannerSilhouette.ts) avec projection 3D maison (voir src/lib/scanner3d.ts). Aucune dépendance. Ce module n'est chargé que
+// par import dynamique, après l'affichage de la page. C'est le SEUL consommateur de la silhouette : le repli statique (SVG du serveur)
+// et toutes les images de partage restent sur le cylindre abstrait (décision du propriétaire du 03/10/2026, docs/DECISIONS.md).
 //
 // Mouvement : rotation automatique lente, plan de balayage qui monte et descend, rotation au doigt/à la souris (événements pointeur).
 // Avec « prefers-reduced-motion: reduce » : aucune boucle d'animation ; une image fixe, redessinée seulement quand le visiteur
 // fait tourner l'objet (pas d'inertie, pas de balayage).
 
+import { CAMERA_DISTANCE as CAMERA, STATIC_VIEW, clampPitch, project, scanProximity, type Projected, type View } from "@/lib/scanner3d";
 import {
-  CAMERA_DISTANCE as CAMERA,
-  CYLINDER,
-  STATIC_VIEW,
-  clampPitch,
-  generateCylinderPoints,
-  project,
-  ringHeights,
-  ringPolyline,
-  scanHeight,
-  scanProximity,
-  type Projected,
-  type View,
-} from "@/lib/scanner3d";
+  RING_PARAMS,
+  SCAN_DISC_RADIUS,
+  SILHOUETTE_LENGTH,
+  MERIDIAN_COUNT,
+  SILHOUETTE_VIEW,
+  generateSilhouettePoints,
+  ringFactor,
+  scanDisc,
+  scanFraction,
+  silhouetteAxis,
+  silhouetteMeridian,
+  silhouetteRing,
+  silhouetteSpec,
+  type BendDirection,
+  type SilhouetteSpec,
+} from "@/lib/scannerSilhouette";
 
 export type ScannerHandle = { destroy(): void };
 
 type Options = {
+  /** Courbure de l'axe : angle et direction du rapport d'exemple (valeurs fournies par le serveur). Absente : axe droit. */
+  curvature?: { angleDeg: number; direction: BendDirection };
   /** Appelé après le premier dessin réussi (le repli statique peut alors s'effacer). */
   onFirstFrame?: () => void;
 };
@@ -65,11 +73,15 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
   let cssH = 0;
   let dpr = 1;
   let points: Float32Array = new Float32Array(0);
+  let params: Float32Array = new Float32Array(0); // paramètre axial (0 à 1) de chaque point
   let pointCount = 0;
-  const heights = ringHeights(5);
-  const rings = heights.map((y, i) => ringPolyline(y, i === 0 || i === heights.length - 1 ? 1.22 : 1.12, 72));
+  const spec: SilhouetteSpec = silhouetteSpec(options.curvature);
+  const L = SILHOUETTE_LENGTH;
+  const rings = RING_PARAMS.map((t, i) => silhouetteRing(spec, t, ringFactor(i, RING_PARAMS.length), 72));
+  const axisLine = silhouetteAxis(spec, 24);
+  const meridians = Array.from({ length: MERIDIAN_COUNT }, (_, i) => silhouetteMeridian(spec, ((i + 0.5) / MERIDIAN_COUNT) * Math.PI * 2, 48));
 
-  const view: View = { yaw: STATIC_VIEW.yaw, pitch: STATIC_VIEW.pitch, cameraDistance: CAMERA };
+  const view: View = { yaw: SILHOUETTE_VIEW.yaw, pitch: SILHOUETTE_VIEW.pitch, cameraDistance: CAMERA };
   let yawVel = AUTO_SPEED;
   const t0 = performance.now();
   let raf = 0;
@@ -97,7 +109,9 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
     canvas.height = Math.round(h * dpr);
     const want = cssW * cssH < 70000 ? POINTS_SMALL : POINTS_LARGE;
     if (want !== pointCount) {
-      points = generateCylinderPoints(want);
+      const cloud = generateSilhouettePoints(spec, want);
+      points = cloud.points;
+      params = cloud.params;
       pointCount = want;
     }
   }
@@ -107,19 +121,19 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, cssW, cssH);
-    // Unité : le cylindre (hauteur 1,7 + anneaux) tient dans le bandeau avec une marge.
+    // Unité : la silhouette (longueur 3 + anneaux) tient dans le bandeau avec une marge.
     // Sur les bandeaux étroits (mobile), les valeurs occupent les deux côtés : l'objet doit tenir dans la zone libre du centre.
     const unit = cssW < 480 ? Math.min(cssH / 3.5, (cssW - 190) / 2.8) : Math.min(cssH / 3.5, cssW / 3.2);
     const cx = cssW / 2;
     const cy = cssH / 2;
-    const planeY = reduced ? -CYLINDER.halfHeight + STATIC_VIEW.scan * 2 * CYLINDER.halfHeight : scanHeight(now - t0);
+    const planeT = reduced ? STATIC_VIEW.scan : scanFraction(now - t0); // position du plan de balayage le long de l'axe, de 0 à 1
 
     // Anneaux de mesure (derrière les points : lignes fines)
     ctx.lineWidth = 1;
     for (let r = 0; r < rings.length; r++) {
       const poly = rings[r];
       const edge = r === 0 || r === rings.length - 1;
-      const near = scanProximity(heights[r], planeY, 0.12);
+      const near = scanProximity(RING_PARAMS[r] * L, planeT * L, 0.12);
       ctx.strokeStyle = `rgba(${br},${bg},${bb},${(edge ? 0.5 : 0.28) + near * 0.4})`;
       ctx.beginPath();
       for (let i = 0; i < poly.length; i += 3) {
@@ -132,16 +146,28 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
       ctx.stroke();
     }
 
-    // Axe central et graduations (échelle de mesure à droite de l'axe)
+    // Fil de fer : méridiens de la surface (fins, derrière les points) pour lire le profil
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(${br},${bg},${bb},0.2)`;
+    ctx.beginPath();
+    for (const line of meridians) {
+      for (let i = 0; i < line.length; i += 3) {
+        project(line[i], line[i + 1], line[i + 2], view, tmp2);
+        if (i === 0) ctx.moveTo(cx + tmp2.x * unit, cy + tmp2.y * unit);
+        else ctx.lineTo(cx + tmp2.x * unit, cy + tmp2.y * unit);
+      }
+    }
+    ctx.stroke();
+
+    // Axe central (suit la courbure de l'axe)
     {
-      const top = project(0, CYLINDER.halfHeight * 1.18, 0, view, tmp);
-      const tx = cx + top.x * unit;
-      const ty = cy + top.y * unit;
-      const bot = project(0, -CYLINDER.halfHeight * 1.18, 0, view, tmp2);
       ctx.strokeStyle = `rgba(${br},${bg},${bb},0.22)`;
       ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(cx + bot.x * unit, cy + bot.y * unit);
+      for (let i = 0; i < axisLine.length; i += 3) {
+        project(axisLine[i], axisLine[i + 1], axisLine[i + 2], view, tmp2);
+        if (i === 0) ctx.moveTo(cx + tmp2.x * unit, cy + tmp2.y * unit);
+        else ctx.lineTo(cx + tmp2.x * unit, cy + tmp2.y * unit);
+      }
       ctx.stroke();
     }
 
@@ -157,8 +183,8 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
       project(points[i * 3], points[i * 3 + 1], points[i * 3 + 2], view, tmp);
       sx[i] = cx + tmp.x * unit;
       sy[i] = cy + tmp.y * unit;
-      if (scanProximity(points[i * 3 + 1], planeY, 0.2) > 0.15) levels[i] = 4;
-      else levels[i] = Math.min(3, Math.max(0, Math.floor(((tmp.depth - (CAMERA - 1.3)) / 2.6) * 4)));
+      if (scanProximity(params[i] * L, planeT * L, 0.2) > 0.15) levels[i] = 4;
+      else levels[i] = Math.min(3, Math.max(0, Math.floor(((tmp.depth - (CAMERA - 1.2)) / 2.4) * 4)));
     }
     for (let lv = 0; lv < 5; lv++) {
       const size = SIZES[lv];
@@ -168,13 +194,12 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
       ctx.fill();
     }
 
-    // Plan de balayage : disque légèrement plus large que l'objet, bord net, voile translucide
+    // Plan de balayage : disque perpendiculaire à l'axe, plus large que l'objet, bord net, voile translucide
     {
-      const R = 1.38;
+      const disc = scanDisc(spec, planeT, SCAN_DISC_RADIUS, 64);
       ctx.beginPath();
-      for (let i = 0; i <= 64; i++) {
-        const a = (i / 64) * Math.PI * 2;
-        project(Math.cos(a) * R, planeY, Math.sin(a) * R, view, tmp);
+      for (let i = 0; i < disc.length; i += 3) {
+        project(disc[i], disc[i + 1], disc[i + 2], view, tmp);
         const px = cx + tmp.x * unit;
         const py = cy + tmp.y * unit;
         if (i === 0) ctx.moveTo(px, py);

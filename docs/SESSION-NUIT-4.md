@@ -7,9 +7,10 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 - Dépôt à jour depuis GitHub au départ. Journal mis à jour à la fin de chaque bloc. Commit + push à la fin de chaque bloc, **`npm run verify` vert à chaque commit**.
 - Problème qui résiste à 3 tentatives : le consigner ici, annuler les modifications en cours du bloc, passer au suivant.
 - **Déploiement sur bitometre.com : uniquement aux blocs 0 et 9**, si `verify` est vert, suivi du test de fumée public (`RAILWAY_TEST_URL=https://bitometre.com npx playwright test -c playwright.remote.config.ts --grep-invert "protection par mot de passe|administration : connexion"`). Test en échec : redéployer la version précédente. Déploiement : `railway up -s web --ci` (le service n'est relié à aucun dépôt).
-- **Interdits** : activer la formule photo sur le site public, utiliser une photo réelle, dépenser plus de 0,50 $ en appels xAI (images neutres fabriquées uniquement), ouvrir un compte, envoyer un message, inventer un chiffre affiché, représenter une anatomie.
+- **Interdits** : activer la formule photo sur le site public, utiliser une photo réelle, dépenser plus de 0,50 $ en appels xAI (images neutres fabriquées uniquement), ouvrir un compte, envoyer un message, inventer un chiffre affiché, représenter une anatomie (sauf la dérogation du 03/10/2026 ci-dessous : uniquement dans le moteur animé du bandeau scanner).
 - Décision non couverte : l'option la plus prudente, notée dans `docs/DECISIONS.md`.
 - Dérogation de charte (bloc 1 seulement) : 3D et fond sombre autorisés pour le bandeau « scanner » en tête de l'accueil ; le reste du site reste clair.
+- **Dérogation à la règle « aucune représentation anatomique » (propriétaire, 03/10/2026)** : levée pour ce seul bandeau scanner de l'accueil, et seulement dans son **moteur animé (canvas)** ; elle reste en vigueur partout ailleurs (rapport, cartes de partage, images Open Graph, pages de contenu, repli statique, e-mails, etc.). Détail et portée : `docs/DECISIONS.md`, section « Bandeau scanner : dérogation … du 03/10/2026 ».
 
 ## Blocs
 | Bloc | Sujet | État |
@@ -34,7 +35,7 @@ Après une compaction du contexte : relire ce journal, `docs/DECISIONS.md`, `CLA
 ## Bloc 1 : bandeau « scanner » 3D : FAIT
 Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste de l'accueil et du site reste clair.
 
-**Ce qui est fait**
+**Ce qui est fait** (état du 02/10 ; le moteur animé a été modifié le 03/10 : voir « Modification du bandeau (03/10/2026) » plus bas)
 - Nuage de points d'un **cylindre géométrique abstrait** (court, bases plates, aucun détail évoquant un organe : hauteur 1,7 pour un diamètre 2), 5 anneaux de mesure (les deux extrêmes plus larges), axe central, **plan de balayage** qui monte et descend (période 6,4 s), rotation automatique lente (un tour en environ 28 s), rotation au doigt/à la souris (événements pointeur ; la souris incline aussi, le doigt ne fait tourner qu'horizontalement car `touch-action: pan-y` laisse la page défiler).
 - Autour : les valeurs de l'exemple (`exampleReport()`, valeurs existantes uniquement : longueur 13,8 cm, circonférence 11,9 cm, percentiles, courbure 15°, score), badge « Exemple · valeurs fictives » en bas du bandeau.
 - **Chargement différé** : la coque client (`ScannerShell`, quelques centaines d'octets) attend l'événement `load` puis un instant de repos (`requestIdleCallback`, 3 s au plus), puis importe dynamiquement le moteur (fichier de 3,8 Ko compressé, mesuré). Aucune dépendance ajoutée : canvas 2D et projection 3D maison.
@@ -217,6 +218,38 @@ Dérogation de charte (3D, fond sombre) appliquée à ce seul bandeau ; le reste
 - Captures (build de production local, mode bêta, valeurs d'essai, rapports de test supprimés ensuite) : `docs/captures-nuit4/` : accueil et rapport à 390 px et 1 440 px, haut de page et page entière. Vérifiées à l'œil : le bouton « Démarrer mon analyse » est dans le premier écran à 390 px ; le rapport affiche le score, les percentiles et le profil.
 - Lighthouse mobile de l'accueil (build final local, 3 passages) : performance **94, 96, 95** ; accessibilité 100 ; bonnes pratiques 100 ; CLS 0 ; LCP 2,7 à 2,8 s ; TBT 80 à 150 ms. À refaire sur bitometre.com après le déploiement (le réseau et Cloudflare changent les temps).
 - Remarque technique : un serveur lancé « détaché » (`&`, `nohup`) ne joint pas PostgreSQL dans l'environnement de l'assistant ; lancé comme tâche de fond gérée ou par Playwright, il le joint. Sans effet sur la production.
+
+## Modification du bandeau (03/10/2026) : silhouette stylisée dans le moteur animé : FAIT
+Décision du propriétaire du 03/10/2026 (dérogation « aucune représentation anatomique » levée pour ce seul bandeau, moteur animé seulement ; texte et portée dans `docs/DECISIONS.md`).
+
+**Ce qui change**
+- Le moteur animé (canvas) ne dessine plus le cylindre mais une **silhouette stylisée** : surface de révolution lisse, axe légèrement courbe, rayon variable (fût, léger rétrécissement de jonction, renflement arrondi en bout). Rendu **uniquement** en nuage de points (460 ou 800 points, tracé par lots comme avant), fil de fer (8 méridiens fins), 5 anneaux de mesure qui épousent la forme, axe central courbe et plan de balayage perpendiculaire à l'axe qui monte et descend. Aucune texture, aucun détail, aucun ombrage.
+- **Proportions lues dans les constantes du site** (`referenceFor("erect", ...)`) : longueur 13,12 cm, circonférence 11,66 cm, diamètre = circonférence / π = 3,71 cm, **rapport longueur / diamètre = 3,535**. Les constantes du code (13,12 et 11,66) ne diffèrent des chiffres du propriétaire (13,1 et 11,7) que par l'arrondi : aucun écart à signaler ; le code fait foi.
+- **Courbure** = celle du rapport d'exemple (15°, vers la gauche, transmise par le serveur), plafonnée à 20° pour rester « légèrement incurvé ». Les valeurs affichées autour (13,8 cm, 11,9 cm, percentiles, 15°, score) et le badge « Exemple · valeurs fictives » sont inchangés.
+- **Restent le cylindre abstrait, inchangé** : le repli statique (SVG du serveur) et toutes les images de partage / Open Graph. Garantie par test (voir plus bas).
+- Texte réservé aux lecteurs d'écran : « Visualisation schématique de mesure : nuage de points, anneaux de mesure et plan de balayage. » (sobre, sans description de forme).
+- Conservés : chargement différé (import dynamique après `load` puis repos), rotation au doigt / à la souris, rotation automatique lente, aucune animation continue en mouvement réduit (image fixe, redessinée seulement pendant un glissement), pas de débordement à 320 / 375 / 390 px, axe-core sans violation, bouton principal dans le premier écran à 390 × 844, 375 × 700, 360 × 740.
+
+**Fichiers** : `src/lib/scannerSilhouette.ts` (nouveau, géométrie pure : profil de rayon `radiusProfile(t)`, axe courbe, nuage, anneaux, méridiens, disque de balayage) ; `src/components/scanner/scannerEngine.ts` (dessine la silhouette ; seul importateur du module) ; `ScannerShell.tsx` (transmet la courbure) ; `ScannerBand.tsx` (texte alternatif, courbure transmise ; le repli SVG n'a pas changé d'un octet) ; `src/lib/scanner3d.ts` (cylindre conservé, non modifié) ; `src/app/page.tsx` (commentaire) ; `tests/scanner-silhouette.test.ts` (31 tests), `tests/scanner-separation.test.ts` (15 tests), `tests/fixtures/scanner-fallback.svg` (référence du repli), `e2e/scanner.spec.ts` (+2 tests : repli du serveur identique à la référence ; le moteur dessine une forme allongée plus haute que large), `e2e/mobile.spec.ts` (commentaire) ; captures `docs/captures-nuit4/scanner-silhouette-390.png` et `scanner-silhouette-1440.png`.
+
+**Tests**
+- Géométrie : profil fini et jamais négatif, valant 1 à la base et 0 au bout, constant sur le fût, rétrécissement léger puis renflement plus large que le fût, monotone là où attendu (décroissant vers la jonction, croissant jusqu'au renflement, décroissant jusqu'au bout), continu et sans saut de pente aux raccords, bout arrondi (et non pointu) ; rapport longueur / diamètre égal à celui des constantes (et aucun nombre de référence écrit en dur dans la géométrie ni le moteur) ; courbure = celle de l'exemple, bornée, sens correct pour les quatre directions, longueur de l'axe conservée, repère orthonormé, objet centré ; points exactement sur la surface, aucun NaN (1 à 3 000 points, 4 courbures), déterminisme de la graine ; anneaux et disque perpendiculaires à l'axe.
+- Séparation : le seul importateur de la silhouette est `scannerEngine.ts` (la coque ne l'atteint que par import dynamique) ; le repli (`ScannerBand.tsx`), `scanner3d.ts` et la fermeture des imports de `cardImage.tsx` et des trois routes d'image (og, story, neutre) ne l'atteignent pas et ne mentionnent aucun de ses exports ; toute route d'image de l'application est vérifiée ; le SVG du repli est identique octet pour octet à la référence d'avant et indépendant de la courbure ; seule la page d'accueil importe le bandeau. Sensibilité vérifiée à la main (un import ajouté dans `cardImage.tsx` fait échouer 6 tests).
+
+**Taille du moteur** (chunk dynamique du moteur, `next build`) : 9,6 Ko brut, **4,2 Ko gzip -9, 3,8 Ko brotli** (3,8 Ko compressé avant la modification : variation de quelques centaines d'octets). Aucune dépendance ajoutée.
+
+**Lighthouse mobile** (accueil, site compilé local avec `FREE_BETA=on`, Chromium de Playwright, simulation mobile par défaut, 10 passages sur une machine partagée avec d'autres programmes) : performance **91, 94, 95, 93, 86, 93, 98, 75, 97, 94** (médiane 93,5) ; accessibilité 100 ; bonnes pratiques 100 ; CLS 0 ; LCP 2,0 à 3,0 s (le titre) ; TBT 100 à 370 ms sauf un passage à 1 270 ms (performance 75), attribué au bruit de la machine (même dispersion qu'au bloc 1 : 49, 80, 95 avant optimisation, puis 92 à 95 ; le moteur est chargé après `load` et ne pèse pas sur le LCP). Objectif ≥ 90 atteint en médiane, pas à chaque passage.
+
+**Captures** (build de production local, mouvement réduit pour une image reproductible) : `docs/captures-nuit4/scanner-silhouette-390.png` et `-1440.png`. Vérifiées à l'œil : nuage de points bleu avec fil de fer fin et anneaux, sur fond sombre ; schématique, sobre, sans texture ni réalisme ; lisible (assez de points, silhouette allongée avec une tête arrondie et une légère inclinaison) ; le bouton « Démarrer mon analyse » est entièrement dans le premier écran à 390 px.
+
+**`npm run verify`** : vert (lint, types, 683 tests unitaires, contrôle SEO, 164 tests de bout en bout, 12 min).
+
+**Limites / à savoir**
+- **Saut visuel au chargement** : le repli (cylindre trapu, vue de dessus à 0,42 rad) laisse place, par fondu de 0,3 s, à une silhouette allongée vue presque de profil (0,2 rad) : les deux ne se superposent pas. C'est voulu (le repli reste le cylindre abstrait) mais perceptible.
+- La courbure de 15° sur une longueur de 3 unités est discrète (écart latéral du bout d'environ 13 % de la longueur) : elle se lit surtout pendant la rotation.
+- Les 8 méridiens et le nuage donnent une lecture correcte de la forme mais, vu de face à petite taille (mobile), le renflement terminal et la jonction sont peu marqués.
+- Le test de séparation analyse les imports par expression régulière (le code du dépôt utilise des points-virgules) : un import écrit de façon inhabituelle pourrait lui échapper ; les tests e2e (HTML réellement servi) en sont un second filet pour le repli.
+- Aucun essai sur un vrai téléphone ni lecteur d'écran.
 
 ## RAPPORT FINAL
 **Commits de la nuit** (du plus ancien au plus récent) : `f16b1f7` journal ; `72bf34d` bloc 1 ; `163d113` bloc 2 ; `2fa80c7` bloc 3 ; `4215b1d` bloc 4 ; `073de29` bloc 5 ; `7ec9a1d` bloc 6 ; `da9498a` bloc 7 ; `ec5d9a3` bloc 8 ; puis le commit de ce bloc 9. Tous poussés sur `origin/main`, `verify` vert à chacun.

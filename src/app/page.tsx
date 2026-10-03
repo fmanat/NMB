@@ -59,7 +59,7 @@ export default async function Home() {
             </p>
           </div>
 
-          {/* Bandeau « scanner » (dérogation de charte : 3D et fond sombre pour ce seul bandeau) : cylindre abstrait balayé par un plan,
+          {/* Bandeau « scanner » (dérogation de charte : 3D et fond sombre pour ce seul bandeau) : visualisation schématique (repli statique : cylindre abstrait ; moteur animé : silhouette stylisée, décision du 03/10/2026) balayée par un plan,
               entouré des valeurs du rapport d'exemple (fictives, marquées « Exemple »). Mobile : pleine largeur entre le texte et le bouton
               (le bouton principal reste visible sans défilement à 390 px). Ordinateur : colonne de droite. Le rapport complet est plus bas (#exemple). */}
           <div className="-mx-4 min-[390px]:-mx-5 md:mx-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-center">

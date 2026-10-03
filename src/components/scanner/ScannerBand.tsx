@@ -6,7 +6,8 @@ import { CAMERA_DISTANCE, CYLINDER, STATIC_VIEW, generateCylinderPoints, project
 import { ScannerShell } from "./ScannerShell";
 
 // Bandeau « scanner » (dérogation de charte décidée par le propriétaire : 3D et fond sombre pour ce seul bandeau).
-// L'objet est un cylindre géométrique abstrait. Les valeurs affichées autour sont celles du rapport d'EXEMPLE (fictif), jamais des mesures réelles.
+// Le REPLI statique ci-dessous reste le cylindre géométrique abstrait (jamais la silhouette du moteur animé : décision du propriétaire
+// du 03/10/2026, docs/DECISIONS.md ; un test garantit que ce fichier n'importe pas la silhouette). Les valeurs affichées autour sont celles du rapport d'EXEMPLE (fictif), jamais des mesures réelles.
 
 const W = 400;
 const H = 240;
@@ -69,6 +70,7 @@ export function ScannerBand({ ex }: { ex: ReportResults }) {
   const dir = ex.curvature.direction !== "none" ? DIRECTION_FR[ex.curvature.direction] : "sans direction";
   return (
     <ScannerShell
+      curvature={{ angleDeg: ex.curvature.angleDeg, direction: ex.curvature.direction }}
       fallback={<StaticScene />}
       labels={
         <dl className="pointer-events-none absolute inset-0 m-0">
@@ -85,7 +87,7 @@ export function ScannerBand({ ex }: { ex: ReportResults }) {
           </span>
           <span className="hidden text-[12px] leading-4 text-[var(--bm-dark-secondary)] group-data-[scanner=live]:inline">Faites glisser pour tourner</span>
           <span className="sr-only">
-            Illustration abstraite : un cylindre géométrique en nuage de points, entouré d&apos;anneaux de mesure et balayé par un plan. Elle ne représente rien d&apos;autre.
+            Visualisation schématique de mesure : nuage de points, anneaux de mesure et plan de balayage.
           </span>
         </div>
       }
