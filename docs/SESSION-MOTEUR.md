@@ -12,8 +12,8 @@ Démarrée le 03/10/2026, session autonome, **aucune question posée**. Demande 
 | Étape | Sujet | État |
 |---|---|---|
 | 1 | Moteur photo-report/2 (deux appels, calculs, contrôles du texte, rapport partiel), rapport en compte rendu, consignes, textes du site, tests, appels réels sans photo | FAIT (verify vert : 768 tests unitaires, 171 de bout en bout) |
-| 2 | Calibration : paires conservées, graphique et écart moyen par tranche dans l'administration | EN COURS |
-| 3 | Appels réels sur images neutres, exemple de rapport, `docs/TEST-PHOTO.md`, cahier des charges | À FAIRE |
+| 2 | Calibration : paires conservées, graphique et écart moyen par tranche dans l'administration | FAIT |
+| 3 | Appels réels sans photo, exemple de rapport, `docs/TEST-PHOTO.md`, cahier des charges | FAIT (avec l'étape 1 ; journal final ci-dessous) |
 
 ## Étape 1 : moteur photo-report/2 et rapport en compte rendu : FAIT
 
@@ -55,3 +55,15 @@ Démarrée le 03/10/2026, session autonome, **aucune question posée**. Demande 
 - Retouches du prompt d'après les textes réels : traduction entre parenthèses à la première apparition seulement (le modèle en mettait après chaque mot), noms des indicateurs sans parenthèse, Note qui rappelle la méthode réelle (le modèle mentionnait une carte absente), clés JSON jamais recopiées, longueur visée d'environ 700 mots.
 - **Dépense réelle estimée de la session : environ 0,25 $** (plafond 0,30 $) : 0,01 $ (vision) + au plus 0,11 $ (rédaction interrompue par le délai, facturation inconnue, comptée au pire) + 0,107 $ (sonde à délai long) + 0,005 $ (sonde sans raisonnement) + 0,012 $ (circuit complet, deux rédactions, au tarif réel). Plus aucun appel réel après cela.
 
+
+## Étape 2 : calibration dans l'administration : FAIT
+- Conservation : à chaque mesure calibrée sur la carte, une ligne de `calibration_pairs` (migration 010) : longueur et circonférence mesurées par la carte, longueur et circonférence estimées par le modèle **sans la carte**. Ni clé, ni date, ni lien avec un rapport ou une tentative. Paire non conservée si l'estimation sans carte sort de la plage plausible.
+- Calcul (`src/lib/admin/calibration.ts`, testé) : par dimension, écart moyen (estimation − mesure, en cm et en %) par tranche de taille selon la mesure par la carte (longueur : < 11, 11–13, 13–15, 15–17, ≥ 17 cm ; circonférence : < 10, 10–11,5, 11,5–13, 13–14,5, ≥ 14,5 cm), écart moyen et absolu moyen d'ensemble, pente des moindres carrés (1 = aucun retour vers la moyenne).
+- Administration (`/admin`, section « Calibration du modèle ») : deux nuages de points (mesure en abscisse, estimation en ordonnée, diagonale « estimation = mesure », info-bulle par point), tableaux par tranche, phrase d'aide à la lecture. Motifs de refus et de rapport partiel du nouveau moteur ajoutés au tableau « Refus par motif ».
+- Test de bout en bout : cinq paires factices qui ramènent vers 13 cm → +1,5 cm dans la tranche « moins de 11 cm », pente 0,50.
+
+## RAPPORT FINAL
+- **Fait** : moteur photo-report/2 complet (deux appels, calculs par le code, texte vérifié, rapport partiel), rapport en compte rendu et PDF, calibration et graphique d'administration, notice `docs/TEST-PHOTO.md` à jour. `npm run verify` vert à chaque commit (768 tests unitaires, 172 de bout en bout). PHOTO_BETA inchangée (désactivée en production), rien déployé.
+- **Appels réels** : environ 0,25 $ sur 0,30 $, sans aucune photo (image neutre fabriquée pour la vision ; valeurs factices pour la rédaction).
+- **Reste à faire par le propriétaire** : tester le moteur complet avec sa photo (`docs/TEST-PHOTO.md`) ; réécrire la question de `content/seo/faq.md` sur la photo (elle décrit l'ancien moteur) ; répondre aux questions de fin de session (rapport partiel en version payante, longueur souple, modèle de rédaction, FAQ).
+- **Limites connues** : la durée réelle avec une photo n'est pas mesurée (attendu : 10 à 20 s pour la vision, environ 10 s par rédaction, une relance fréquente) ; la règle « chaque phrase contient une valeur » et le ton ne sont pas vérifiables par le code (prompt seulement) ; les rapports partiels comptent comme « Erreurs » dans « Analyses lancées » de l'administration (leur motif commence par « Rapport partiel »).

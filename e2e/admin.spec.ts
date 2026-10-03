@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { alertOf, E2E, expect, test } from "./helpers";
+import { alertOf, E2E, expect, test, withDb } from "./helpers";
 
 /** Clique « Se connecter » et attend la réponse du serveur (chaque échec est volontairement ralenti). */
 async function submit(page: Page) {
@@ -55,5 +55,26 @@ test.describe("Administration", () => {
     await submit(page);
     await expect(alertOf(page)).toContainText("Trop de tentatives");
     await expect(page).toHaveURL(/\/admin\/connexion/);
+  });
+});
+
+test.describe("Administration : calibration du modèle photo", () => {
+  test("nuages de points (mesure par la carte, estimation sans la carte) et écart moyen par tranche", async ({ page }) => {
+    // Paires factices : le modèle ramène vers 13 cm (surestime les petites longueurs, sous-estime les grandes).
+    await withDb(async (db) => {
+      await db.query("TRUNCATE calibration_pairs");
+      for (const c of [10, 12, 14, 16, 18]) await db.query("INSERT INTO calibration_pairs VALUES ($1, $2, $3, $4)", [c, 13 + 0.5 * (c - 13), 12, 12]);
+    });
+    await page.goto("/admin/connexion");
+    await page.getByLabel("Mot de passe").fill(E2E.adminPassword);
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+    const section = page.locator("section", { has: page.getByRole("heading", { name: /Calibration du modèle/ }) });
+    await expect(section.getByRole("img", { name: /Longueur \(5 paires\)/ })).toBeVisible();
+    await expect(section.locator("circle")).toHaveCount(10);
+    await expect(section.getByRole("cell", { name: "moins de 11 cm" })).toBeVisible();
+    await expect(section).toContainText("+1,5 cm");
+    await expect(section).toContainText("pente 0,50");
+    await withDb((db) => db.query("TRUNCATE calibration_pairs"));
   });
 });

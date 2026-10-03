@@ -5,7 +5,10 @@ import { FINANCE, FORMULAS } from "@/config/site";
 import { ADMIN_COOKIE, isAdminTokenValid } from "@/lib/admin/auth";
 import { dashboardStats, type Finance, type FormulaKey } from "@/lib/admin/stats";
 import { computeFunnel, funnelCounts } from "@/lib/funnel";
+import { calibrationSummary, type DimSummary } from "@/lib/admin/calibration";
+import { listCalibrationPairs } from "@/lib/repo";
 import { logout } from "./actions";
+import { CalibrationChart } from "./CalibrationChart";
 
 export const metadata = { title: "Tableau de bord", robots: { index: false, follow: false, nocache: true } };
 
@@ -38,6 +41,19 @@ const MOTIFS: Record<string, string> = {
   fournisseur_invalid: "Prestataire d'analyse : réponse invalide",
   recevabilite_invalide: "Réponse de recevabilité non conforme au schéma (après relance)",
   commentaire_invalide: "Commentaire non conforme au schéma (après relance)",
+  // Moteur photo-report/2 : refus et rapports partiels (échec technique, rapport générique livré).
+  refus_prestataire: "Image refusée par le prestataire d'analyse",
+  partiel_qualite_insuffisante: "Rapport partiel : photo difficile à lire",
+  partiel_vision_invalide: "Rapport partiel : réponse d'analyse non conforme (après relance)",
+  partiel_estimation_invraisemblable: "Rapport partiel : estimation invraisemblable",
+  partiel_redaction_interdits: "Rapport partiel : rédaction contraire aux interdits (après relance)",
+  partiel_redaction_refusee: "Rapport partiel : rédaction refusée par le prestataire",
+  partiel_redaction_invalide: "Rapport partiel : rédaction invalide",
+  partiel_fournisseur_timeout: "Rapport partiel : délai du prestataire dépassé",
+  partiel_fournisseur_network: "Rapport partiel : réseau",
+  partiel_fournisseur_auth: "Rapport partiel : clé refusée",
+  partiel_fournisseur_policy: "Rapport partiel : accès refusé",
+  partiel_fournisseur_invalid: "Rapport partiel : réponse invalide du prestataire",
 };
 const OUTCOMES: Record<string, string> = { refused: "Refus", blocked: "Bloquée", error: "Erreur technique" };
 
@@ -86,6 +102,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
   // Entonnoir : trois périodes côte à côte, toujours les mêmes (7 jours, 30 jours, depuis le début).
   const funnelPeriods = PERIODS.filter((p) => p.key === "7" || p.key === "30" || p.key === "tout");
   const funnels = await Promise.all(funnelPeriods.map(async (p) => ({ p, rows: computeFunnel(await funnelCounts(p.days)) })));
+  const calib = calibrationSummary(await listCalibrationPairs());
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 space-y-6">
@@ -197,6 +214,40 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
           ]}
         />
       </Card>
+      <Card
+        title="Calibration du modèle : mesure par la carte et estimation sans la carte"
+        note="Une paire par analyse photo dont la taille a été mesurée sur la carte de référence : la mesure du site et l'estimation du modèle faite sans tenir compte de la carte (rien d'autre n'est conservé : ni date, ni rapport). Si le modèle ramène ses estimations vers la moyenne, les points forment un nuage plus plat que la diagonale, l'écart moyen est positif dans les petites tranches et négatif dans les grandes, et la pente est nettement inférieure à 1. Toutes les paires depuis le début, indépendamment de la période choisie."
+      >
+        {calib.length.n === 0 ? (
+          <p className="text-sm text-muted">Aucune paire pour l&apos;instant : il faut des analyses photo avec une carte de référence exploitable.</p>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <CalibrationChart title={`Longueur (${nb(calib.length.n)} paires)`} s={calib.length} range={[6, 24]} />
+              <CalibrationChart title={`Circonférence (${nb(calib.girth.n)} paires)`} s={calib.girth} range={[6, 18]} />
+            </div>
+            {(["length", "girth"] as const).map((dim) => (
+              <CalibrationTable key={dim} title={dim === "length" ? "Longueur" : "Circonférence"} s={calib[dim]} />
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+const signed = (n: number | null, unit: string, digits = 1) => (n === null ? "—" : `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(digits).replace(".", ",")} ${unit}`);
+
+/** Écart moyen (estimation sans la carte − mesure par la carte) par tranche de taille, plus la pente globale. */
+function CalibrationTable({ title, s }: { title: string; s: DimSummary }) {
+  return (
+    <div className="space-y-1">
+      <h3 className="text-sm font-semibold">{title} : écart moyen par tranche (estimation − mesure)</h3>
+      <Table head={["Tranche (mesure par la carte)", "Paires", "Écart moyen", "En % de la mesure"]} rows={s.bands.map((b) => [b.label, nb(b.n), signed(b.meanGapCm, "cm"), signed(b.meanGapPct, "%")])} />
+      <p className="text-xs text-muted">
+        Ensemble : écart moyen {signed(s.meanGapPct, "%")}, écart absolu moyen {s.meanAbsGapPct === null ? "—" : `${s.meanAbsGapPct.toFixed(1).replace(".", ",")} %`}, pente{" "}
+        {s.slope === null ? "— (au moins 3 paires dispersées)" : s.slope.toFixed(2).replace(".", ",")} (1 = aucun retour vers la moyenne).
+      </p>
     </div>
   );
 }
