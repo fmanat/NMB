@@ -51,3 +51,10 @@ Session autonome, sans question. Journal mis à jour à la fin de chaque bloc. �
 - **/a-propos** (« Bitomètre ») : ce qu'est le site, méthode, sources, politique de mise à jour, limites, confidentialité ; aucune identité de personne ni de société. 967 mots.
 - Le contrôle des paragraphes partagés a fait réécrire plusieurs passages de ces pages trop proches des guides existants.
 - Tableaux pleine largeur, zone « 80 % » des courbes plus contrastée.
+
+## Bloc 5 : les 11 pages par centimètre — terminé
+- `/taille-penis-10-cm` à `/taille-penis-20-cm` (requêtes « pénis 10 cm » … « pénis 20 cm »). Mise en page commune automatique : fil d'Ariane (Accueil › Percentile du pénis › N cm), réponse immédiate (rang calculé, « sur 1 000 hommes, environ N mesurent moins »), courbe avec le repère, « Vérifier sa mesure en quatre points », calculateur prérempli (longueur = la taille, circonférence = médiane de référence), tailles voisines, appel vers le questionnaire, grille des autres tailles.
+- Contenu propre à chaque page selon sa place : 10-12 cm (relativiser, erreurs de mesure, repos/érection, circonférence ; 11 cm : le 10e percentile n'est qu'un repère ; 12 cm : premier quartile, variation selon la référence) ; 13-14 cm (ce que « dans la moyenne » veut dire, densité au centre, sensibilité au demi-centimètre) ; 15-16 cm (proportions, haut de la courbe, vérifications) ; 17-20 cm (rareté, extrapolation de la loi normale sur 692 hommes, hommes « attendus » au-delà, erreurs qui ajoutent, pouces, limite des 4 écarts-types pour 20 cm).
+- 4 à 6 questions-réponses par page, toutes différentes ; 700 à 1 100 mots par page (corps et questions-réponses), vérifié par test.
+- Contrôle automatique des paragraphes partagés (> 30 %) : 75 recoupements trouvés au premier passage, tous éliminés par réécriture (pages 10 à 20, piliers, à propos), réponses des questions-réponses comprises.
+- 20 cm : au-delà de 4 écarts-types, le calculateur prérempli affiche le message de refus du questionnaire (comportement existant), la page l'explique.

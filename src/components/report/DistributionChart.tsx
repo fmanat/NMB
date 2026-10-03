@@ -6,7 +6,7 @@ import { percentile } from "@/lib/stats";
  * Courbe de distribution de la population de référence (loi normale) avec la position de l'utilisateur (ligne bleue verticale).
  * Utile et non décorative : elle explique le percentile. L'unité figure toujours sur l'axe.
  */
-export function DistributionChart({ label, value, mean, sd, unit = "cm" }: { label: string; value: number; mean: number; sd: number; unit?: string }) {
+export function DistributionChart({ label, value, mean, sd, unit = "cm", marker = "Vous" }: { label: string; value: number; mean: number; sd: number; unit?: string; marker?: string }) {
   const W = 320;
   const H = 120;
   const top = 22;
@@ -38,7 +38,7 @@ export function DistributionChart({ label, value, mean, sd, unit = "cm" }: { lab
         <line x1="0" x2={W} y1={base} y2={base} stroke="var(--border)" />
         <line className="anim-marker" x1={ux} x2={ux} y1={top - 6} y2={base} stroke="var(--accent)" strokeWidth="2.5" />
         <circle className="anim-marker" cx={ux} cy={top - 6} r="4" fill="var(--accent)" />
-        <text x={ux} y="10" fontSize="12" fontWeight="700" fill="var(--accent)" textAnchor={anchor} className="num">{`Vous : ${f1(value)} ${unit}`}</text>
+        <text x={ux} y="10" fontSize="12" fontWeight="700" fill="var(--accent)" textAnchor={anchor} className="num">{`${marker} : ${f1(value)} ${unit}`}</text>
         <text x="0" y={H - 8} fontSize="11" fill="var(--bm-navy-700)" textAnchor="start" className="num">{`${f1(lo)} ${unit}`}</text>
         <text x={Math.min(W - 60, Math.max(60, x(mean)))} y={H - 8} fontSize="11" fill="var(--bm-navy-700)" textAnchor="middle" className="num">{`médiane ${f1(mean)} ${unit}`}</text>
         <text x={W} y={H - 8} fontSize="11" fill="var(--bm-navy-700)" textAnchor="end" className="num">{`${f1(hi)} ${unit}`}</text>

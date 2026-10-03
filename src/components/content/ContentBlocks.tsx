@@ -4,7 +4,7 @@ import { f1 } from "@/lib/format";
 import { CM_SIZES, cmSlug, existingSlugs } from "@/lib/seo";
 import { outOfCalculatorRange, perThousandBelow, rankLabel, rawPercentile, seriesRef, shownPercentile, type Series } from "@/lib/seoFigures";
 import { valueAtPercentile } from "@/lib/stats";
-import { frInt } from "@/lib/ticker";
+import { frInt, frNumber } from "@/lib/ticker";
 import { snap } from "@/lib/tryIt";
 import { ScanButton } from "@/components/ScanButton";
 import { Card } from "@/components/ui/Card";
@@ -77,12 +77,12 @@ export function CmAnswer({ cm }: { cm: number }) {
         Sur 1 000 hommes de la population de référence, environ {frInt(below)} mesurent moins de {cm} cm.
       </p>
       <p className="t-small text-muted mt-3">
-        Percentile {f1(shown)} pour une longueur en érection de {cm} cm (loi normale, moyenne {f1(ref.mean)} cm, écart-type {f1(ref.sd)} cm,{" "}
+        Percentile {f1(shown)} pour une longueur en érection de {cm} cm (loi normale, moyenne {frNumber(ref.mean)} cm, écart-type {frNumber(ref.sd)} cm,{" "}
         {REFERENCE_SOURCE}).
         {out ? " Cette valeur se situe au-delà de la plage que le calculateur du site positionne : l'estimation n'est donnée qu'à titre indicatif." : ""}
       </p>
       <div className="mt-4">
-        <DistributionChart label={`Longueur en érection, repère à ${cm} cm`} value={cm} mean={ref.mean} sd={ref.sd} />
+        <DistributionChart label={`Longueur en érection, repère à ${cm} cm`} value={cm} mean={ref.mean} sd={ref.sd} marker="Repère" />
       </div>
     </Card>
   );

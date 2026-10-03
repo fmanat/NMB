@@ -62,7 +62,8 @@ for (const p of pages) {
   for (const w of forbiddenWords([p.title, p.h1, p.metaDescription, ...p.faq.flatMap((f) => [f.q, f.a]), p.bodyHtml.replace(/<[^>]+>/g, " ")].join("\n"))) err(`mot interdit par les règles d'écriture : « ${w} »`);
   if (p.sources.length === 0) warn("aucune source citée");
   if (p.faq.length === 0) warn("aucune question FAQ (le balisage schema.org ne sera pas généré)");
-  if (!/\]\(\/?analyse\b/.test(p.bodyHtml) && !p.bodyHtml.includes('href="/analyse"')) warn("aucun lien vers /analyse dans le corps");
+  // Pages par centimètre : l'appel vers le questionnaire est ajouté par la mise en page.
+  if (p.kind !== "centimetre" && !/\]\(\/?analyse\b/.test(p.bodyHtml) && !p.bodyHtml.includes('href="/analyse"')) warn("aucun lien vers /analyse dans le corps");
   if (!SEO_SLUGS.some((s) => s !== p.slug && p.bodyHtml.includes(`href="/${s}`))) warn("aucun lien interne vers une autre page");
   if (p.pendingLinks.length) console.log(`  ℹ liens vers des pages pas encore présentes : ${p.pendingLinks.join(", ")}`);
   const urls = p.sources.map((s) => s.url);
