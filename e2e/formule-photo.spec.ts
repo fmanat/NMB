@@ -186,6 +186,8 @@ for (const width of [320, 375, 390] as const) {
       await expect(page).toHaveURL(/\/verification-age/);
       await check("vérification d'âge");
       await page.getByRole("button", { name: "Vérifier mon âge" }).click();
+      // Attendre la page de simulation avant le contrôle (sinon axe-core peut analyser la page en cours de navigation, sans titre).
+      await expect(page.getByRole("button", { name: "Simuler une vérification réussie" })).toBeVisible();
       await check("vérification d'âge simulée");
       await page.getByRole("button", { name: "Simuler une vérification réussie" }).click();
       await expect(page).toHaveURL(/\/analyse\/photo\?f=B/);
