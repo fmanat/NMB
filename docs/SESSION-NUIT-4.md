@@ -298,3 +298,4 @@ Série finale, machine moins chargée (charge 6 à 8) : performance **83, 90, 95
 **Tests** : unitaires 716/716 (nouveaux tests : longueur du bout, rainure, rebord et sa dissymétrie, effilement, extrémité arrondie, aplatissement, inclinaison, continuité de la coupe, repère de coupe, densité du rebord, anneaux autour de la surface, vue entre 60 et 70°) ; e2e du bandeau 17/17 et petits écrans verts ; lint vert.
 **Captures** : `docs/captures-nuit4/scanner-gland-390.png`, `-1440.png` et les gros plans du bandeau `-390-bandeau.png`, `-1440-bandeau.png` (image fixe, mouvement réduit).
 **Inchangés** : repli SVG, images de partage, `scanner3d.ts`, tests de séparation et référence du repli.
+**Déploiement** : lancé par le propriétaire (`railway up -s web --ci`, 03/10/2026) ; vérifié sur https://bitometre.com : page et `/api/health` répondent, le bandeau passe en mode animé avec la vue de départ à 65° et l'inclinaison 0,34.
