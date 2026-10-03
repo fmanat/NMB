@@ -170,6 +170,18 @@ describe("règles souples (relance, puis tolérées) : longueur, phrases, répé
     expect(repeatedExpressions(["l'Index de conicité distale", "l'Index de conicité distale", "l'Index de conicité distale"])).toEqual([]); // nom d'indicateur
   });
 
+  it("percentile formulé deux fois dans la même phrase, majuscules fautives : écarts souples (relance avec la consigne)", () => {
+    const s = nominal();
+    const r = checkReportText(s.json({ conclusion: "La longueur se place au percentile 74, au-dessus de 74 % de la population de référence. La Longueur reste lisible et l'Indice de Rectitude Axiale aussi." }), s.ctx);
+    expect(r.ok).toBe(true);
+    expect(r.soft.join(" | ")).toMatch(/percentile formulé deux fois/);
+    expect(r.soft.join(" | ")).toMatch(/majuscule fautive \(« Longueur »\)/);
+    const caps = checkReportText(s.json({ conclusion: "L'Indice de Rectitude Axiale reste lisible. Le profil est net." }), s.ctx);
+    expect(caps.soft.join()).toMatch(/majuscule fautive \(« (Rectitude|Indice de R) »\)/);
+    const fine = checkReportText(s.json({ conclusion: "Longueur en tête de phrase : aucune faute ici. Puis la longueur, au percentile 74, puis l'Indice de rectitude axiale." }), s.ctx);
+    expect(fine.soft.join()).not.toMatch(/percentile formulé|majuscule/);
+  });
+
   it("« variante de la normale » au plus une fois", () => {
     const s = nominal();
     const r = checkReportText(s.json({ conclusion: `${s.text.conclusion} Une variante de la normale.`, aspect_surface: `${s.text.aspect_surface} Une variante de la normale.` }), s.ctx);

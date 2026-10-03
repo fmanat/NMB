@@ -85,6 +85,8 @@ export const SYSTEM_TEXT_V2 = [
   "- Chaque terme savant est suivi de sa traduction entre parenthèses, par exemple « distal (situé vers l'extrémité) » : à sa première apparition seulement, et au plus une parenthèse par phrase. Les mots courants (longueur, circonférence, symétrie, score, indice, axe, base) ne sont pas des termes savants ; les noms des indicateurs (Indice de rectitude axiale, Coefficient de symétrie bilatérale, Index de conicité distale, Indice de typicité) s'écrivent tels quels, sans parenthèse.",
   "- Chaque phrase contient une observation précise, une valeur ou un rapport de proportions. Aucune phrase générique.",
   "- Vocabulaire varié : aucune expression de plus de trois mots ne revient plus de deux fois. L'expression « variante de la normale » : une fois au plus.",
+  "- Percentiles : une seule formulation par valeur et par phrase, soit « au percentile 74 », soit « au-dessus de 74 % de la population de référence », jamais les deux ensemble.",
+  "- Majuscules : les mots longueur, circonférence, courbure, symétrie, score global s'écrivent en minuscules dans la phrase (« la longueur », jamais « la Longueur ») ; un nom d'indicateur ne prend qu'une majuscule, à son initiale (« l'Indice de rectitude axiale », jamais « l'Indice de Rectitude Axiale »).",
   "- Désigne le sujet par des termes cliniques (tige, gland, couronne, axe, base, extrémité). Pour situer la longueur, parle de la base et de l'extrémité (jamais du pubis).",
   "",
   "INTERDITS (vérifiés automatiquement ; une seule violation fait rejeter le texte)",
@@ -102,7 +104,7 @@ export const SYSTEM_TEXT_V2 = [
   "- morphologie_generale, gland_couronne, axe_courbure, symetrie_equilibre, aspect_surface, positionnement_statistique : un paragraphe de 3 à 5 phrases chacun, qui commence par l'observation la plus favorable.",
   "- points_remarquables : exactement trois points forts, une phrase chacun, chacun sur un indicateur différent pris dans la liste des indicateurs favorables.",
   "- conclusion : exactement deux phrases.",
-  "- note_laboratoire : une seule phrase sobre, la seule place pour une précaution sur la précision : elle rappelle la méthode (estimation visuelle, ou mesure calibrée sur la carte de référence) et que les dimensions sont des estimations.",
+  "- note_laboratoire : une seule phrase simple et naturelle, de 12 à 30 mots, la seule place pour une précaution sur la précision : elle dit comment les dimensions ont été obtenues et qu'il s'agit d'estimations, sans jargon ni formule administrative. Exemple de ton : « Les dimensions de ce rapport sont des estimations visuelles faites à partir de votre photo. »",
   VERSION_LINE,
 ].join("\n");
 
@@ -115,10 +117,10 @@ export function valuesBlock(ind: MorphoIndicators, method: "visuelle" | "calibre
     `Méthode : ${method === "calibree" ? "mesure calibrée sur la carte de référence" : "estimation visuelle"}.`,
     `Longueur (de la base à l'extrémité) : ${fr(ind.longueurCm)} cm${
       ind.percentileLongueur !== null
-        ? ` ; percentile ${Math.round(ind.percentileLongueur)} (au-dessus de ${Math.round(ind.percentileLongueur)} % de la population de référence, ${100 - Math.round(ind.percentileLongueur)} % au-delà) ; médiane de référence ${fr(ind.medianeLongueurCm)} cm`
+        ? ` ; percentile ${Math.round(ind.percentileLongueur)} (formulation équivalente, à n'utiliser qu'à la place de la première : au-dessus de ${Math.round(ind.percentileLongueur)} % de la population de référence) ; médiane de référence ${fr(ind.medianeLongueurCm)} cm`
         : " ; état de repos : aucun percentile de longueur n'est calculé, ne positionne pas la longueur dans la population"
     }.`,
-    `Circonférence à mi-tige : ${fr(ind.circonferenceCm)} cm ; percentile ${Math.round(ind.percentileCirconference)} (au-dessus de ${Math.round(ind.percentileCirconference)} % de la population de référence, ${100 - Math.round(ind.percentileCirconference)} % au-delà) ; médiane de référence ${fr(ind.medianeCirconferenceCm)} cm.`,
+    `Circonférence à mi-tige : ${fr(ind.circonferenceCm)} cm ; percentile ${Math.round(ind.percentileCirconference)} (formulation équivalente, à n'utiliser qu'à la place de la première : au-dessus de ${Math.round(ind.percentileCirconference)} % de la population de référence) ; médiane de référence ${fr(ind.medianeCirconferenceCm)} cm.`,
     `Courbure : ${ind.courbureDeg}°${ind.courbureDirection === "none" ? " (axe droit)" : ` ${directionText(ind.courbureDirection)}`}.`,
     `Indice de rectitude axiale : ${ind.rectitude} sur 100.`,
     `Coefficient de symétrie bilatérale : ${ind.symetrie} sur 100.`,

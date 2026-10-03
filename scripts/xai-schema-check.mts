@@ -9,6 +9,7 @@
 //   npm run xai:schema-check -- --texte-seul         rédaction seule (aucune image envoyée)
 //   npm run xai:schema-check -- --etat repos         rédaction pour un état de repos
 //   npm run xai:schema-check -- --courbure 35        rédaction avec une courbure de 35° (phrase d'avis médical)
+//   npm run xai:schema-check -- --texte-seul --essais 1   une seule rédaction, sans relance (un seul appel réel)
 //
 // La clé XAI_API_KEY est lue dans .env et n'est jamais affichée ; l'image n'est écrite nulle part.
 
@@ -30,6 +31,7 @@ const maxUsd = Number(opt("max-usd") ?? 0.15);
 const textOnly = args.includes("--texte-seul");
 const state = opt("etat") === "repos" ? "rest" : "erect";
 const curvature = Number(opt("courbure") ?? SIMULATED_ESTIMATES.courbure_degres);
+const attempts = opt("essais") === "1" ? 1 : 2;
 if (!process.env.XAI_API_KEY) {
   console.error("XAI_API_KEY est vide : renseignez .env.");
   process.exit(1);
@@ -87,7 +89,7 @@ console.log(`\n2/2 Appel texte (sans image ; valeurs factices, état ${state ===
 
 let previous: string[] | undefined;
 let accepted: ReturnType<typeof checkReportText> | null = null;
-for (let attempt = 1; attempt <= 2 && spent < maxUsd; attempt++) {
+for (let attempt = 1; attempt <= attempts && spent < maxUsd; attempt++) {
   const w = await xaiVision.writeReport({ indicators: ind, method: "visuelle", observations, allowedHighlights, previousViolations: previous });
   report(`rédaction, essai ${attempt}`, w.usage);
   if (w.refused) {
@@ -97,7 +99,7 @@ for (let attempt = 1; attempt <= 2 && spent < maxUsd; attempt++) {
   const check = checkReportText(w.json, ctx);
   if (!check.ok) console.log(`  ✗ règles strictes violées : ${check.hard.join(" ; ")}`);
   if (check.soft.length) console.log(`  ~ écarts de forme : ${check.soft.join(" ; ")}`);
-  if (check.ok && (check.soft.length === 0 || attempt === 2)) {
+  if (check.ok && (check.soft.length === 0 || attempt === attempts)) {
     accepted = check;
     break;
   }

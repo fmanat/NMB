@@ -160,6 +160,13 @@ export const FORBIDDEN_RULES: readonly Rule[] = [
 const MEDICAL_WORDS = stems("médic médecin urolog santé consult");
 const MEDICAL_SENTENCE = /avis médical|professionnel de santé|médecin|urologue/iu;
 
+/** « percentile 74 … 74 % » dans une même phrase : double formulation du même rang. */
+const DOUBLE_PERCENTILE = /percentile\s+(\d+)\b[^.;!?]{0,80}?(?<![\d,])\1\s*%/iu;
+/** Mot courant en majuscule au milieu d'une phrase (« la Longueur »). */
+const CAPITALIZED_WORD = /(?<=[\p{Ll}\d,;:’'(]\s?)(?:Longueur|Circonférence|Courbure|Symétrie|Rectitude|Conicité|Typicité|Score global|Score)(?![\p{L}])/u;
+/** Nom d'indicateur avec plusieurs majuscules (« Indice de Rectitude Axiale »). */
+const CAPITALIZED_NAME = /(?:Indice|Coefficient|Index) de \p{Lu}/u;
+
 /** Valeurs que le texte a le droit de citer (toutes fournies par le code). */
 export function citableNumbers(ind: MorphoIndicators): number[] {
   const out = new Set<number>([100, 50, 2015, 85.6, 53.98]);
@@ -303,6 +310,10 @@ export function checkReportText(raw: unknown, ctx: TextCheckContext): TextCheck 
   const rep = repeatedExpressions(texts);
   if (rep.length) soft.push(`expressions répétées plus de deux fois : ${rep.slice(0, 3).map((g) => `« ${g} »`).join(", ")}`);
   if (occurrences(texts, /variante de la normale/) > 1) soft.push("« variante de la normale » plus d'une fois");
+  const doubled = texts.map((x) => x.match(DOUBLE_PERCENTILE)?.[0]).find(Boolean);
+  if (doubled) soft.push(`percentile formulé deux fois dans la même phrase (« ${doubled} ») : « au percentile N » OU « au-dessus de N % », jamais les deux`);
+  const caps = texts.map((x) => x.match(CAPITALIZED_WORD)?.[0] ?? x.match(CAPITALIZED_NAME)?.[0]).find(Boolean);
+  if (caps) soft.push(`majuscule fautive (« ${caps.trim()} ») : « la longueur », et une seule majuscule initiale pour un nom d'indicateur`);
 
   return hard.length ? { ok: false, hard, soft, value: t } : { ok: true, value: t, soft };
 }

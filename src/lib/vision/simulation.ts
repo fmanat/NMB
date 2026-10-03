@@ -217,13 +217,13 @@ export function simulatedReportText(input: Pick<ReportTextInput, "indicators" | 
   const position =
     pL !== null
       ? [
-          `Dans l'échantillon de Veale et al. (2015), la longueur se place au percentile ${pL}, au-dessus de ${pL} % des sujets.`,
-          `La circonférence occupe le percentile ${pC}, ce qui la situe devant ${pC} % des valeurs observées.`,
+          `Dans l'échantillon de Veale et al. (2015), la longueur se place au percentile ${pL}, en regard d'une médiane de ${n(ind.medianeLongueurCm)} cm.`,
+          `La circonférence se situe au-dessus de ${pC} % des valeurs observées, pour une médiane de ${n(ind.medianeCirconferenceCm)} cm.`,
           `L'Indice de typicité de ${ind.typicite} sur 100 classe l'ensemble en ${ind.typiciteLibelle}, c'est-à-dire un profil ${LABEL_DESC[ind.typiciteLibelle]}.`,
           "Cette double lecture, longitudinale et transversale, donne une image complète du positionnement.",
         ]
       : [
-          `Au repos, la circonférence occupe le percentile ${pC}, devant ${pC} % des valeurs observées dans l'échantillon de Veale et al. (2015).`,
+          `Au repos, la circonférence occupe le percentile ${pC} dans l'échantillon de Veale et al. (2015).`,
           "La longueur n'est pas positionnée dans cet état, conformément à la méthode du laboratoire.",
           `L'Indice de typicité de ${ind.typicite} sur 100 classe l'ensemble en ${ind.typiciteLibelle}, c'est-à-dire un profil ${LABEL_DESC[ind.typiciteLibelle]}.`,
           "La lecture transversale, centrée sur le calibre, donne ici un repère stable et directement comparable.",
