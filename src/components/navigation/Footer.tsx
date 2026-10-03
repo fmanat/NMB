@@ -39,6 +39,7 @@ export function Footer() {
                 {g.breadcrumb}
               </Link>
             ))}
+            <Link href="/presse" className="inline-flex items-center min-h-[44px] hover:text-foreground">Presse</Link>
           </nav>
         )}
         <p>

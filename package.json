@@ -22,7 +22,8 @@
     "photo:test": "tsx scripts/photo-test.mts",
     "photo:supprimer": "tsx scripts/photo-supprimer.mts",
     "e2e": "playwright test",
-    "e2e:remote": "playwright test -c playwright.remote.config.ts"
+    "e2e:remote": "playwright test -c playwright.remote.config.ts",
+    "presse:chiffres": "tsx scripts/presse-chiffres.mts"
   },
   "dependencies": {
     "marked": "^18.0.14",

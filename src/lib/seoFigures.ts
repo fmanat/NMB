@@ -53,6 +53,14 @@ const sig2 = (n: number) => {
   return Math.round(n / p) * p;
 };
 
+/** Lignes d'un tableau des percentiles, du centimètre `from` au centimètre `to` (rang, percentile affiché, nombre sur 1 000). */
+export function percentileRows(series: Series, from: number, to: number) {
+  return Array.from({ length: to - from + 1 }, (_, i) => {
+    const cm = from + i;
+    return { cm, shown: shownPercentile(series, cm), rank: rankLabel(rawPercentile(series, cm)), perThousand: perThousandBelow(series, cm) };
+  });
+}
+
 export class FigureError extends Error {}
 
 /** Définition internationale du pouce. */

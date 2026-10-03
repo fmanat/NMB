@@ -26,6 +26,9 @@ test.describe("Accessibilité : version payante", () => {
     await scan(page, "paiement");
     await page.getByRole("button", { name: /^Payer/ }).click(); // sans la case : message d'erreur
     await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toBeVisible();
+    // Le bouton est désactivé (« Redirection… ») tant que l'action serveur répond : attendre qu'il redevienne actif avant le contrôle,
+    // sinon un serveur lent (premier passage à froid) fait analyser un état transitoire.
+    await expect(page.getByRole("button", { name: /^Payer/ })).toBeEnabled();
     await scan(page, "paiement avec erreur");
   });
 

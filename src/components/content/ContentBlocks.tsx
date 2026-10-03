@@ -2,7 +2,7 @@ import Link from "next/link";
 import { REFERENCE_SOURCE } from "@/config/site";
 import { f1 } from "@/lib/format";
 import { CM_SIZES, cmSlug, existingSlugs } from "@/lib/seo";
-import { outOfCalculatorRange, perThousandBelow, rankLabel, rawPercentile, seriesRef, shownPercentile, type Series } from "@/lib/seoFigures";
+import { outOfCalculatorRange, percentileRows, perThousandBelow, rankLabel, rawPercentile, seriesRef, shownPercentile, type Series } from "@/lib/seoFigures";
 import { valueAtPercentile } from "@/lib/stats";
 import { frInt, frNumber } from "@/lib/ticker";
 import { snap } from "@/lib/tryIt";
@@ -130,15 +130,6 @@ export function ReferenceCurve({ series, title }: { series: Series; title: strin
       </figcaption>
     </figure>
   );
-}
-
-/** Lignes du tableau des percentiles (calculées) : longueur en érection 10 à 20 cm, circonférence 9 à 15 cm. */
-export function percentileRows(series: Series, from: number, to: number) {
-  return Array.from({ length: to - from + 1 }, (_, i) => {
-    const cm = from + i;
-    const raw = rawPercentile(series, cm);
-    return { cm, shown: shownPercentile(series, cm), rank: rankLabel(raw), perThousand: perThousandBelow(series, cm) };
-  });
 }
 
 /** Tableaux des percentiles, chaque ligne de longueur renvoyant vers la page du centimètre. */

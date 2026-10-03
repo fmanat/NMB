@@ -48,7 +48,7 @@ Le site cite ses sources sur chaque page, dans une liste « Références » plac
 - les études où la mesure est prise par un professionnel de santé, plutôt que déclarée ;
 - les recommandations des sociétés savantes d'urologie pour les questions de mesure et de courbure.
 
-Chaque chiffre tiré d'une source est vérifié sur la source elle-même avant publication. Les chiffres issus de sondages déclaratifs ou de classements sans méthode publiée ne sont pas repris comme références ; lorsqu'ils sont évoqués, c'est pour expliquer leurs limites, comme sur la page [taille du pénis par pays](/taille-penis-par-pays).
+Chaque chiffre tiré d'une source est vérifié sur la source elle-même avant publication. Les graphiques du site sont réutilisables avec leur mention de source, depuis la [page presse](/presse). Les chiffres issus de sondages déclaratifs ou de classements sans méthode publiée ne sont pas repris comme références ; lorsqu'ils sont évoqués, c'est pour expliquer leurs limites, comme sur la page [taille du pénis par pays](/taille-penis-par-pays).
 
 ## La mise à jour des pages
 

@@ -419,7 +419,7 @@ export function faqJsonLd(page: Pick<SeoPage, "faq">): string | null {
 /** Entrées du sitemap : pages publiques fixes, plus les pages de contenu seulement si elles sont publiées. */
 /** Pages publiques fixes (hors pages de contenu) qui ont leur place dans le sitemap. La page presse suit la publication. */
 export function fixedPublicPaths(published: boolean, beta = false): string[] {
-  return ["", "/methode", "/contact", "/mentions-legales", beta ? "/conditions" : "/cgv", "/confidentialite"];
+  return ["", "/methode", "/contact", "/mentions-legales", beta ? "/conditions" : "/cgv", "/confidentialite", ...(published ? ["/presse"] : [])];
 }
 
 /**

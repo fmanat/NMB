@@ -58,3 +58,8 @@ Session autonome, sans question. Journal mis à jour à la fin de chaque bloc. �
 - 4 à 6 questions-réponses par page, toutes différentes ; 700 à 1 100 mots par page (corps et questions-réponses), vérifié par test.
 - Contrôle automatique des paragraphes partagés (> 30 %) : 75 recoupements trouvés au premier passage, tous éliminés par réécriture (pages 10 à 20, piliers, à propos), réponses des questions-réponses comprises.
 - 20 cm : au-delà de 4 écarts-types, le calculateur prérempli affiche le message de refus du questionnaire (comportement existant), la page l'explique.
+
+## Bloc 6 : page presse et kit de relations presse — terminé
+- **/presse** : trois graphiques originaux téléchargeables en PNG 1 600 × 900 (`/presse/graphiques/distribution-longueur.png`, `distribution-circonference.png`, `tableau-percentiles.png`), source intégrée dans l'image ; mention de source à reprendre (texte et version avec lien) ; chiffres clés ; pages de référence. Aucun chiffre qui ne vienne de Veale et al. (2015) ou des calculs du site. Dans le sitemap, lien dans le pied de page et depuis « À propos ».
+- **docs/PRESSE/** : `README.md` (règles d'envoi, origine des chiffres), `ANGLES.md` (trois angles : ce que dit vraiment la science sur la taille moyenne ; pourquoi la plupart des hommes se mesurent mal ; les classements par pays ne valent rien), `COMMUNIQUE.md` (communiqué court), `CIBLES.md` (santé, lifestyle masculin, sexologie, vulgarisation scientifique, annuaires d'outils), `MODELES.md` (un message par type, plus une relance).
+- `npm run presse:chiffres` recalcule tous les chiffres du kit avec les fonctions du site (valeurs vérifiées identiques à celles des documents le 03/10/2026).
