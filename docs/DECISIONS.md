@@ -380,3 +380,18 @@ Portée inchangée : moteur canvas seulement ; repli SVG et images de partage re
 | Vue de départ | `SILHOUETTE_VIEW` = azimut 0,6, inclinaison 0,34 (trois quarts, légèrement de dessus), **la même sur toutes les tailles** (testé en e2e). | Une vue propre au mobile : écartée par la consigne. |
 | Points | Disques par lots (6 classes de profondeur × normal / éclairé), rayon 0,85 × (distance caméra / profondeur)^1,2 (≈ 1,36 à 0,6 px), opacité décroissante avec la profondeur ; 560 points sur bandeau étroit. | Un remplissage par point (trop coûteux, voir le bloc 1) ; sprites pré-dessinés (inutile à cette échelle). |
 | État de test | `canvas.__scannerState()` (lecture seule : vue, position du plan, boîte du plan) pour que l'e2e mesure sans deviner ; aucune donnée personnelle. | Seulement l'échantillonnage de pixels : ne donne pas la position du plan. |
+
+
+## Bout de la silhouette plus réaliste (03/10/2026, demande du propriétaire)
+
+Portée inchangée : moteur canvas seulement ; repli SVG et images de partage restent le cylindre abstrait (tests de séparation verts, référence non modifiée). Même style : nuage de points, méridiens, anneaux ; aucune texture, aucun détail de surface. Vocabulaire du code toujours neutre (« bout », « rebord », « rainure », constantes `TIP_SHAPE`), conformément à la décision « Abstraction conservée ».
+
+| Question | Décision | Alternative écartée |
+|---|---|---|
+| Rebord à la base du bout | Rayon moyen +12,5 % par rapport au fût (dans la fourchette 10–15 % demandée) ; dissymétrie ×(1 ± 0,3) : +16,25 % dessus, +8,75 % dessous ; face amont très courte (1,2 % de la longueur) pour une arête nette. « Dessus » = +z de la scène, même convention que la courbure « vers le haut ». | Rebord symétrique : ne répondait pas à la consigne. |
+| Rainure | Rétrécissement de 5 % (fenêtre en cos²) centré 2,5 % de la longueur sous le rebord. | Plus profond : se serait lu comme une encoche. |
+| Forme du bout | Longueur 20 % ; rayon ∝ √(1 − u)·(1 + 0,15 u) : s'affine progressivement vers une pointe arrondie (testé : plus fin qu'un dôme à mi-bout, sans pointe vive) ; aplati de 12 % de haut en bas ; centre des coupes incliné de 9° vers le bas. | Calotte elliptique (l'ancien dôme symétrique). |
+| Anneaux | Toujours des cercles centrés sur l'axe et de style unique ; positions 0,04 / 0,29 / 0,545 / rebord (l'anneau sur le bout, qui masquait la forme, est retiré). Un test vérifie que chaque anneau entoure la surface, dessus du rebord compris. | Anneaux épousant la coupe dissymétrique : ce ne seraient plus des anneaux de mesure. |
+| Densité sur le rebord | 2 rangées de points en plus sur le rebord, prises sur le même budget (total inchangé à ±3 %) : densité surfacique ≈ 2 à 4 fois celle du fût dans une bande étroite, ordinaire ailleurs. | Augmenter la densité de tout le bout : n'aurait pas souligné le contour. |
+| Méridiens | 160 échantillons (au lieu de 48) pour que l'arête et la rainure se voient ; dessus et dessous font partie des 8 méridiens. | — |
+| Vue de départ | Azimut 65° (au lieu de 34°) depuis la vue de face, inclinaison 0,34 inchangée, la même sur mobile et ordinateur (tests unitaire et e2e : entre 60 et 70°). | — |

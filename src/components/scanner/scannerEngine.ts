@@ -105,7 +105,7 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
   const planeBox = { x0: 0, y0: 0, x1: 0, y1: 0 };
   let planeNow = 0;
   const axisLine = silhouetteAxis(spec, 24);
-  const meridians = Array.from({ length: MERIDIAN_COUNT }, (_, i) => silhouetteMeridian(spec, ((i + 0.5) / MERIDIAN_COUNT) * Math.PI * 2, 48));
+  const meridians = Array.from({ length: MERIDIAN_COUNT }, (_, i) => silhouetteMeridian(spec, (i / MERIDIAN_COUNT) * Math.PI * 2));
 
   const view: View = { yaw: SILHOUETTE_VIEW.yaw, pitch: SILHOUETTE_VIEW.pitch, cameraDistance: CAMERA };
   let yawVel = AUTO_SPEED;
@@ -171,7 +171,7 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
       ctx.stroke();
     }
 
-    // Fil de fer : méridiens de la surface (fins, derrière les points) pour lire le profil
+    // Fil de fer : méridiens de la surface (fins, derrière les points) pour lire le profil ; dessus (angle 0) et dessous (π) compris
     ctx.lineWidth = 1;
     ctx.strokeStyle = `rgba(${br},${bg},${bb},0.2)`;
     ctx.beginPath();

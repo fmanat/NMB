@@ -6,11 +6,12 @@
  * restent sur le cylindre abstrait de `scanner3d.ts` ; un test (`tests/scanner-separation.test.ts`) le garantit. Ne l'importer
  * nulle part ailleurs.
  *
- * Forme : une surface de révolution lisse, rendue UNIQUEMENT en nuage de points et en anneaux de mesure. Rayon variable le long d'un
- * axe légèrement courbe ; aucun détail au-delà de la silhouette (aucune texture, aucun relief fin, aucun ombrage).
+ * Forme : une surface lisse rendue UNIQUEMENT en nuage de points, méridiens et anneaux de mesure. Rayon variable le long d'un axe
+ * légèrement courbe ; le bout a un rebord, une rainure, un effilement aplati et incliné (voir `TIP_SHAPE`) ; aucun détail au-delà de la
+ * silhouette (aucune texture, aucun relief fin, aucun ombrage).
  *   - le rapport longueur / diamètre vient des constantes de référence du site (moyennes en érection de Veale et al., 2015) ;
  *   - la courbure (angle et direction) vient du rapport d'exemple, bornée à un rendu « légèrement incurvé ».
- * Les constantes de style ci-dessous (proportions du renflement terminal, collerette, taille dans la scène) ne sont pas des données
+ * Les constantes de style ci-dessous (proportions du bout, rebord, rainure, taille dans la scène) ne sont pas des données
  * affichées : ce sont des choix de dessin.
  */
 
@@ -41,18 +42,34 @@ export const SILHOUETTE_SHAFT_RADIUS = SILHOUETTE_LENGTH / LENGTH_TO_DIAMETER / 
 // ---------------------------------------------------------------------------------------------------------------------
 // Profil de rayon r(t), t de 0 (base, fût) à 1 (extrémité arrondie)
 
-/** Forme du bout (choix de dessin, relatifs à la longueur et au rayon du fût). */
-export const PROFILE = {
-  /** Début du rétrécissement de jonction (collerette), en fraction de la longueur. */
-  collarAt: 0.78,
-  /** Profondeur du rétrécissement : rayon relatif minimal = 1 − collarDepth. */
-  collarDepth: 0.09,
-  /** Largeur (en fraction de la longueur) sur laquelle le rétrécissement se résorbe. */
-  collarWidth: 0.06,
-  /** Position où le renflement terminal atteint son rayon maximal. */
-  swellEnd: 0.87,
-  /** Excédent de rayon du renflement terminal par rapport au fût (relatif). */
-  swell: 0.16,
+/**
+ * Forme du bout (choix de dessin, relatifs à la longueur et au rayon du fût ; aucune texture ni aucun détail de surface) :
+ *   - rebord : arête nette à la base du bout, plus large que le fût, un peu plus marqué sur le dessus que sur le dessous ;
+ *   - rainure : léger rétrécissement du fût juste sous le rebord ;
+ *   - bout : s'affine progressivement vers une pointe arrondie (pas un dôme symétrique), légèrement aplati de haut en bas et un peu
+ *     incliné vers le bas par rapport à l'axe du fût.
+ * Convention de scène (celle de la courbure) : « dessus » = +z (vers la caméra en vue de face), « dessous » = −z.
+ */
+export const TIP_SHAPE = {
+  /** Position du rebord (début du bout), en fraction de la longueur : le bout occupe les 20 % terminaux. */
+  rimAt: 0.8,
+  /** Excédent de rayon moyen du rebord par rapport au fût (relatif) : 12,5 % plus large. */
+  rimExcess: 0.125,
+  /** Dissymétrie dessus / dessous de cet excédent : × (1 + 0,3) sur le dessus, × (1 − 0,3) sur le dessous. */
+  rimTopBias: 0.3,
+  /** Longueur (fraction de la longueur) de la face amont du rebord : courte, donc arête nette. */
+  rimFace: 0.012,
+  /** Profondeur de la rainure (rayon relatif minimal ≈ 1 − grooveDepth) et sa demi-largeur, centrée juste sous le rebord. */
+  grooveDepth: 0.05,
+  grooveWidth: 0.025,
+  /** Galbe de l'effilement du bout (0 : racine pure ; plus grand : bout plus plein avant la pointe). */
+  taper: 0.15,
+  /** Aplatissement haut / bas du bout (relatif) : l'épaisseur dessus–dessous vaut 1 − flatten fois la largeur. */
+  flatten: 0.12,
+  /** Inclinaison du bout vers le bas par rapport à l'axe du fût (degrés). */
+  tiltDeg: 9,
+  /** Fraction du bout (depuis le rebord) sur laquelle la dissymétrie du rebord se résorbe. */
+  rimFade: 0.3,
 } as const;
 
 const smoothstep = (x: number) => {
@@ -60,26 +77,60 @@ const smoothstep = (x: number) => {
   return u * u * (3 - 2 * u);
 };
 
-/** Rayon relatif ρ(t) (1 = rayon du fût). Lisse (C1), jamais négatif, 0 à l'extrémité (t = 1) ; t hors [0, 1] est ramené dans l'intervalle. */
+const clampT = (t: number) => (Number.isFinite(t) ? Math.min(1, Math.max(0, t)) : 0);
+
+/** Avancement dans le bout : 0 au rebord, 1 à l'extrémité (négatif sur le fût). */
+const tipU = (x: number) => (x - TIP_SHAPE.rimAt) / (1 - TIP_SHAPE.rimAt);
+
+/** Montée de la face amont du rebord : 0 sur le fût, 1 au rebord et au-delà. */
+const rimRise = (x: number) => smoothstep((x - (TIP_SHAPE.rimAt - TIP_SHAPE.rimFace)) / TIP_SHAPE.rimFace);
+
+/**
+ * Rayon relatif MOYEN ρ(t) autour de l'axe (1 = rayon du fût), jamais négatif, 1 à la base, 0 à l'extrémité (t = 1) ;
+ * t hors [0, 1] est ramené dans l'intervalle. Fût constant, rainure, arête nette du rebord, puis effilement vers une pointe arrondie
+ * (rayon ∝ √(1 − u) près de l'extrémité : arrondi, sans pointe vive).
+ */
 export function radiusProfile(t: number): number {
-  const x = Number.isFinite(t) ? Math.min(1, Math.max(0, t)) : 0;
-  const { collarAt, collarDepth, collarWidth, swellEnd, swell } = PROFILE;
-  // Corps : fût de rayon 1, légère encoche à la jonction, puis renflement progressif.
-  const w = Math.min(1, Math.max(0, (x - collarAt) / collarWidth));
-  const dip = x < collarAt ? 0 : collarDepth * Math.cos((Math.PI / 2) * w) ** 2; // fenêtre en cos², nulle après collarWidth
-  // Avant la jonction, le fût se resserre doucement vers la collerette (même fenêtre, côté amont).
-  const wPre = Math.min(1, Math.max(0, (collarAt - x) / collarWidth));
-  const dipPre = x >= collarAt ? 0 : collarDepth * Math.cos((Math.PI / 2) * wPre) ** 2;
-  const body = 1 - dip - dipPre + swell * smoothstep((x - collarAt) / (swellEnd - collarAt));
-  // Extrémité : calotte elliptique (rayon ∝ √(1 − u²)), tangente nulle au raccord : arrondi sans arête.
-  if (x <= swellEnd) return Math.max(0, body);
-  const u = (x - swellEnd) / (1 - swellEnd);
-  return Math.max(0, (1 + swell) * Math.sqrt(Math.max(0, 1 - u * u)));
+  const x = clampT(t);
+  const { rimAt, rimExcess, grooveDepth, grooveWidth, taper } = TIP_SHAPE;
+  const top = 1 + rimExcess;
+  if (x >= rimAt) {
+    const u = tipU(x);
+    if (u >= 1) return 0;
+    return Math.max(0, top * Math.sqrt(1 - u) * (1 + taper * u));
+  }
+  // Rainure : fenêtre en cos² centrée juste sous le rebord, nulle au rebord et à une largeur en amont.
+  const w = (x - (rimAt - grooveWidth)) / grooveWidth;
+  const groove = Math.abs(w) >= 1 ? 0 : grooveDepth * Math.cos((Math.PI / 2) * w) ** 2;
+  return Math.max(0, 1 - groove + rimExcess * rimRise(x));
 }
 
-/** Rayon absolu (unités de scène) à la position t. */
+/** Rayon absolu MOYEN (unités de scène) à la position t. */
 export function radiusAt(t: number, shaftRadius = SILHOUETTE_SHAFT_RADIUS): number {
   return shaftRadius * radiusProfile(t);
+}
+
+/** Plus grand rayon relatif de la surface, tous angles confondus : le dessus du rebord. */
+export const MAX_RELATIVE_RADIUS = 1 + TIP_SHAPE.rimExcess * (1 + TIP_SHAPE.rimTopBias);
+
+/**
+ * Coupe de la surface à la position t, dans le plan perpendiculaire à l'axe : décalage (relatif au rayon du fût) d'un point d'angle
+ * `angle` par rapport à l'axe, en composantes « dessus » (d) et « côté » (l). angle = 0 : dessus ; angle = π : dessous.
+ * Sur le fût et la rainure, c'est un cercle ; au rebord, la coupe est plus marquée dessus ; sur le bout, la coupe est une ellipse
+ * aplatie de haut en bas, dont le centre descend progressivement (inclinaison vers le bas).
+ */
+export function crossSection(t: number, angle: number, lengthOverRadius = SILHOUETTE_LENGTH / SILHOUETTE_SHAFT_RADIUS): { d: number; l: number } {
+  const x = clampT(t);
+  const rho = radiusProfile(x);
+  const u = Math.max(0, tipU(x));
+  const { rimExcess, rimTopBias, flatten, tiltDeg, rimFade } = TIP_SHAPE;
+  // Dissymétrie du rebord : nulle sur le fût, maximale au rebord, résorbée sur le premier tiers du bout.
+  const asym = ((rimExcess * rimTopBias) / (1 + rimExcess)) * rimRise(x) * (1 - smoothstep(u / rimFade));
+  const r = rho * (1 + asym * Math.cos(angle));
+  const flat = 1 - flatten * smoothstep(u / 0.35);
+  // Inclinaison : le centre de la coupe descend (vers −z) proportionnellement à l'avancement dans le bout.
+  const drop = Math.tan((tiltDeg * Math.PI) / 180) * u * (1 - TIP_SHAPE.rimAt) * lengthOverRadius;
+  return { d: r * Math.cos(angle) * flat - drop, l: r * Math.sin(angle) };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -173,16 +224,39 @@ export function axisFrame(spec: SilhouetteSpec, t: number): { T: Vec3; N: Vec3; 
   };
 }
 
-/** Position d'un point de la surface : axe en t, angle a autour de l'axe, rayon `radiusFactor` fois le rayon local (1 = surface). */
+/**
+ * Repère de coupe à la position t : « dessus » D (direction +z de la scène ramenée dans le plan perpendiculaire à l'axe) et « côté »
+ * S = T × D. La courbure rendue étant bornée (≤ 20°), la tangente n'est jamais parallèle à z : D est toujours défini.
+ */
+export function sectionFrame(spec: SilhouetteSpec, t: number): { D: Vec3; S: Vec3 } {
+  const { T } = axisFrame(spec, t);
+  const dz = T.z; // Z · T
+  const dx = -dz * T.x;
+  const dy = -dz * T.y;
+  const dzz = 1 - dz * T.z;
+  const n = Math.hypot(dx, dy, dzz) || 1;
+  const D = { x: dx / n, y: dy / n, z: dzz / n };
+  return { D, S: { x: T.y * D.z - T.z * D.y, y: T.z * D.x - T.x * D.z, z: T.x * D.y - T.y * D.x } };
+}
+
+/**
+ * Position d'un point de la surface : axe en t, angle a autour de l'axe (0 = dessus), coupe de `crossSection` (rebord, rainure, bout
+ * aplati et incliné). `radiusFactor` agrandit la coupe autour de son centre (1 = surface, 0 = centre de la coupe, qui est l'axe sauf sur
+ * le bout incliné).
+ */
 export function surfacePoint(spec: SilhouetteSpec, t: number, angle: number, radiusFactor = 1, out: Vec3 = { x: 0, y: 0, z: 0 }): Vec3 {
   const p = axisPoint(spec, t);
-  const { N, B } = axisFrame(spec, t);
-  const r = radiusAt(t, spec.shaftRadius) * radiusFactor;
-  const ca = Math.cos(angle) * r;
-  const sa = Math.sin(angle) * r;
-  out.x = p.x + N.x * ca + B.x * sa;
-  out.y = p.y + N.y * ca + B.y * sa;
-  out.z = p.z + N.z * ca + B.z * sa;
+  const { D, S } = sectionFrame(spec, t);
+  const R = spec.shaftRadius;
+  const ratio = spec.length / R;
+  const c = crossSection(t, angle, ratio);
+  // Centre de la coupe (décalage d'inclinaison) : la partie de d qui ne dépend pas de l'angle.
+  const center = crossSection(t, Math.PI / 2, ratio).d;
+  const d = (center + (c.d - center) * radiusFactor) * R;
+  const l = c.l * radiusFactor * R;
+  out.x = p.x + D.x * d + S.x * l;
+  out.y = p.y + D.y * d + S.y * l;
+  out.z = p.z + D.z * d + S.z * l;
   return out;
 }
 
@@ -200,7 +274,13 @@ export type SilhouetteCloud = {
  * Nuage de points posés sur la surface : réseau décalé au hasard (rangées le long de l'axe, espacées régulièrement en abscisse
  * curviligne de la surface, nombre de points par rangée proportionnel à son périmètre). Reproductible pour une même graine.
  * Le nombre de points obtenu peut différer de `count` de quelques pourcents (arrondis du réseau). Le bout reste ouvert (pas de disque à la base).
+ * Sur le rebord, `RIM_ROWS` rangées supplémentaires (prises sur le même budget de points) soulignent légèrement le contour du rebord.
  */
+/** Rangées de points supplémentaires sur le rebord (densité légèrement plus forte au rebord). */
+export const RIM_ROWS = 2;
+/** Espacement des points le long de ces rangées, relatif à la maille du réseau (1 : même espacement que le reste du nuage). */
+const RIM_ROW_SPACING = 1;
+
 export function generateSilhouettePoints(spec: SilhouetteSpec, count: number, seed = 20261003): SilhouetteCloud {
   const rnd = mulberry32(seed);
   const target = Math.max(24, Math.round(count));
@@ -217,7 +297,11 @@ export function generateSilhouettePoints(spec: SilhouetteSpec, count: number, se
     prevR = r;
   }
   const total = m[STEPS];
-  const mesh = Math.sqrt(area / target); // côté d'une maille
+  // Budget des rangées du rebord (périmètre au rebord), retiré du réseau régulier pour garder le total proche de `count`.
+  const rimCirc = 2 * Math.PI * radiusAt(TIP_SHAPE.rimAt, spec.shaftRadius);
+  const rimN = (mesh0: number) => Math.max(1, Math.round(rimCirc / (mesh0 * RIM_ROW_SPACING)));
+  const extra = RIM_ROWS * rimN(Math.sqrt(area / target));
+  const mesh = Math.sqrt(area / Math.max(16, target - extra)); // côté d'une maille
   const rows = Math.max(4, Math.round(total / mesh));
   const tAtM = (mm: number): number => {
     // recherche dichotomique de t tel que m(t) = mm
@@ -248,20 +332,27 @@ export function generateSilhouettePoints(spec: SilhouetteSpec, count: number, se
       ts.push(t);
     }
   }
+  // Rangées du rebord : réparties sur la face du rebord et juste au-delà, angles décalés au hasard.
+  const nRim = rimN(Math.sqrt(area / target));
+  for (let k = 0; k < RIM_ROWS; k++) {
+    const t = TIP_SHAPE.rimAt - TIP_SHAPE.rimFace * 0.5 + ((k + 0.5 + (rnd() - 0.5) * 0.4) / RIM_ROWS) * TIP_SHAPE.rimFace * 1.2;
+    const phase = rnd() * Math.PI * 2;
+    for (let i = 0; i < nRim; i++) {
+      const a = phase + ((i + (rnd() - 0.5) * 0.6) / nRim) * Math.PI * 2;
+      surfacePoint(spec, t, a, 1, tmp);
+      pts.push(tmp.x, tmp.y, tmp.z);
+      ts.push(t);
+    }
+  }
   return { points: Float32Array.from(pts), params: Float32Array.from(ts) };
 }
 
-/** Polyligne d'un anneau (cercle fermé perpendiculaire à l'axe) en t, de rayon `radiusFactor` × rayon local (≥ 1 : autour de la surface). */
+/**
+ * Polyligne d'un anneau de mesure : cercle fermé perpendiculaire à l'axe, centré sur l'axe, de rayon `radiusFactor` × rayon moyen local
+ * (`radiusAt`). Avec le facteur des anneaux (1,25), il entoure la surface même là où elle est dissymétrique (dessus du rebord).
+ */
 export function silhouetteRing(spec: SilhouetteSpec, t: number, radiusFactor: number, segments = 72): Float32Array {
-  const out = new Float32Array((segments + 1) * 3);
-  const tmp: Vec3 = { x: 0, y: 0, z: 0 };
-  for (let i = 0; i <= segments; i++) {
-    surfacePoint(spec, t, (i / segments) * Math.PI * 2, radiusFactor, tmp);
-    out[i * 3] = tmp.x;
-    out[i * 3 + 1] = tmp.y;
-    out[i * 3 + 2] = tmp.z;
-  }
-  return out;
+  return scanDisc(spec, t, radiusAt(t, spec.shaftRadius) * radiusFactor, segments);
 }
 
 /** Disque de balayage en t : cercle perpendiculaire à l'axe, de rayon FIXE `radius` (plus large que l'objet), centré sur l'axe. */
@@ -282,9 +373,11 @@ export function scanDisc(spec: SilhouetteSpec, t: number, radius: number, segmen
 
 /** Nombre de lignes de fil de fer (méridiens) tracées le long de la surface, pour lire la forme même quand le nuage est clairsemé. */
 export const MERIDIAN_COUNT = 8;
+/** Échantillons par méridien : assez serrés pour que l'arête nette du rebord et la rainure se lisent sur le fil de fer. */
+export const MERIDIAN_SAMPLES = 160;
 
 /** Polyligne d'un méridien (ligne de la surface à angle constant autour de l'axe), `n` + 1 points de t = 0 à t = 1. */
-export function silhouetteMeridian(spec: SilhouetteSpec, angle: number, n = 48): Float32Array {
+export function silhouetteMeridian(spec: SilhouetteSpec, angle: number, n = MERIDIAN_SAMPLES): Float32Array {
   const out = new Float32Array((n + 1) * 3);
   const tmp: Vec3 = { x: 0, y: 0, z: 0 };
   for (let i = 0; i <= n; i++) {
@@ -297,10 +390,10 @@ export function silhouetteMeridian(spec: SilhouetteSpec, angle: number, n = 48):
 }
 
 /**
- * Vue de départ du moteur animé (et image fixe en mouvement réduit), identique sur mobile et sur ordinateur : de trois quarts et
- * légèrement de dessus, pour que le profil, la courbure et l'ouverture des anneaux (donc du plan de balayage) se lisent.
+ * Vue de départ du moteur animé (et image fixe en mouvement réduit), identique sur mobile et sur ordinateur : proche du profil (65° par
+ * rapport à la vue de face) et légèrement de dessus, pour que le rebord, la courbure du bout et l'ouverture des anneaux se lisent.
  */
-export const SILHOUETTE_VIEW = { yaw: 0.6, pitch: 0.34 } as const;
+export const SILHOUETTE_VIEW = { yaw: (65 * Math.PI) / 180, pitch: 0.34 } as const;
 
 /** Polyligne de l'axe (graduation centrale), `n` + 1 points de t = 0 à t = 1. */
 export function silhouetteAxis(spec: SilhouetteSpec, n = 24): Float32Array {
@@ -314,8 +407,8 @@ export function silhouetteAxis(spec: SilhouetteSpec, n = 24): Float32Array {
   return out;
 }
 
-/** Positions (t) des anneaux de mesure : réparties le long de l'axe, dont la jonction de la collerette et le rayon maximal du bout. */
-export const RING_PARAMS: readonly number[] = [0.04, 0.3, 0.56, PROFILE.collarAt, PROFILE.swellEnd];
+/** Positions (t) des anneaux de mesure : réparties régulièrement le long du fût, la dernière sur le rebord. */
+export const RING_PARAMS: readonly number[] = [0.04, 0.29, 0.545, TIP_SHAPE.rimAt];
 
 /**
  * Style UNIQUE des anneaux de mesure : tous les anneaux (y compris le premier, en bas, et le dernier) ont exactement le même rayon
@@ -326,7 +419,7 @@ export const RING_STYLE = { factor: 1.25, alpha: 0.3, width: 1 } as const;
 export const ringFactor = (): number => RING_STYLE.factor;
 
 /** Rayon fixe du disque de balayage : plus large que tout anneau et que l'objet, mais volontairement serré (pas un trait qui dépasse). */
-export const SCAN_DISC_RADIUS = SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell) * 1.4;
+export const SCAN_DISC_RADIUS = SILHOUETTE_SHAFT_RADIUS * MAX_RELATIVE_RADIUS * 1.4;
 /** Style du plan de balayage : trait fin, voile très léger. */
 export const PLANE_STYLE = { strokeAlpha: 0.7, fillAlpha: 0.07, width: 1 } as const;
 

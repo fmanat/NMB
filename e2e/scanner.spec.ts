@@ -272,7 +272,7 @@ test.describe("Bandeau scanner : plan de balayage dans le cadre", () => {
   });
 });
 
-test.describe("Bandeau scanner : vue de trois quarts, la même sur mobile et sur ordinateur", () => {
+test.describe("Bandeau scanner : vue proche du profil, la même sur mobile et sur ordinateur", () => {
   const initialView = async (page: Page, width: number, height: number) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: "reduce" }); // image fixe : la vue de départ n'est pas modifiée par la rotation automatique
@@ -281,13 +281,13 @@ test.describe("Bandeau scanner : vue de trois quarts, la même sur mobile et sur
     return state(page);
   };
 
-  test("même azimut et même inclinaison par défaut à 390 px et à 1 280 px (de trois quarts, pas de face)", async ({ page }) => {
+  test("même azimut et même inclinaison par défaut à 390 px et à 1 280 px (proche du profil : 60 à 70° de la vue de face)", async ({ page }) => {
     const mobile = await initialView(page, 390, 844);
     const desktop = await initialView(page, 1280, 800);
     expect(mobile.yaw).toBe(desktop.yaw);
     expect(mobile.pitch).toBe(desktop.pitch);
-    expect(desktop.yaw).toBeGreaterThan(0.45); // ni de face (0)…
-    expect(desktop.yaw).toBeLessThan(1.1); // …ni de profil
+    expect((desktop.yaw * 180) / Math.PI).toBeGreaterThanOrEqual(60); // proche du profil…
+    expect((desktop.yaw * 180) / Math.PI).toBeLessThanOrEqual(70); // …sans y être tout à fait
     expect(desktop.pitch).toBeGreaterThan(0.25);
   });
 

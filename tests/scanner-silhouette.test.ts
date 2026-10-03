@@ -19,7 +19,11 @@ import {
   sceneExtent,
   sceneUnit,
   MAX_RENDER_BEND_DEG,
-  PROFILE,
+  TIP_SHAPE,
+  MAX_RELATIVE_RADIUS,
+  RIM_ROWS,
+  crossSection,
+  sectionFrame,
   RING_PARAMS,
   SCAN_DISC_RADIUS,
   SILHOUETTE_DIAMETER,
@@ -99,51 +103,95 @@ describe("profil de rayon r(t)", () => {
     expect(radiusProfile(Infinity)).toBe(radiusProfile(0));
   });
 
-  it("le fût est de rayon constant jusqu'à l'amont de la collerette", () => {
-    const end = PROFILE.collarAt - PROFILE.collarWidth;
-    for (const t of ts.filter((x) => x <= end)) expect(radiusProfile(t)).toBe(1);
+  const C = TIP_SHAPE.rimAt;
+  const grooveLow = C - TIP_SHAPE.grooveWidth; // fond de la rainure
+
+  it("le fût est de rayon constant jusqu'à l'amont de la rainure", () => {
+    for (const t of ts.filter((x) => x <= C - 2 * TIP_SHAPE.grooveWidth)) expect(radiusProfile(t)).toBe(1);
   });
 
-  it("présente un léger rétrécissement à la jonction, puis un renflement arrondi plus large que le fût, puis se referme", () => {
-    const collar = radiusProfile(PROFILE.collarAt);
-    expect(collar).toBeCloseTo(1 - PROFILE.collarDepth, 12);
-    expect(collar).toBeLessThan(1);
-    expect(collar).toBeGreaterThan(0.9); // un rétrécissement léger, pas une encoche
-    const max = Math.max(...ts.map(radiusProfile));
-    expect(max).toBeCloseTo(1 + PROFILE.swell, 9);
-    expect(radiusProfile(PROFILE.swellEnd)).toBeCloseTo(max, 12);
-    expect(max).toBeGreaterThan(1);
+  it("le bout (du rebord à l'extrémité) fait environ 20 % de la longueur totale", () => {
+    expect(1 - C).toBeGreaterThanOrEqual(0.18);
+    expect(1 - C).toBeLessThanOrEqual(0.22);
   });
 
-  it("est monotone là où attendu : décroissant vers la collerette, croissant jusqu'au renflement, décroissant jusqu'à l'extrémité", () => {
-    const seg = (a: number, b: number, n = 400) => Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n).map(radiusProfile);
-    const nonDecreasing = (v: number[]) => v.every((x, i) => i === 0 || x >= v[i - 1] - 1e-12);
-    const nonIncreasing = (v: number[]) => v.every((x, i) => i === 0 || x <= v[i - 1] + 1e-12);
-    expect(nonIncreasing(seg(PROFILE.collarAt - PROFILE.collarWidth, PROFILE.collarAt))).toBe(true);
-    expect(nonDecreasing(seg(PROFILE.collarAt, PROFILE.swellEnd))).toBe(true);
-    expect(nonIncreasing(seg(PROFILE.swellEnd, 1))).toBe(true);
+  it("rainure : un léger rétrécissement du fût juste sous le rebord", () => {
+    const groove = radiusProfile(grooveLow);
+    expect(groove).toBeLessThan(0.97);
+    expect(groove).toBeGreaterThan(0.9); // léger, pas une encoche
+    expect(C - grooveLow).toBeLessThan(0.05); // juste sous le rebord
+    expect(Math.min(...ts.filter((t) => t < C).map(radiusProfile))).toBeCloseTo(groove, 2);
   });
 
-  it("est lisse : continu partout, sans saut de pente aux raccords, sans pente excessive (hors extrémité arrondie)", () => {
-    const h = 1e-5;
-    const slope = (t: number) => (radiusProfile(t + h) - radiusProfile(t - h)) / (2 * h);
-    // Pente bornée jusqu'au renflement (la calotte arrondie du bout, elle, finit par une tangente verticale en t = 1).
-    for (const t of grid(1000).filter((x) => x > 0 && x <= PROFILE.swellEnd)) expect(Math.abs(slope(t))).toBeLessThan(6);
-    // Raccords : la pente ne saute pas.
-    for (const t of [PROFILE.collarAt - PROFILE.collarWidth, PROFILE.collarAt, PROFILE.collarAt + PROFILE.collarWidth, PROFILE.swellEnd]) {
-      const left = (radiusProfile(t) - radiusProfile(t - 2 * h)) / (2 * h);
-      const right = (radiusProfile(t + 2 * h) - radiusProfile(t)) / (2 * h);
-      expect(Math.abs(left - right), `raccord t = ${t}`).toBeLessThan(0.05);
-    }
-    // Continu : aucun écart brusque entre deux points voisins.
-    for (let i = 1; i < ts.length * 0.95; i++) expect(Math.abs(radiusProfile(ts[i]) - radiusProfile(ts[i - 1]))).toBeLessThan(0.01);
+  it("rebord : arête nette, de 10 à 15 % plus large que le fût, plus marqué dessus que dessous", () => {
+    const rim = radiusProfile(C);
+    expect(rim).toBeGreaterThanOrEqual(1.1);
+    expect(rim).toBeLessThanOrEqual(1.15);
+    expect(Math.max(...ts.map(radiusProfile))).toBeCloseTo(rim, 9); // le plus large de toute la forme
+    // Arête nette : du fond de la rainure au sommet du rebord en moins de 4 % de la longueur.
+    expect(C - grooveLow).toBeLessThan(0.04);
+    expect(rim - radiusProfile(grooveLow)).toBeGreaterThan(0.15);
+    // Dessus / dessous (diamètre dessus–dessous = largeur moyenne : le rebord reste de 10 à 15 % plus large que le fût).
+    const up = crossSection(C, 0).d;
+    const down = -crossSection(C, Math.PI).d;
+    expect(up).toBeGreaterThan(down + 0.03);
+    expect((up + down) / 2).toBeGreaterThanOrEqual(1.1);
+    expect((up + down) / 2).toBeLessThanOrEqual(1.15);
+    expect(MAX_RELATIVE_RADIUS).toBeCloseTo(up, 9);
+    // De côté, le rebord est symétrique (gauche = droite).
+    expect(crossSection(C, Math.PI / 2).l).toBeCloseTo(-crossSection(C, -Math.PI / 2).l, 12);
   });
 
-  it("l'extrémité est arrondie (calotte) : le rayon décroît comme une racine, sans pointe", () => {
-    // Pointe aiguë (cône) : rayon proportionnel à la distance à l'extrémité. Calotte arrondie : bien plus large près de l'extrémité.
+  it("bout : s'affine progressivement (décroissance continue du rebord à l'extrémité), pas un dôme symétrique", () => {
+    const seg = Array.from({ length: 401 }, (_, i) => C + ((1 - C) * i) / 400).map(radiusProfile);
+    expect(seg.every((x, i) => i === 0 || x <= seg[i - 1] + 1e-12)).toBe(true);
+    // Effilé : à mi-bout, le rayon est nettement plus petit qu'un dôme (ellipse) de même longueur, mais pas une pointe vive.
+    const u = 0.5;
+    const dome = radiusProfile(C) * Math.sqrt(1 - u * u);
+    const mid = radiusProfile(C + u * (1 - C));
+    expect(mid).toBeLessThan(dome * 0.92);
+    expect(mid).toBeGreaterThan(radiusProfile(C) * 0.6);
+  });
+
+  it("l'extrémité est arrondie : le rayon décroît comme une racine, sans pointe vive", () => {
     const d = 0.01;
-    const cone = (1 + PROFILE.swell) * (d / (1 - PROFILE.swellEnd));
+    const cone = radiusProfile(C) * (d / (1 - C)); // pointe aiguë : rayon proportionnel à la distance à l'extrémité
     expect(radiusProfile(1 - d)).toBeGreaterThan(3 * cone);
+  });
+
+  it("bout légèrement aplati de haut en bas : épaisseur dessus–dessous < largeur, sans excès", () => {
+    for (const u of [0.4, 0.6, 0.8]) {
+      const t = C + u * (1 - C);
+      const thick = crossSection(t, 0).d - crossSection(t, Math.PI).d;
+      const wide = crossSection(t, Math.PI / 2).l - crossSection(t, -Math.PI / 2).l;
+      expect(thick / wide).toBeLessThan(0.95);
+      expect(thick / wide).toBeGreaterThan(0.8);
+    }
+  });
+
+  it("bout un peu incliné vers le bas par rapport à l'axe du fût (de 5 à 15°), le fût restant centré", () => {
+    for (const t of [0, 0.3, 0.7, grooveLow]) {
+      expect(crossSection(t, 0).d).toBeCloseTo(-crossSection(t, Math.PI).d, 12);
+    }
+    const center = (t: number) => (crossSection(t, 0).d + crossSection(t, Math.PI).d) / 2;
+    const ratio = SILHOUETTE_LENGTH / SILHOUETTE_SHAFT_RADIUS;
+    const t1 = C + 0.9 * (1 - C);
+    // Pente moyenne du centre des coupes (hors aplatissement, qui est symétrique) : vers le bas (d < 0).
+    const drop = (crossSection(t1, Math.PI / 2).d - crossSection(C, Math.PI / 2).d) / ((t1 - C) * ratio);
+    const deg = (Math.atan(-drop) * 180) / Math.PI;
+    expect(deg).toBeGreaterThan(5);
+    expect(deg).toBeLessThan(15);
+    expect(center(t1)).toBeLessThan(0);
+  });
+
+  it("la coupe est continue partout (aucun saut entre deux positions voisines, hors extrémité)", () => {
+    for (const a of [0, Math.PI / 3, Math.PI / 2, Math.PI]) {
+      for (let i = 1; i < ts.length * 0.97; i++) {
+        const p = crossSection(ts[i], a);
+        const q = crossSection(ts[i - 1], a);
+        expect(Math.hypot(p.d - q.d, p.l - q.l), `a=${a} t=${ts[i]}`).toBeLessThan(0.02);
+      }
+    }
   });
 
   it("le rayon absolu est le rayon relatif × rayon du fût", () => {
@@ -290,12 +338,22 @@ describe("nuage de points de la silhouette", () => {
         const d = { x: p.x - c.x, y: p.y - c.y, z: p.z - c.z };
         const { T } = axisFrame(spec, t);
         expect(Math.abs(dot(d, T))).toBeLessThan(2e-6); // dans le plan perpendiculaire à l'axe
-        expect(Math.hypot(d.x, d.y, d.z)).toBeCloseTo(radiusAt(t, spec.shaftRadius), 4);
+        // Sur la coupe de la surface : composantes dessus / côté de la forme de `crossSection` pour l'angle du point.
+        const { D, S } = sectionFrame(spec, t);
+        const dd = dot(d, D) / spec.shaftRadius;
+        const ll = dot(d, S) / spec.shaftRadius;
+        const center = crossSection(t, Math.PI / 2).d;
+        let best = Infinity;
+        for (let k = 0; k < 720; k++) {
+          const q = crossSection(t, (k / 720) * Math.PI * 2);
+          best = Math.min(best, Math.hypot(q.d - dd, q.l - ll));
+        }
+        expect(best, `t=${t} centre=${center}`).toBeLessThan(0.01);
       }
     }
   });
 
-  it("couvre toute la longueur, des deux côtés, et le renflement est plus large que le fût", () => {
+  it("couvre toute la longueur, des deux côtés, et le rebord est plus large que le fût", () => {
     const spec = specs[1];
     const { points, params } = generateSilhouettePoints(spec, 900, 5);
     expect(Math.min(...params)).toBeLessThan(0.05);
@@ -327,7 +385,7 @@ describe("nuage de points de la silhouette", () => {
     const ratio = (maxY - minY) / (2 * spec.shaftRadius);
     expect(ratio).toBeGreaterThan(LENGTH_TO_DIAMETER * 0.97);
     expect(ratio).toBeLessThanOrEqual(LENGTH_TO_DIAMETER * 1.0001);
-    expect(maxR).toBeLessThanOrEqual(spec.shaftRadius * (1 + PROFILE.swell) + 1e-6);
+    expect(maxR).toBeLessThanOrEqual(spec.shaftRadius * MAX_RELATIVE_RADIUS + 1e-6);
   });
 
   it("surfacePoint est cohérent avec l'axe et le rayon (facteur 0 = l'axe, 1 = la surface)", () => {
@@ -340,6 +398,48 @@ describe("nuage de points de la silhouette", () => {
     expect(onAxis.z).toBeCloseTo(c.z, 12);
     const s = surfacePoint(spec, t, 1.3, 1);
     expect(Math.hypot(s.x - c.x, s.y - c.y, s.z - c.z)).toBeCloseTo(radiusAt(t, spec.shaftRadius), 9);
+  });
+
+  it("repère de coupe : « dessus » orthonormé, perpendiculaire à l'axe et tourné vers +z, quelle que soit la courbure", () => {
+    for (const spec of specs) {
+      for (const t of [0, 0.5, 0.8, 0.95, 1]) {
+        const { T } = axisFrame(spec, t);
+        const { D, S } = sectionFrame(spec, t);
+        expect(Math.hypot(D.x, D.y, D.z)).toBeCloseTo(1, 9);
+        expect(Math.hypot(S.x, S.y, S.z)).toBeCloseTo(1, 9);
+        expect(Math.abs(dot(D, T))).toBeLessThan(1e-9);
+        expect(Math.abs(dot(S, T))).toBeLessThan(1e-9);
+        expect(Math.abs(dot(D, S))).toBeLessThan(1e-9);
+        expect(D.z).toBeGreaterThan(0.9);
+      }
+    }
+  });
+
+  it("densité de points légèrement plus forte sur le rebord qu'ailleurs sur le fût", () => {
+    expect(RIM_ROWS).toBeGreaterThan(0);
+    // Densité surfacique (points par unité d'aire) : aire de la bande calculée sur le profil moyen.
+    const area = (a: number, b: number) => {
+      let sum = 0;
+      for (let i = 0; i < 400; i++) {
+        const t0 = a + ((b - a) * i) / 400;
+        const t1 = a + ((b - a) * (i + 1)) / 400;
+        const r0 = radiusAt(t0);
+        const r1 = radiusAt(t1);
+        sum += Math.PI * (r0 + r1) * Math.hypot((t1 - t0) * SILHOUETTE_LENGTH, r1 - r0);
+      }
+      return sum;
+    };
+    for (const seed of [5, 7, 11, 20261003]) {
+      const { params } = generateSilhouettePoints(specs[1], 800, seed);
+      const density = (a: number, b: number) => params.filter((t) => t >= a && t < b).length / area(a, b);
+      const shaft = density(0.2, 0.6);
+      const ratio = density(TIP_SHAPE.rimAt - TIP_SHAPE.rimFace, TIP_SHAPE.rimAt + 0.01) / shaft;
+      expect(ratio, `graine ${seed}`).toBeGreaterThan(1.5);
+      expect(ratio, `graine ${seed}`).toBeLessThan(6);
+      // Ailleurs sur le bout, densité ordinaire.
+      expect(density(0.83, 0.95) / shaft).toBeGreaterThan(0.75);
+      expect(density(0.83, 0.95) / shaft).toBeLessThan(1.35);
+    }
   });
 });
 
@@ -367,15 +467,25 @@ describe("anneaux de mesure, disque de balayage, axe", () => {
     }
   });
 
-  it("les anneaux sont croissants le long de l'axe, dans [0, 1], et marquent la collerette et le renflement", () => {
+  it("les anneaux sont croissants le long de l'axe, dans [0, 1], et marquent le rebord", () => {
     expect([...RING_PARAMS].sort((a, b) => a - b)).toEqual([...RING_PARAMS]);
     expect(RING_PARAMS.every((t) => t >= 0 && t <= 1)).toBe(true);
-    expect(RING_PARAMS).toContain(PROFILE.collarAt);
-    expect(RING_PARAMS).toContain(PROFILE.swellEnd);
+    expect(RING_PARAMS).toContain(TIP_SHAPE.rimAt);
+  });
+
+  it("chaque anneau entoure la surface à sa hauteur, même au-dessus du rebord (plus marqué dessus)", () => {
+    for (const t of RING_PARAMS) {
+      let maxSurf = 0;
+      for (let k = 0; k < 360; k++) {
+        const q = crossSection(t, (k / 360) * Math.PI * 2);
+        maxSurf = Math.max(maxSurf, Math.hypot(q.d, q.l));
+      }
+      expect(radiusProfile(t) * RING_STYLE.factor).toBeGreaterThan(maxSurf * 1.05);
+    }
   });
 
   it("le disque de balayage est plus large que l'objet entier, centré sur l'axe, perpendiculaire à lui", () => {
-    expect(SCAN_DISC_RADIUS).toBeGreaterThan(SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell));
+    expect(SCAN_DISC_RADIUS).toBeGreaterThan(SILHOUETTE_SHAFT_RADIUS * MAX_RELATIVE_RADIUS);
     for (const t of [0, 0.38, 1]) {
       const disc = scanDisc(spec, t, SCAN_DISC_RADIUS, 32);
       const c = axisPoint(spec, t);
@@ -442,7 +552,7 @@ describe("anneaux et plan de balayage : perpendiculaires à la tangente de l'axe
     for (const angleDeg of [15, 20]) {
       it(`${direction}, ${angleDeg}° : normale de l'anneau · tangente = ±1 à de nombreuses hauteurs (anneaux de mesure et plan de balayage)`, () => {
         const spec = silhouetteSpec({ angleDeg, direction });
-        for (const t of [0, 0.04, 0.1, 0.2, 0.3, 0.45, 0.56, 0.7, PROFILE.collarAt, 0.85, PROFILE.swellEnd, 0.95, 1]) {
+        for (const t of [0, 0.04, 0.1, 0.2, 0.3, 0.45, 0.56, 0.7, TIP_SHAPE.rimAt, 0.85, 0.9, 0.95, 1]) {
           const { T } = axisFrame(spec, t);
           if (t < 0.99) {
             // (à t = 1 le rayon local est nul : l'anneau est dégénéré)
@@ -497,9 +607,9 @@ describe("aucun anneau « spécial » : un seul style pour tous", () => {
   });
 
   it("le disque de balayage est plus large que tout anneau, mais sans excès ; trait fin et voile léger", () => {
-    const maxRing = SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell) * RING_STYLE.factor;
+    const maxRing = SILHOUETTE_SHAFT_RADIUS * Math.max(...RING_PARAMS.map(radiusProfile)) * RING_STYLE.factor;
     expect(SCAN_DISC_RADIUS).toBeGreaterThan(maxRing);
-    expect(SCAN_DISC_RADIUS).toBeLessThan(SILHOUETTE_SHAFT_RADIUS * (1 + PROFILE.swell) * 1.6);
+    expect(SCAN_DISC_RADIUS).toBeLessThan(SILHOUETTE_SHAFT_RADIUS * MAX_RELATIVE_RADIUS * 1.6);
     expect(PLANE_STYLE.width).toBeLessThanOrEqual(1);
     expect(PLANE_STYLE.fillAlpha).toBeLessThanOrEqual(0.1);
   });
@@ -585,10 +695,10 @@ describe("cadrage : le plan de balayage et tout le dessin restent dans le cadre 
   });
 });
 
-describe("vue de départ : de trois quarts, la même partout", () => {
-  it("azimut et inclinaison de départ : ni de face, ni de profil, ni de dessus", () => {
-    expect(SILHOUETTE_VIEW.yaw).toBeGreaterThan(0.45);
-    expect(SILHOUETTE_VIEW.yaw).toBeLessThan(1.1);
+describe("vue de départ : proche du profil, la même partout", () => {
+  it("azimut de départ entre 60 et 70° de la vue de face (proche du profil), inclinaison légère : ni de face, ni de dessus", () => {
+    expect((SILHOUETTE_VIEW.yaw * 180) / Math.PI).toBeGreaterThanOrEqual(60);
+    expect((SILHOUETTE_VIEW.yaw * 180) / Math.PI).toBeLessThanOrEqual(70);
     expect(SILHOUETTE_VIEW.pitch).toBeGreaterThan(0.25);
     expect(SILHOUETTE_VIEW.pitch).toBeLessThan(0.6);
   });
