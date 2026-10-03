@@ -230,14 +230,14 @@ export function bandeauTests(beta: boolean) {
           expect(await layoutProblems(page)).toEqual([]);
           expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
 
-          // Le bandeau reste dans l'écran, sous le bouton principal et avant la section « Essayez ».
+          // Le bandeau est tout en haut de la page, dans l'écran, au-dessus du menu (barre fine : au plus 32 px plus la bordure de 1 px quand il défile).
           const band = (await region(page).boundingBox())!;
           expect(band.x).toBeGreaterThanOrEqual(0);
           expect(band.x + band.width).toBeLessThanOrEqual(w + 0.5);
-          const cta = (await page.locator("main").getByRole("button", { name: "Démarrer mon analyse" }).first().boundingBox())!;
-          expect(band.y).toBeGreaterThanOrEqual(cta.y + cta.height);
-          const essayez = (await page.locator("#essayez").boundingBox())!;
-          expect(band.y + band.height).toBeLessThanOrEqual(essayez.y + 1);
+          expect(band.y).toBeLessThanOrEqual(1);
+          const header = (await page.locator("header.site-header").boundingBox())!;
+          expect(band.y + band.height).toBeLessThanOrEqual(header.y + 1);
+          if (!reduced) expect(band.height).toBeLessThanOrEqual(33);
 
           if (!reduced) {
             // Défilement figé à son départ : les éléments visibles ne se recouvrent pas (le détecteur ignore ce qui est aria-hidden).
@@ -283,6 +283,27 @@ export function bandeauTests(beta: boolean) {
       await page.goto("/");
       const cta = (await page.locator("main").getByRole("button", { name: "Démarrer mon analyse" }).first().boundingBox())!;
       expect(cta.y + cta.height).toBeLessThanOrEqual(844);
+    });
+  });
+
+  test.describe(`Bandeau défilant (${beta ? "bêta gratuite" : "version payante"}) : accueil seulement`, () => {
+    test("absent des autres pages, au chargement comme après un clic dans le menu ; une adresse inconnue reste une page introuvable", async ({ page, request }) => {
+      await page.goto("/methode");
+      await expect(page.locator("h1").first()).toBeVisible();
+      await expect(region(page)).toHaveCount(0);
+      // Navigation interne depuis l'accueil (sans rechargement) : le bandeau disparaît.
+      await page.goto("/");
+      await expect(region(page)).toBeVisible();
+      await page.locator("header.site-header").getByRole("link", { name: "Méthode" }).first().click();
+      await expect(page).toHaveURL(/\/methode$/);
+      await expect(region(page)).toHaveCount(0);
+      // Retour à l'accueil par le logo : il revient.
+      await page.locator("header.site-header").getByRole("link", { name: /accueil/ }).first().click();
+      await expect(page).toHaveURL(/\/$/);
+      await expect(region(page)).toBeVisible();
+      // L'emplacement attrape-tout du bandeau ne transforme pas une adresse inconnue en page vide.
+      expect((await request.get("/adresse-qui-n-existe-pas/vraiment")).status()).toBe(404);
+      expect((await request.get("/adresse-inconnue")).status()).toBe(404);
     });
   });
 }

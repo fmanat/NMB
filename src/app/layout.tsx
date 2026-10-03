@@ -19,11 +19,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? `https://${SITE.domain}`),
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children, bandeau }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${sans.variable} ${mono.variable} h-full`}>
       <body className="min-h-full flex flex-col">
         <a href="#contenu" className="skip-link">Aller au contenu</a>
+        {/* Bandeau défilant : tout en haut de l'accueil seulement (route parallèle src/app/@bandeau) ; vide ailleurs. */}
+        {bandeau}
         <Header />
         <main id="contenu" tabIndex={-1} className="flex-1">{children}</main>
         <Footer />

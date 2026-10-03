@@ -325,10 +325,18 @@ describe("accueil et bandeau : choix de rendu", () => {
     expect(seconds).toBeGreaterThanOrEqual(60);
     expect(seconds).toBeLessThanOrEqual(900);
   });
-  it("le bandeau est placé sous le hero (avant la section Essayez)", () => {
-    const i = page.indexOf("<InfoTicker />");
-    expect(i).toBeGreaterThan(page.indexOf("<ScannerBand"));
-    expect(i).toBeLessThan(page.indexOf("<TrySection />"));
+  it("le bandeau est tout en haut de l'accueil seulement : emplacement « bandeau » de la mise en page, avant le menu, vide ailleurs", () => {
+    const slot = readFileSync("src/app/@bandeau/page.tsx", "utf8");
+    expect(slot).toContain("<InfoTicker />");
+    expect(slot.match(/^export const revalidate = (\d+);/m)?.[1]).toBe(page.match(/^export const revalidate = (\d+);/m)?.[1]);
+    expect(page).not.toContain("<InfoTicker");
+    const layout = readFileSync("src/app/layout.tsx", "utf8");
+    const at = layout.indexOf("{bandeau}");
+    expect(at).toBeGreaterThan(layout.indexOf('className="skip-link"')); // le lien d'évitement reste le premier élément
+    expect(at).toBeLessThan(layout.indexOf("<Header />"));
+    for (const f of ["src/app/@bandeau/default.tsx", "src/app/@bandeau/[...autres]/page.tsx"]) {
+      expect(readFileSync(f, "utf8"), f).toMatch(/return null;/);
+    }
   });
   it("aucun composant du bandeau n'est client ni ne fait d'appel réseau ; l'ancien bandeau d'en-tête a disparu", () => {
     for (const f of ["src/components/ticker/TickerBand.tsx", "src/components/ticker/InfoTicker.tsx", "src/lib/ticker.ts"]) {

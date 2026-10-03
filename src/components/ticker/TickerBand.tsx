@@ -1,7 +1,7 @@
 import type { TickerItem } from "@/lib/ticker";
 
 /**
- * Bandeau défilant d'informations vraies (accueil), purement présentationnel : il reçoit la liste déjà construite (`buildTickerItems`).
+ * Bandeau défilant d'informations vraies (tout en haut de l'accueil, au-dessus du menu : barre fine), purement présentationnel : il reçoit la liste déjà construite (`buildTickerItems`).
  * Aucun JavaScript, aucun appel réseau : tout est rendu par le serveur, le défilement est du CSS (voir globals.css, « Bandeau défilant »).
  *
  * Accessibilité :
@@ -34,7 +34,7 @@ export function TickerBand({ items }: { items: TickerItem[] }) {
   if (items.length === 0) return null;
   return (
     <section aria-label="Informations du site" className="ticker border-b border-[var(--bm-gray-200)] bg-[var(--bm-blue-050)]">
-      <div className="container-bm flex items-center gap-2 min-h-11">
+      <div className="container-bm flex items-center gap-2 min-h-7 sm:min-h-8">
         {/* Version lisible (lecteurs d'écran ; visible et statique si le mouvement est réduit). */}
         <ul data-ticker="list" className="ticker-list">
           {items.map((it) => (

@@ -395,3 +395,13 @@ Portée inchangée : moteur canvas seulement ; repli SVG et images de partage re
 | Densité sur le rebord | 2 rangées de points en plus sur le rebord, prises sur le même budget (total inchangé à ±3 %) : densité surfacique ≈ 2 à 4 fois celle du fût dans une bande étroite, ordinaire ailleurs. | Augmenter la densité de tout le bout : n'aurait pas souligné le contour. |
 | Méridiens | 160 échantillons (au lieu de 48) pour que l'arête et la rainure se voient ; dessus et dessous font partie des 8 méridiens. | — |
 | Vue de départ | Azimut 65° (au lieu de 34°) depuis la vue de face, inclinaison 0,34 inchangée, la même sur mobile et ordinateur (tests unitaire et e2e : entre 60 et 70°). | — |
+
+
+## Bandeau défilant tout en haut de l'accueil (03/10/2026, demande du propriétaire)
+
+| Question | Décision | Alternative écartée |
+|---|---|---|
+| Pages concernées | **Accueil seulement** (choix du propriétaire, option recommandée). | Toutes les pages : compteur à rafraîchir partout, bandeau pendant le questionnaire, le rapport et le paiement. |
+| Mécanisme | Route parallèle `src/app/@bandeau` : `page.tsx` (accueil, `revalidate = 300` comme l'accueil), `default.tsx` et `[...autres]/page.tsx` vides (sans la seconde, Next.js garderait le bandeau après un clic vers une autre page). La mise en page rend `{bandeau}` juste après le lien d'évitement, avant le menu. Les pages statiques restent statiques (vérifié au `next build`) ; une adresse inconnue reste en 404 (test e2e). | Lire l'adresse dans la mise en page (rend tout le site dynamique) ; composant client selon l'adresse (lecture de la base sur chaque page). |
+| Apparence | Barre fine : 28 px sur mobile, 32 px sur ordinateur (+ bordure), texte 12 px, case « Pause » de 18 px dans une cible de 28 px de haut (≥ 24 px, WCAG 2.5.8). Le menu reste collé en haut lors du défilement ; le bandeau, lui, défile avec la page. | Garder la hauteur de 44 px : le bouton principal sortait du premier écran à 375 × 700. |
+| Premier écran mobile | Sur-titre « Science · Données · Statistiques » masqué sous 640 px pour garder le bouton principal visible à 375 × 700 (bas du bouton à 694 px). | Réduire le bandeau scanner : contraire à l'agrandissement de 30 % demandé. |

@@ -299,3 +299,9 @@ Série finale, machine moins chargée (charge 6 à 8) : performance **83, 90, 95
 **Captures** : `docs/captures-nuit4/scanner-gland-390.png`, `-1440.png` et les gros plans du bandeau `-390-bandeau.png`, `-1440-bandeau.png` (image fixe, mouvement réduit).
 **Inchangés** : repli SVG, images de partage, `scanner3d.ts`, tests de séparation et référence du repli.
 **Déploiement** : lancé par le propriétaire (`railway up -s web --ci`, 03/10/2026) ; vérifié sur https://bitometre.com : page et `/api/health` répondent, le bandeau passe en mode animé avec la vue de départ à 65° et l'inclinaison 0,34.
+
+## Bandeau défilant tout en haut de l'accueil (03/10/2026)
+**Fait** : bandeau déplacé au-dessus du menu, accueil seulement (route parallèle `src/app/@bandeau`), barre fine (28 px mobile, 32 px ordinateur), sur-titre du hero masqué sous 640 px pour garder le bouton dans le premier écran à 375 × 700. Détail dans `docs/DECISIONS.md`.
+**Tests** : `npm run verify` vert (lint, types, 716 tests unitaires, contrôle SEO, 171 e2e). Nouveau test e2e : bandeau absent des autres pages (chargement et clic dans le menu), adresse inconnue toujours en 404.
+**Captures** : `docs/captures-nuit4/ticker-haut-390.png`, `ticker-haut-1440.png` (non versionnées).
+**Limite** : en mouvement réduit, la liste statique s'étale sur plusieurs lignes en haut ; sur petit téléphone le bouton peut alors passer sous le premier écran (non testé).

@@ -5,7 +5,6 @@ import { exampleReport } from "@/lib/exampleReport";
 import { ScanButton } from "@/components/ScanButton";
 import { ScannerBand } from "@/components/scanner/ScannerBand";
 import { TrackView } from "@/components/TrackView";
-import { InfoTicker } from "@/components/ticker/InfoTicker";
 import { TrySection } from "@/components/try/TrySection";
 import { Accordion } from "@/components/ui/Accordion";
 import { Badge } from "@/components/ui/Badge";
@@ -48,8 +47,9 @@ export default async function Home() {
             Ordinateur : texte et boutons à gauche, rapport d'exemple complet à droite. */}
         <div className="container-bm pt-4 pb-10 md:pt-16 md:pb-20 grid gap-4 md:gap-5 lg:grid-cols-[1.05fr_1fr] lg:gap-x-14 lg:gap-y-0 lg:content-center">
           <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
-            <p className="t-eyebrow">Science · Données · Statistiques</p>
-            <h1 className="t-display mt-3 md:mt-4">Votre profil morphologique en données.</h1>
+            <p className="t-eyebrow hidden sm:block">Science · Données · Statistiques</p>
+            {/* Mobile : sur-titre masqué pour garder le bouton principal dans le premier écran sous le bandeau défilant du haut. */}
+            <h1 className="t-display sm:mt-3 md:mt-4">Votre profil morphologique en données.</h1>
             <p className="t-lead text-muted mt-3 md:mt-5 max-w-[34rem]">
               Longueur, circonférence, courbure : un rapport statistique chiffré, comparé à une étude de référence.
               <span className="hidden sm:inline">
@@ -77,9 +77,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Bandeau défilant d'informations vraies (statut, référence, mesures, version, compteur au-delà du seuil) : rendu serveur */}
-      <InfoTicker />
 
       {/* Essayez : simulation locale (curseurs), mêmes calculs que le rapport, chargée en différé */}
       <TrySection />

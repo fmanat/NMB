@@ -381,7 +381,7 @@ input[type="radio"] { width: 20px; height: 20px; flex: none; }
 .skip-link:focus { transform: translateY(0); }
 main:focus { outline: none !important; }
 
-/* ---------- Bandeau défilant d'informations (accueil) ---------- */
+/* ---------- Bandeau défilant d'informations (barre fine tout en haut de l'accueil) ---------- */
 /* Deux copies identiques côte à côte ; la piste glisse de la moitié de sa largeur puis recommence (boucle sans saut).
    Chaque copie fait au moins la largeur de l'écran pour qu'il n'y ait jamais de vide à droite. */
 .ticker-viewport {
@@ -408,8 +408,8 @@ main:focus { outline: none !important; }
 @keyframes bm-ticker { to { transform: translateX(-50%); } }
 .ticker-item {
   display: inline-block;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: 12px;
+  line-height: 18px;
   white-space: nowrap;
 }
 .ticker-item::before {
@@ -422,7 +422,7 @@ main:focus { outline: none !important; }
   background: var(--bm-blue-400);
   vertical-align: middle;
 }
-.ticker-pause-input { width: 24px; height: 24px; }
+.ticker-pause-input { width: 18px; height: 18px; }
 .ticker-label { color: var(--bm-navy-700); }
 .ticker-value { color: var(--bm-navy-900); font-weight: 600; }
 /* Pause : survol, focus clavier dans le bandeau, case « Pause » cochée. */
@@ -433,10 +433,10 @@ main:focus { outline: none !important; }
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  gap: 6px;
+  min-height: 28px; /* cible de 28 px de haut (au moins 24 px, WCAG 2.5.8) : la barre reste fine */
   padding-inline: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--bm-navy-700);
   cursor: pointer;
@@ -466,13 +466,13 @@ main:focus { outline: none !important; }
     width: auto;
     height: auto;
     margin: 0;
-    padding: 8px 0;
+    padding: 4px 0;
     overflow: visible;
     clip: auto;
     white-space: normal;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 24px;
+    gap: 2px 20px;
   }
   /* Éléments de la liste statique : retour à la ligne permis (jamais plus larges que l'écran). */
   .ticker-list .ticker-item { max-width: 100%; white-space: normal; }
