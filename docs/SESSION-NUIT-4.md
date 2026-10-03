@@ -305,3 +305,4 @@ Série finale, machine moins chargée (charge 6 à 8) : performance **83, 90, 95
 **Tests** : `npm run verify` vert (lint, types, 716 tests unitaires, contrôle SEO, 171 e2e). Nouveau test e2e : bandeau absent des autres pages (chargement et clic dans le menu), adresse inconnue toujours en 404.
 **Captures** : `docs/captures-nuit4/ticker-haut-390.png`, `ticker-haut-1440.png` (non versionnées).
 **Limite** : en mouvement réduit, la liste statique s'étale sur plusieurs lignes en haut ; sur petit téléphone le bouton peut alors passer sous le premier écran (non testé).
+**Déploiement** : lancé par le propriétaire (03/10/2026) ; vérifié sur https://bitometre.com : bandeau en haut de l'accueil (0 à 33 px, avant le menu, hors du contenu principal), absent de /methode, adresse inconnue en 404.
