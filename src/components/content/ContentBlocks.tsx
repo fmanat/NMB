@@ -190,14 +190,18 @@ export function PercentileTables() {
 }
 
 /** Les 11 pages par centimètre, avec leur rang. `current` : taille de la page affichée (mise en évidence). */
-export function SizeLinks({ current, title = "Où vous situez-vous ?" }: { current?: number | null; title?: string }) {
+export function SizeLinks({ current, title = "Où vous situez-vous ?", bare = false }: { current?: number | null; title?: string; bare?: boolean }) {
   const exists = existingSlugs();
   const sizes = CM_SIZES.filter((n) => exists.has(cmSlug(n)));
   if (sizes.length === 0) return null;
   return (
-    <nav aria-labelledby="tailles-titre" className="mt-10">
-      <h2 id="tailles-titre" className="t-h3">{title}</h2>
-      <p className="t-small text-muted mt-2">Longueur en érection : choisissez une taille pour voir sa position dans la population de référence.</p>
+    <nav aria-labelledby={bare ? undefined : "tailles-titre"} aria-label={bare ? "Tailles en centimètres" : undefined} className={bare ? "" : "mt-10"}>
+      {!bare && (
+        <>
+          <h2 id="tailles-titre" className="t-h3">{title}</h2>
+          <p className="t-small text-muted mt-2">Longueur en érection : choisissez une taille pour voir sa position dans la population de référence.</p>
+        </>
+      )}
       <ul className="mt-4 grid grid-cols-2 gap-2 min-[480px]:grid-cols-3 md:grid-cols-4">
         {sizes.map((n) => (
           <li key={n}>

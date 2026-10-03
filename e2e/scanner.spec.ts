@@ -82,7 +82,7 @@ async function expectExampleValues(page: Page) {
   await expect(b.getByText("13,8 cm")).toBeVisible();
   await expect(b.getByText("11,9 cm")).toBeVisible();
   await expect(b.getByText(/^\d+ \/ 100$/)).toBeVisible();
-  await expect(b.getByText(/^Percentile \d+$/)).toHaveCount(2);
+  await expect(b.getByText(/^\d+e percentile$/)).toHaveCount(2); // rang en partie entière, comme « Au-dessus de X % »
   await expect(b.getByText(/^15°$/)).toBeVisible();
 }
 

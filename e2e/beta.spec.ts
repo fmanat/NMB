@@ -49,7 +49,7 @@ test.describe("Bêta gratuite : formule A seule", () => {
   test("l'accueil ne parle ni de prix, ni de photo, ni des protocoles B et C", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByText("Gratuit pendant la bêta", { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Votre profil morphologique en données.");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Calculateur de taille du pénis");
     await expect(page.locator("text=Exemple · valeurs fictives >> visible=true").first()).toBeVisible();
     const text = await page.locator("body").innerText();
     expect(text).not.toMatch(/€|PROTOCOLE [BC]|Trois protocoles|paiement unique|Photo jamais stockée/i);

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReportResults } from "@/lib/reportCore";
 import { DIRECTION_FR } from "@/lib/reportCore";
-import { f1 } from "@/lib/format";
+import { f1, rankLabel } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { CurvatureIndicator } from "./CurvatureIndicator";
@@ -17,14 +17,44 @@ const CURVE_LABEL = { none: "Aucune", light: "Légère", marked: "Marquée" } as
  * Tableau de bord d'un rapport : score, position statistique, indicateurs, repères de taille.
  * Reçoit des résultats déjà calculés (aucun calcul statistique ici). Sert au rapport réel et à l'exemple fictif de l'accueil.
  */
-export function ReportDashboard({ results: r, example = false }: { results: ReportResults; example?: boolean }) {
+export function ReportDashboard({ results: r, example = false, lead = "score" }: { results: ReportResults; example?: boolean; lead?: "score" | "percentile" }) {
   const declared = r.formula === "A";
   const curve = r.curvature;
   const medical = curve.angleDeg >= 30;
+  const state = r.state === "rest" ? "au repos" : "en érection";
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* 1. Score global et position statistique */}
+      {/* 1. Position statistique en tête (accueil : le percentile est l'information principale), score au second plan */}
+      {lead === "percentile" && r.length.percentile !== undefined ? (
+        <Card as="section" className="!p-6 md:!p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-10">
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="t-eyebrow">Longueur {state}</p>
+                {example && <Badge tone="warning">Exemple fictif</Badge>}
+              </div>
+              <p className="num font-bold text-accent mt-2 text-[40px] leading-[44px] md:text-[56px] md:leading-[60px]">{rankLabel(r.length.percentile)}</p>
+              <p className="t-lead mt-2">{`Au-dessus d'environ ${Math.floor(r.length.percentile)} % de la population de référence`}</p>
+              {r.girth.percentile !== undefined && (
+                <p className="t-small text-muted mt-3">
+                  Circonférence {state} : <span className="num font-semibold text-foreground">{rankLabel(r.girth.percentile)}</span>, au-dessus d&apos;environ {Math.floor(r.girth.percentile)} % de la population de référence.
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-4 rounded-[12px] border border-[var(--border)] p-4 md:w-[300px]">
+              <ScoreRing score={r.score} size="sm" />
+              <div>
+                <p className="t-small font-semibold">Score global</p>
+                <p className="t-caption text-muted mt-1">
+                  Note de présentation, volontairement indulgente : ce n&apos;est pas un percentile.{" "}
+                  <Link href="/methode" className="text-accent underline">Voir la méthode</Link>
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ) : (
       <Card as="section" className="!p-6 md:!p-8">
         <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:gap-10">
           <ScoreRing score={r.score} />
@@ -41,6 +71,7 @@ export function ReportDashboard({ results: r, example = false }: { results: Repo
           </div>
         </div>
       </Card>
+      )}
 
       {/* 2. Profil morphologique (case de la grille 3 × 3, d'après les deux percentiles) */}
       <ProfileCard results={r} example={example} />

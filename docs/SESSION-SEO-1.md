@@ -26,3 +26,12 @@ Session autonome, sans question. Journal mis à jour à la fin de chaque bloc. �
 - Parcours automatique des liens : `e2e/liens.spec.ts` (aucun lien interne cassé ; sitemap = exactement les pages indexables ; canonique = soi-même ; image de partage servie). Les liens vers une page de contenu absente ne sont pas affichés.
 - `docs/SEARCH-CONSOLE.md` : Google Search Console et Bing par DNS chez Cloudflare, sitemap, planificateur de mots-clés.
 - Tests : `tests/seo-figures.test.ts` (quantile, jetons, cohérence avec le rapport).
+
+## Bloc 2 : page d'accueil — terminé
+- Titre de page « Calculateur taille pénis : percentile et moyenne | Bitomètre » ; H1 « Calculateur de taille du pénis » ; sous-titre au ton laboratoire qui dit ce qu'on obtient en une minute.
+- Méta-description orientée clic (deux variantes : bêta gratuite / payant), sans chiffre trompeur (l'effectif de 15 521 hommes ne concerne pas la longueur en érection : il n'est pas mis en avant).
+- Rapport d'exemple : le percentile est l'information principale (« 65e percentile : au-dessus d'environ 65 % de la population de référence »), le score passe au second plan dans un encadré (option `lead="percentile"` de `ReportDashboard`, utilisée seulement sur l'accueil ; le rapport réel est inchangé).
+- Bandeau « scanner » de l'accueil : « Percentile 66 » (arrondi) remplacé par « 65e percentile » (partie entière), pour être cohérent avec « Au-dessus de 65 % » affiché plus bas. Fonction commune `rankLabel` (`src/lib/format.ts`).
+- Section « Où vous situez-vous ? » (11 tailles) et « Comprendre les chiffres » (pages piliers) : `src/components/content/HomeGuides.tsx`. Chaque lien n'apparaît que si sa page existe et est publiée.
+- Bandeau défilant : « Indicateurs dans chaque rapport : 4 » au lieu de « Mesures ».
+- Pied de page : libellés courts des guides (champ `breadcrumb`), sans les pages par centimètre.

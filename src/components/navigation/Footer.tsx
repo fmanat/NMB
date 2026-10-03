@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FORMULAS, SITE, formatEur } from "@/config/site";
 import { isFreeBeta } from "@/lib/mode";
-import { isPublished, loadSeoPages } from "@/lib/seo";
+import { visibleSeoPages } from "@/lib/seo";
 import { Logo } from "./Header";
 
 const LINKS = [
@@ -18,7 +18,7 @@ const LINKS_BETA = LINKS.map(([h, l]) => (h === "/cgv" ? (["/conditions", "Condi
 export function Footer() {
   const beta = isFreeBeta();
   // Guides : visibles seulement une fois publiés (ou hors production, pour la relecture).
-  const guides = isPublished() || process.env.NODE_ENV !== "production" ? loadSeoPages() : [];
+  const guides = visibleSeoPages().filter((p) => p.kind !== "centimetre");
   return (
     <footer className="site-footer border-t border-[var(--bm-gray-200)] bg-[var(--bm-gray-050)] mt-0">
       <div className="container-bm py-10 space-y-6 text-sm text-muted">
@@ -36,7 +36,7 @@ export function Footer() {
           <nav aria-label="Guides" className="flex flex-wrap gap-x-5 gap-y-1">
             {guides.map((g) => (
               <Link key={g.slug} href={`/${g.slug}`} className="inline-flex items-center min-h-[44px] hover:text-foreground">
-                {g.title}
+                {g.breadcrumb}
               </Link>
             ))}
           </nav>

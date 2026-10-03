@@ -72,7 +72,7 @@ export function bandeauTests(beta: boolean) {
     test("le nombre de mesures est celui des cartes de « Ce que mesure le rapport »", async ({ page }) => {
       await page.goto("/");
       const cards = await page.locator("section", { has: page.getByRole("heading", { name: /Quatre indicateurs/ }) }).locator("ul > li").count();
-      await expect(item(page, "measures")).toContainText(`Mesures dans chaque rapport ${cards} `);
+      await expect(item(page, "measures")).toContainText(`Indicateurs dans chaque rapport ${cards} `);
       expect(cards).toBeGreaterThan(0);
     });
 

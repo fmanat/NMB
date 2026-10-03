@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { QuestionnaireResults } from "@/lib/report";
 import { DIRECTION_FR } from "@/lib/report";
-import { f1 } from "@/lib/format";
+import { f1, rankLabel } from "@/lib/format";
 import { CAMERA_DISTANCE, CYLINDER, STATIC_VIEW, generateCylinderPoints, project, ringHeights, ringPolyline, type View } from "@/lib/scanner3d";
 import { ScannerShell } from "./ScannerShell";
 
@@ -74,8 +74,8 @@ export function ScannerBand({ ex }: { ex: QuestionnaireResults }) {
       fallback={<StaticScene />}
       labels={
         <dl className="pointer-events-none absolute inset-0 m-0">
-          <Stat pos="left-3 top-3 lg:left-5 lg:top-5" label="Longueur" value={<>{f1(ex.length.value)} cm</>} sub={`Percentile ${Math.round(ex.length.percentile)}`} />
-          <Stat pos="right-3 top-3 text-right lg:right-5 lg:top-5" label="Circonférence" value={<>{f1(ex.girth.value)} cm</>} sub={`Percentile ${Math.round(ex.girth.percentile)}`} />
+          <Stat pos="left-3 top-3 lg:left-5 lg:top-5" label="Longueur" value={<>{f1(ex.length.value)} cm</>} sub={rankLabel(ex.length.percentile)} />
+          <Stat pos="right-3 top-3 text-right lg:right-5 lg:top-5" label="Circonférence" value={<>{f1(ex.girth.value)} cm</>} sub={rankLabel(ex.girth.percentile)} />
           <Stat pos="left-3 bottom-3 lg:left-5 lg:bottom-5" label="Courbure" value={<>{f1(ex.curvature.angleDeg)}°</>} sub={dir} />
           <Stat pos="right-3 bottom-3 text-right lg:right-5 lg:bottom-5" label="Score global" value={<>{Math.round(ex.score)} / 100</>} sub="Note de présentation" />
         </dl>

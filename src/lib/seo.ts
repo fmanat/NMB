@@ -384,9 +384,14 @@ export function loadSeoPagesReport(dir: string = SEO_DIR): { pages: SeoPage[]; e
   return { pages, errors };
 }
 
-/** Slugs des pages présentes (et valides) : un lien vers une page de contenu n'est affiché que si elle existe. */
+/** Pages accessibles au public : toutes une fois publiées (ou hors production, pour la relecture), aucune sinon. */
+export function visibleSeoPages(dir?: string): SeoPage[] {
+  return isPublished() || process.env.NODE_ENV !== "production" ? loadSeoPages(dir) : [];
+}
+
+/** Slugs des pages accessibles : un lien vers une page de contenu n'est affiché que si elle existe pour le visiteur. */
 export function existingSlugs(dir?: string): Set<string> {
-  return new Set(loadSeoPages(dir).map((p) => p.slug));
+  return new Set(visibleSeoPages(dir).map((p) => p.slug));
 }
 
 export function getSeoPage(slug: string, dir?: string): SeoPage | null {

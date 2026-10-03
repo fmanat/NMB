@@ -89,7 +89,7 @@ export function buildTickerItems({ freeBeta, buildDate, live, report }: TickerIn
   if (measures.length > 0) {
     items.push({
       id: "measures",
-      label: "Mesures dans chaque rapport",
+      label: "Indicateurs dans chaque rapport",
       value: String(measures.length),
       note: `(${measures.map((k) => REPORT_MEASURES[k]).join(", ")})`,
     });

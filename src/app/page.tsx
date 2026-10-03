@@ -15,6 +15,7 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 import { TrustBadge } from "@/components/ui/TrustBadge";
 import { ReportDashboard } from "@/components/report/ReportDashboard";
 import { ogImagePath, toJsonLd, webApplication } from "@/lib/structuredData";
+import { HomeGuides } from "@/components/content/HomeGuides";
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
   { icon: "ruler", title: "Saisir", text: "Vous indiquez votre longueur et votre circonférence en centimètres, et la courbure approximative. Environ une minute." },
@@ -35,6 +36,10 @@ const MEASURES: { icon: IconName; title: string; text: string }[] = [
 export const revalidate = 300;
 
 export const metadata: Metadata = {
+  title: { absolute: `Calculateur taille pénis : percentile et moyenne | ${SITE.name}` },
+  description: isFreeBeta()
+    ? "Calculez en une minute le percentile de votre longueur et de votre circonférence, comparées à l'étude de référence. Gratuit pendant la bêta, sans compte."
+    : "Calculez en une minute le percentile de votre longueur et de votre circonférence, comparées à l'étude de référence. Sans compte, rapport chiffré.",
   alternates: { canonical: "/" },
   openGraph: { type: "website", url: "/", siteName: SITE.name, locale: "fr_FR", images: [{ url: ogImagePath("accueil"), width: 1200, height: 630 }] },
   twitter: { card: "summary_large_image", images: [ogImagePath("accueil")] },
@@ -58,9 +63,9 @@ export default async function Home() {
           <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
             <p className="t-eyebrow hidden sm:block">Science · Données · Statistiques</p>
             {/* Mobile : sur-titre masqué pour garder le bouton principal dans le premier écran sous le bandeau défilant du haut. */}
-            <h1 className="t-display sm:mt-3 md:mt-4">Votre profil morphologique en données.</h1>
+            <h1 className="t-display sm:mt-3 md:mt-4">Calculateur de taille du pénis</h1>
             <p className="t-lead text-muted mt-3 md:mt-5 max-w-[34rem]">
-              Longueur, circonférence, courbure : un rapport statistique chiffré, comparé à une étude de référence.
+              Le laboratoire compare vos mesures à une étude de référence : en une minute, votre percentile, votre position sur la courbe et un rapport chiffré.
               <span className="hidden sm:inline">
                 {" "}
                 {beta ? (photoBeta ? "Par questionnaire ou à partir d'une photo : gratuit pendant la bêta, sans compte." : "Gratuit pendant la bêta, sans compte, en une minute.") : "Sans compte, paiement unique."}
@@ -137,7 +142,7 @@ export default async function Home() {
             vous obtenez les mêmes éléments.
           </p>
           <div className="mt-8">
-            <ReportDashboard results={ex} example />
+            <ReportDashboard results={ex} example lead="percentile" />
           </div>
           <div className="mt-8 text-center">
             <ScanButton label="Obtenir mon rapport" />
@@ -168,6 +173,9 @@ export default async function Home() {
           </p>
         </div>
       </section>
+
+      {/* Repères : les pages par centimètre et les pages piliers (liens affichés seulement si la page existe) */}
+      <HomeGuides />
 
       {/* Offres hors bêta */}
       {!beta && (

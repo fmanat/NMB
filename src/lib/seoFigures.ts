@@ -1,7 +1,7 @@
 import { MAX_SIGMA, REFERENCE_SAMPLES } from "@/config/site";
 import { clampPercentile } from "./reportCore";
 import { percentile, referenceFor, valueAtPercentile, type BodyState } from "./stats";
-import { f1 } from "./format";
+import { f1, rankLabel } from "./format";
 import { frInt, frNumber } from "./ticker";
 
 // Chiffres des pages de contenu : tous calculés ici, avec les fonctions de calcul du site (mêmes références, même loi normale
@@ -35,16 +35,7 @@ export const rawPercentile = (s: Series, cm: number) => {
 /** Percentile tel que le rapport l'affiche (une décimale, borné entre 0,1 et 99,9). */
 export const shownPercentile = (s: Series, cm: number) => clampPercentile(rawPercentile(s, cm));
 
-/**
- * Rang en toutes lettres : partie entière du percentile (jamais arrondi à la hausse, comme « Au-dessus de X % » du rapport).
- * Aux extrémités : « sous le 1er percentile », « au-delà du 99e percentile ».
- */
-export function rankLabel(raw: number): string {
-  if (raw >= 99.9) return "au-delà du 99e percentile";
-  const n = Math.floor(clampPercentile(raw));
-  if (n < 1) return "sous le 1er percentile";
-  return n === 1 ? "1er percentile" : `${n}e percentile`;
-}
+export { rankLabel };
 
 /** Sur 1 000 hommes de la population de référence, nombre (partie entière) dont la valeur est inférieure. */
 export const perThousandBelow = (s: Series, cm: number) => Math.floor(shownPercentile(s, cm) * 10);
