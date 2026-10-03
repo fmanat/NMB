@@ -149,7 +149,7 @@ export function PercentileTables() {
   return (
     <div className="mt-6 space-y-8">
       <div className="overflow-x-auto">
-        <table>
+        <table className="w-full min-w-[320px]">
           <caption className="text-left t-small text-muted mb-2">Longueur en érection : part de la population de référence en dessous de chaque valeur</caption>
           <thead>
             <tr><th scope="col">Longueur</th><th scope="col">Percentile</th><th scope="col">Sur 1 000 hommes, mesurent moins</th></tr>
@@ -166,7 +166,7 @@ export function PercentileTables() {
         </table>
       </div>
       <div className="overflow-x-auto">
-        <table>
+        <table className="w-full min-w-[320px]">
           <caption className="text-left t-small text-muted mb-2">Circonférence en érection : part de la population de référence en dessous de chaque valeur</caption>
           <thead>
             <tr><th scope="col">Circonférence</th><th scope="col">Percentile</th><th scope="col">Sur 1 000 hommes, mesurent moins</th></tr>

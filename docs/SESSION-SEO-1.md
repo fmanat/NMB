@@ -44,3 +44,10 @@ Session autonome, sans question. Journal mis à jour à la fin de chaque bloc. �
 - **Modifications de vos textes** (règles d'écriture) : « petits échantillons » → « échantillons réduits » (taille-moyenne) ; « plus courte » → « donner une valeur inférieure » (mesure) ; « anormale/anormal » → « un problème médical », « le signe d'un problème », « pathologique » (courbure, 4 occurrences) ; FAQ du service : « Par défaut » → « sauf choix contraire », « un petit nombre de photos » → « un nombre limité de photos » (2 occurrences).
 - Contrôles ajoutés : `src/lib/contentQuality.ts`, `tests/content-quality.test.ts`, `npm run seo:check` (mots interdits, paragraphes partagés à plus de 30 %, longueurs).
 - **À voir** : `npm run seo:check` signale 24 recoupements de plus de 30 % entre vos guides d'origine (paragraphes repris d'un guide à l'autre, par exemple « Ces moyennes ne reposent pas sur le même nombre d'hommes… »). Simple avertissement : je n'ai pas réécrit vos textes pour cela.
+
+## Bloc 4 : pages piliers nouvelles — terminé
+- **/taille-penis-normale** (« taille pénis normale ») : réponse en tête, population de référence, distribution (courbes), sens statistique de « normal », repos et érection, mesure, calculateur, grille des tailles. 1 050 mots (corps et questions-réponses).
+- **/percentile-penis** (« percentile pénis ») : définition, calcul (loi normale, garde-fous), tableaux de 10 à 20 cm (longueur, chaque ligne liée à sa page) et de 9 à 15 cm (circonférence), calculés par le site, courbes de distribution, limites, calculateur. 1 085 mots.
+- **/a-propos** (« Bitomètre ») : ce qu'est le site, méthode, sources, politique de mise à jour, limites, confidentialité ; aucune identité de personne ni de société. 967 mots.
+- Le contrôle des paragraphes partagés a fait réécrire plusieurs passages de ces pages trop proches des guides existants.
+- Tableaux pleine largeur, zone « 80 % » des courbes plus contrastée.
