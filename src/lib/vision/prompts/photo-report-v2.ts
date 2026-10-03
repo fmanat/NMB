@@ -85,7 +85,7 @@ export const SYSTEM_TEXT_V2 = [
   "- Chaque terme savant est suivi de sa traduction entre parenthèses, par exemple « distal (situé vers l'extrémité) » : à sa première apparition seulement, et au plus une parenthèse par phrase. Les mots courants (longueur, circonférence, symétrie, score, indice, axe, base) ne sont pas des termes savants ; les noms des indicateurs (Indice de rectitude axiale, Coefficient de symétrie bilatérale, Index de conicité distale, Indice de typicité) s'écrivent tels quels, sans parenthèse.",
   "- Chaque phrase contient une observation précise, une valeur ou un rapport de proportions. Aucune phrase générique.",
   "- Vocabulaire varié : aucune expression de plus de trois mots ne revient plus de deux fois. L'expression « variante de la normale » : une fois au plus.",
-  "- Percentiles : une seule formulation par valeur et par phrase, soit « au percentile 74 », soit « au-dessus de 74 % de la population de référence », jamais les deux ensemble.",
+  "- Percentiles : écris « au percentile 74 ». Ne le reformule jamais en pourcentage de la population (« au-dessus de 74 % », « soit 74 % »), ni dans la même phrase ni ailleurs.",
   "- Majuscules : les mots longueur, circonférence, courbure, symétrie, score global s'écrivent en minuscules dans la phrase (« la longueur », jamais « la Longueur ») ; un nom d'indicateur ne prend qu'une majuscule, à son initiale (« l'Indice de rectitude axiale », jamais « l'Indice de Rectitude Axiale »).",
   "- Désigne le sujet par des termes cliniques (tige, gland, couronne, axe, base, extrémité). Pour situer la longueur, parle de la base et de l'extrémité (jamais du pubis).",
   "",
@@ -117,10 +117,10 @@ export function valuesBlock(ind: MorphoIndicators, method: "visuelle" | "calibre
     `Méthode : ${method === "calibree" ? "mesure calibrée sur la carte de référence" : "estimation visuelle"}.`,
     `Longueur (de la base à l'extrémité) : ${fr(ind.longueurCm)} cm${
       ind.percentileLongueur !== null
-        ? ` ; percentile ${Math.round(ind.percentileLongueur)} (formulation équivalente, à n'utiliser qu'à la place de la première : au-dessus de ${Math.round(ind.percentileLongueur)} % de la population de référence) ; médiane de référence ${fr(ind.medianeLongueurCm)} cm`
+        ? ` ; percentile ${Math.round(ind.percentileLongueur)} ; médiane de référence ${fr(ind.medianeLongueurCm)} cm`
         : " ; état de repos : aucun percentile de longueur n'est calculé, ne positionne pas la longueur dans la population"
     }.`,
-    `Circonférence à mi-tige : ${fr(ind.circonferenceCm)} cm ; percentile ${Math.round(ind.percentileCirconference)} (formulation équivalente, à n'utiliser qu'à la place de la première : au-dessus de ${Math.round(ind.percentileCirconference)} % de la population de référence) ; médiane de référence ${fr(ind.medianeCirconferenceCm)} cm.`,
+    `Circonférence à mi-tige : ${fr(ind.circonferenceCm)} cm ; percentile ${Math.round(ind.percentileCirconference)} ; médiane de référence ${fr(ind.medianeCirconferenceCm)} cm.`,
     `Courbure : ${ind.courbureDeg}°${ind.courbureDirection === "none" ? " (axe droit)" : ` ${directionText(ind.courbureDirection)}`}.`,
     `Indice de rectitude axiale : ${ind.rectitude} sur 100.`,
     `Coefficient de symétrie bilatérale : ${ind.symetrie} sur 100.`,

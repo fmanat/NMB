@@ -196,7 +196,7 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
       <button type="submit" className="btn btn-primary btn-block-mobile" disabled={busy || (captchaMode === "simulation" && !captchaOk)}>
         {busy ? "Analyse en cours…" : "Lancer l'analyse"}
       </button>
-      {busy && <p className="text-xs text-muted">L&apos;analyse dure en général de 15 à 45 secondes. Ne fermez pas cette page.</p>}
+      {busy && <p className="text-xs text-muted">L&apos;analyse prend en général moins d&apos;une minute. Ne fermez pas cette page.</p>}
     </form>
   );
 }

@@ -218,7 +218,7 @@ export function simulatedReportText(input: Pick<ReportTextInput, "indicators" | 
     pL !== null
       ? [
           `Dans l'échantillon de Veale et al. (2015), la longueur se place au percentile ${pL}, en regard d'une médiane de ${n(ind.medianeLongueurCm)} cm.`,
-          `La circonférence se situe au-dessus de ${pC} % des valeurs observées, pour une médiane de ${n(ind.medianeCirconferenceCm)} cm.`,
+          `La circonférence occupe le percentile ${pC}, pour une médiane de ${n(ind.medianeCirconferenceCm)} cm.`,
           `L'Indice de typicité de ${ind.typicite} sur 100 classe l'ensemble en ${ind.typiciteLibelle}, c'est-à-dire un profil ${LABEL_DESC[ind.typiciteLibelle]}.`,
           "Cette double lecture, longitudinale et transversale, donne une image complète du positionnement.",
         ]
