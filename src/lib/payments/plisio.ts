@@ -29,8 +29,11 @@ import type { PaymentEvent, PaymentProvider } from "./types";
  */
 
 export const PLISIO_API = "https://api.plisio.net/api/v1/invoices/new";
-/** Monnaies proposées à chaque facture (identifiants Plisio : USDT et USDC sur Ethereum, SOL sur Solana). */
-export const PLISIO_CURRENCIES = ["BTC", "ETH", "USDT", "USDC", "LTC", "SOL"] as const;
+/**
+ * Monnaies proposées à chaque facture (identifiants Plisio) : USDT et USDC sur Ethereum, USDT sur Tron (USDT_TRX), USDC sur Solana
+ * (USDC_SOL), SOL sur Solana. Décision du propriétaire du 04/10/2026 (Tron et Solana : frais de réseau très faibles).
+ */
+export const PLISIO_CURRENCIES = ["BTC", "ETH", "USDT", "USDC", "USDT_TRX", "USDC_SOL", "LTC", "SOL"] as const;
 /** Adresse de notification sur le site (relative à SITE_URL). */
 export const PLISIO_CALLBACK_PATH = "/api/paiement/plisio";
 

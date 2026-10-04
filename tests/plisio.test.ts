@@ -2,6 +2,8 @@ import { createHmac } from "node:crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/paiement/plisio/route";
 import { pool } from "@/lib/db";
+import { computeFinance, dashboardStats, financeConfigFor, sumFinance } from "@/lib/admin/stats";
+import { FINANCE } from "@/config/site";
 import { isHiddenInBeta } from "@/lib/mode";
 import { CheckoutError, startCheckout, startCheckoutWith } from "@/lib/payments/checkout";
 import { paymentProviderFor } from "@/lib/payments";
@@ -50,12 +52,12 @@ describe("création de facture (d'après la documentation de Plisio)", () => {
       source_currency: "EUR",
       source_amount: "4.99",
       order_number: "123456789012345",
-      allowed_psys_cids: "BTC,ETH,USDT,USDC,LTC,SOL",
+      allowed_psys_cids: "BTC,ETH,USDT,USDC,USDT_TRX,USDC_SOL,LTC,SOL",
       callback_url: `${SITE}/api/paiement/plisio?json=true`,
       success_invoice_url: `${SITE}/paiement/retour`,
       fail_invoice_url: `${SITE}/paiement/retour?echec=1`,
     });
-    expect(PLISIO_CURRENCIES).toEqual(["BTC", "ETH", "USDT", "USDC", "LTC", "SOL"]);
+    expect(PLISIO_CURRENCIES).toEqual(["BTC", "ETH", "USDT", "USDC", "USDT_TRX", "USDC_SOL", "LTC", "SOL"]);
     expect(p).not.toHaveProperty("email"); // aucune donnée personnelle transmise
     expect(p).not.toHaveProperty("amount"); // le montant est en euros (source_amount), pas en cryptomonnaie
   });
@@ -120,6 +122,18 @@ describe("notification signée", () => {
     expect(verifyPlisioCallback(callback({ ipn_type: "cash-in", status: "completed", order_number: "1" }), KEY)).toBeNull();
     expect(() => verifyPlisioCallback(callback({ status: "completed", order_number: "1", source_currency: undefined, source_amount: "4.99" }), KEY)).toThrow("Devise");
     expect(() => verifyPlisioCallback(callback({ status: "completed", source_amount: "4.99" }), KEY)).toThrow("order_number");
+  });
+});
+
+describe("commission Plisio en configuration", () => {
+  it("0,5 % pour Plisio ; la commission générale pour les autres prestataires", () => {
+    expect(FINANCE.providerFees.plisio).toEqual({ rate: 0.005, fixedCents: 0 });
+    expect(financeConfigFor("plisio").paymentFeeRate).toBe(0.005);
+    expect(financeConfigFor("verotel").paymentFeeRate).toBe(FINANCE.paymentFeeRate);
+    expect(financeConfigFor(null).paymentFeeRate).toBe(FINANCE.paymentFeeRate);
+    const f = computeFinance(1000, 2, financeConfigFor("plisio"));
+    expect(f.feeCents).toBe(5);
+    expect(sumFinance([f, f]).feeCents).toBe(10);
   });
 });
 
@@ -217,6 +231,15 @@ describe("Plisio : parcours complet", () => {
     expect((await pool().query("SELECT paid_at FROM reports WHERE id = $1", [id])).rows[0].paid_at).toEqual(paidAt);
     expect((await pool().query("SELECT count(*)::int AS n FROM payments WHERE status = 'succeeded'")).rows[0].n).toBe(1);
     expect((await pool().query("SELECT provider_sale_id FROM payments WHERE report_id = $1", [id])).rows[0].provider_sale_id).toBe("5ee0e502283675293c450d0e");
+  });
+
+  it("administration : revenu du paiement Plisio avec sa commission de 0,5 %", async () => {
+    const { order } = await photoPayment();
+    await send(callback({ status: "completed", order_number: order, source_amount: "4.99" }));
+    const d = await dashboardStats(null);
+    expect(d.revenue.byFormula.B.grossCents).toBe(499);
+    expect(d.revenue.byFormula.B.feeCents).toBe(Math.round(499 * 0.005));
+    expect(d.revenue.total.feeCents).toBe(Math.round(499 * 0.005));
   });
 
   it("signature invalide : 422, rien n'est lu ni débloqué", async () => {

@@ -177,6 +177,12 @@ export const FINANCE = {
   vatRate: 0.2, // TVA française par défaut
   paymentFeeRate: 0.155, // commission du prestataire de paiement : valeur PROVISOIRE (15,5 % = tarif public du compte Basic de Verotel, décision du propriétaire le 02/10/2026), à remplacer par le tarif réel du contrat
   paymentFeeFixedCents: 0, // frais fixes par transaction, en centimes (certains prestataires en facturent)
+  // Commission propre à un prestataire (clé = identifiant enregistré dans la table payments), à la place des deux valeurs ci-dessus.
+  // Plisio : 0,5 % payé par le site (décision du propriétaire du 04/10/2026). Les frais de réseau des cryptomonnaies, variables, ne sont
+  // pas comptés ici : ils s'ajoutent au moment des retraits chez Plisio.
+  providerFees: {
+    plisio: { rate: 0.005, fixedCents: 0 },
+  } as Readonly<Record<string, { rate: number; fixedCents: number }>>,
 } as const;
 
 export const ADMIN = {

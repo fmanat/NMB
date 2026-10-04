@@ -12,7 +12,7 @@ export function PayForm({ reportId, price, crypto = false }: { reportId: string;
       <p className="num t-data-xl">{price}</p>
       {crypto && (
         <p className="text-sm text-muted">
-          Paiement en cryptomonnaie (BTC, ETH, USDT, USDC, LTC ou SOL) sur la page de paiement de Plisio, notre prestataire. Le rapport
+          Paiement en cryptomonnaie (BTC, ETH, LTC, SOL, ou USDT et USDC sur Ethereum, Tron ou Solana) sur la page de paiement de Plisio, notre prestataire. Le rapport
           s&apos;ouvre dès que Plisio confirme le paiement complet : selon la monnaie, de quelques minutes à environ une heure.
         </p>
       )}

@@ -7,6 +7,27 @@ const FORMULAS: FormulaKey[] = ["A", "B", "C"];
 
 export type FinanceConfig = { vatRate: number; paymentFeeRate: number; paymentFeeFixedCents: number };
 
+/** Configuration de calcul pour un prestataire : sa commission propre (FINANCE.providerFees) ou, à défaut, la commission générale. */
+export function financeConfigFor(provider: string | null | undefined, finance: typeof FINANCE = FINANCE): FinanceConfig {
+  const own = provider ? finance.providerFees[provider] : undefined;
+  return { vatRate: finance.vatRate, paymentFeeRate: own ? own.rate : finance.paymentFeeRate, paymentFeeFixedCents: own ? own.fixedCents : finance.paymentFeeFixedCents };
+}
+
+/** Somme de plusieurs résultats (par exemple un par prestataire). */
+export function sumFinance(parts: Finance[]): Finance {
+  return parts.reduce(
+    (a, f) => ({
+      transactions: a.transactions + f.transactions,
+      grossCents: a.grossCents + f.grossCents,
+      vatCents: a.vatCents + f.vatCents,
+      netOfVatCents: a.netOfVatCents + f.netOfVatCents,
+      feeCents: a.feeCents + f.feeCents,
+      netCents: a.netCents + f.netCents,
+    }),
+    { transactions: 0, grossCents: 0, vatCents: 0, netOfVatCents: 0, feeCents: 0, netCents: 0 },
+  );
+}
+
 export type Finance = {
   transactions: number;
   grossCents: number; // encaissé TTC
@@ -120,18 +141,17 @@ export async function dashboardStats(days: number | null): Promise<Dashboard> {
 
   // Revenus : paiements confirmés sur la période (conservés même si le rapport a été supprimé).
   const pay = await p.query(
-    `SELECT COALESCE(formula, 'A') AS formula, count(*)::int AS n, COALESCE(sum(amount_cents), 0)::int AS gross
-       FROM payments WHERE status = 'succeeded' AND ($1::timestamptz IS NULL OR confirmed_at >= $1) GROUP BY formula`,
+    `SELECT COALESCE(formula, 'A') AS formula, provider, count(*)::int AS n, COALESCE(sum(amount_cents), 0)::int AS gross
+       FROM payments WHERE status = 'succeeded' AND ($1::timestamptz IS NULL OR confirmed_at >= $1) GROUP BY formula, provider`,
     [since],
   );
-  const byFormula = emptyFormulaRecord(() => computeFinance(0, 0));
-  let totalGross = 0;
-  let totalTx = 0;
-  for (const r of pay.rows as { formula: FormulaKey; n: number; gross: number }[]) {
-    byFormula[r.formula] = computeFinance(r.gross, r.n);
-    totalGross += r.gross;
-    totalTx += r.n;
+  // Commission calculée par prestataire (Plisio a la sienne), puis additionnée par formule et au total.
+  const parts = emptyFormulaRecord((): Finance[] => []);
+  for (const r of pay.rows as { formula: FormulaKey; provider: string | null; n: number; gross: number }[]) {
+    parts[r.formula].push(computeFinance(r.gross, r.n, financeConfigFor(r.provider)));
   }
+  const byFormula = emptyFormulaRecord(() => computeFinance(0, 0));
+  for (const f of FORMULAS) byFormula[f] = sumFinance(parts[f]);
 
   const rf = await p.query(
     `SELECT count(*) FILTER (WHERE status = 'refunded')::int AS refunded, count(*) FILTER (WHERE status = 'disputed')::int AS disputed,
@@ -169,7 +189,7 @@ export async function dashboardStats(days: number | null): Promise<Dashboard> {
     conversion,
     freeBetaReports: beta.rows[0].n,
     refunds: rf.rows[0],
-    revenue: { total: computeFinance(totalGross, totalTx), byFormula },
+    revenue: { total: sumFinance(FORMULAS.map((f) => byFormula[f])), byFormula },
     challenges: { created: chMap.challenge_created ?? 0, taken: chMap.challenge_taken ?? 0 },
     ai: computeAiCost({
       modelCalls: t.model_calls,
