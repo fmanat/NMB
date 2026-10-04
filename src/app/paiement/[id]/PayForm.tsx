@@ -2,26 +2,27 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { REPORT_ACCESS } from "@/config/site";
 import { pay, type PayState } from "../actions";
 
-export function PayForm({ reportId, price, crypto = false }: { reportId: string; price: string; crypto?: boolean }) {
+export function PayForm({ reportId, price, crypto = false, termsHref }: { reportId: string; price: string; crypto?: boolean; termsHref: string }) {
   const [state, action, pending] = useActionState<PayState, FormData>(pay.bind(null, reportId), {});
   return (
-    <form action={action} className="panel p-5 space-y-4">
-      <p className="text-sm text-muted">Paiement unique, sans abonnement. Rapport accessible pendant au moins {REPORT_ACCESS.minYears} ans et téléchargeable en PDF à tout moment.</p>
-      <p className="num t-data-xl">{price}</p>
-      {crypto && (
-        <p className="text-sm text-muted">
-          Paiement en cryptomonnaie (BTC, ETH, LTC, SOL, ou USDT et USDC sur Ethereum, Tron ou Solana) sur la page de paiement de Plisio, notre prestataire. Le rapport
-          s&apos;ouvre dès que Plisio confirme le paiement complet : selon la monnaie, de quelques minutes à environ une heure. Voir les{" "}
-          <Link href="/conditions" className="underline">conditions d&apos;utilisation</Link>.
+    <form action={action} className="panel p-5 md:p-6 space-y-5">
+      <div className="text-center">
+        <p className="num t-data-xl !text-[var(--foreground)]">{price}</p>
+        <p className="mt-2 t-small text-muted">
+          <svg className="mr-1.5 inline -mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+          {/* Le moyen de paiement (cryptomonnaie) est dit avant le clic : le client ne doit pas s'attendre à une carte bancaire. */}
+          {crypto ? "Paiement sécurisé en cryptomonnaie par notre prestataire" : "Paiement sécurisé par notre prestataire"}
         </p>
-      )}
+      </div>
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="waiver" className="mt-1 accent-[var(--accent)]" />
         <span>Je demande l&apos;accès immédiat à mon rapport, je renonce à mon droit de rétractation et je reconnais le perdre dès que l&apos;accès commence.</span>
       </label>
+      <p className="t-small text-muted">
+        Voir les <Link href={termsHref} className="underline">{termsHref === "/cgv" ? "conditions générales de vente" : "conditions d’utilisation"}</Link>.
+      </p>
       {state.error && <p className="text-sm text-[var(--bm-error-text)]" role="alert">{state.error}</p>}
       <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
         {pending ? "Redirection…" : `Payer ${price}`}

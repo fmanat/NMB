@@ -90,9 +90,7 @@ export async function sendPhoto(page: Page, o: { formula: "B" | "C"; image: Buff
     await page.getByLabel("Circonférence déclarée (cm)").fill(o.declared.girth);
   }
   await page.locator('input[type="file"]').setInputFiles({ name: "neutre.jpg", mimeType: "image/jpeg", buffer: o.image });
-  await page.getByLabel("J'ai 18 ans ou plus.").check();
-  await page.getByLabel("Cette photo est de moi.").check();
-  await page.getByLabel(/Je consens au traitement de cette donnée sensible/).check();
+  await page.getByLabel(/J'ai 18 ans ou plus, cette photo est de moi/).check();
   if (o.simulatedCaptcha !== false) await page.getByLabel(/Je ne suis pas un robot/).check();
   await page.getByRole("button", { name: "Lancer l'analyse" }).click();
 }

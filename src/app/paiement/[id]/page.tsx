@@ -4,6 +4,7 @@ import { formatEur } from "@/config/site";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { getReportView } from "@/lib/view";
 import { PayForm } from "./PayForm";
+import { isFreeBeta } from "@/lib/mode";
 import { paymentProviderFor } from "@/lib/payments";
 import { paymentAllowed } from "@/lib/payments/policy";
 
@@ -19,7 +20,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   return (
     <Doc title="Débloquer mon rapport">
       <div className="mt-6">
-        <PayForm reportId={id} price={formatEur(view.priceEur)} crypto={crypto} />
+        <PayForm reportId={id} price={formatEur(view.priceEur)} crypto={crypto} termsHref={isFreeBeta() ? "/conditions" : "/cgv"} />
       </div>
     </Doc>
   );

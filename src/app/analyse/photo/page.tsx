@@ -1,14 +1,13 @@
 import { cookies } from "next/headers";
 import { photoPaidByPlisio } from "@/lib/payments/policy";
 import { notFound, redirect } from "next/navigation";
-import { Doc } from "@/components/Doc";
 import { FORMULAS, formatEur } from "@/config/site";
 import { AGE_COOKIE, isAgeTokenValid } from "@/lib/age/token";
 import { photoAccess } from "@/lib/photoAccess";
 import { getCaptcha } from "@/lib/providers";
 import { PhotoFlow } from "./PhotoFlow";
 
-export const metadata = { title: "Envoi de la photo", robots: { index: false, follow: false } };
+export const metadata = { title: "Analyse de photo", robots: { index: false, follow: false } };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
   const { f } = await searchParams;
@@ -21,27 +20,25 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
 
   const def = FORMULAS[formula];
   const paid = photoPaidByPlisio(); // formule photo payante par Plisio (src/lib/payments/policy.ts)
+  const free = beta && !paid;
   return (
-    <Doc title={`Protocole ${formula} : ${def.label.toLowerCase()} (${beta && !paid ? "gratuit pendant la bêta" : formatEur(def.priceEur)})`}>
-      {preview && <div className="mt-4"><p className="rounded-[10px] border border-[var(--bm-warning-text)] px-4 py-3 t-small" data-photo-preview>
+    <div className="container-bm container-narrow pt-6 pb-10 md:py-14">
+      {preview && (
+        <p className="mb-4 rounded-[10px] border border-[var(--bm-warning-text)] px-4 py-3 t-small" data-photo-preview>
           <strong>Aperçu administrateur.</strong> La formule photo n&apos;est visible qu&apos;avec votre session d&apos;administration : le public ne la voit pas.
-        </p></div>}
-      {beta && paid && (
-        <p className="mt-4 t-small text-muted">
-          Les dimensions sont estimées à partir de la photo par un modèle d&apos;analyse, ou mesurées sur une carte de référence si vous en posez
-          une à côté. Une fois l&apos;analyse terminée, le rapport est verrouillé jusqu&apos;au paiement ({formatEur(def.priceEur)} TTC, paiement unique en
-          cryptomonnaie sur la page de Plisio). En cas de refus de la photo, aucun paiement n&apos;est demandé.
         </p>
       )}
-      {beta && !paid && (
-        <p className="mt-4 t-small text-muted">
-          Bêta : aucun paiement n&apos;est demandé. Les dimensions sont estimées à partir de la photo par un modèle d&apos;analyse, ou mesurées
-          sur une carte de référence si vous en posez une à côté ; le rapport s&apos;affiche directement.
-        </p>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h1 className="t-h1 !text-[28px] !leading-[32px] md:!text-[40px] md:!leading-[44px]">{formula === "C" ? "Analyse de photo + mesures" : "Analyse de photo"}</h1>
+        <span className="num rounded-full bg-[var(--bm-blue-100)] px-3 py-1 text-lg font-bold text-[#0f55d1] dark:text-[var(--accent)]" data-photo-price>{free ? "Gratuit pendant la bêta" : formatEur(def.priceEur)}</span>
+      </div>
+      <p className="mt-2 t-lead">Votre rapport morphométrique complet, en général en moins d&apos;une minute.</p>
+      {!free && (
+        <p className="mt-1 t-small text-muted">Paiement unique après l&apos;analyse. Photo refusée : rien à payer.</p>
       )}
-      <div className="mt-6">
+      <div className="mt-5">
         <PhotoFlow formula={formula} captchaMode={getCaptcha().id} />
       </div>
-    </Doc>
+    </div>
   );
 }

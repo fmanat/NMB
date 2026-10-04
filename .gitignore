@@ -62,3 +62,6 @@ next-env.d.ts
 /playwright-report/
 playwright.local.config.ts
 .next-build/
+
+# Captures d'écran locales (non versionnées)
+captures/

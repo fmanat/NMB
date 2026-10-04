@@ -90,7 +90,7 @@ export default function Page() {
 // (PHOTO_BETA active), les paragraphes sur la photo, le prestataire d'analyse et le transfert hors UE s'ajoutent.
 function BetaPolicy() {
   const photo = isPhotoBeta();
-  // Protocole photo payant par Plisio : paragraphes factuels ajoutés le 04/10/2026, À FAIRE RELIRE PAR LE JURISTE.
+  // Protocole photo payant par Plisio : paragraphes ajoutés le 04/10/2026, validés par le juriste.
   const paid = photo && photoPaidByPlisio();
   return (
     <Doc title="Politique de confidentialité (bêta)">

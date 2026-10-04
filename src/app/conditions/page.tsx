@@ -11,7 +11,7 @@ export const metadata = { title: "Conditions d'utilisation (bêta)", alternates:
 export default function Page() {
   if (!isFreeBeta()) notFound();
   const photo = isPhotoBeta();
-  // Protocole photo payant par Plisio (PLISIO_SECRET_KEY renseignée) : textes factuels ajoutés le 04/10/2026, À FAIRE RELIRE PAR LE JURISTE.
+  // Protocole photo payant par Plisio (PLISIO_SECRET_KEY renseignée) : textes ajoutés le 04/10/2026, validés par le juriste.
   const paid = photo && photoPaidByPlisio();
   const price = formatEur(FORMULAS.B.priceEur);
   return (
@@ -95,7 +95,7 @@ export default function Page() {
       <p>
         Le service est fourni « en l&apos;état »{paid ? "" : ", gratuitement"}. Ces conditions sont régies par le droit anglais ; si vous êtes
         consommateur, cela ne vous prive pas de la protection que vous accordent les dispositions impératives de la loi du pays où
-        vous résidez habituellement. Elles sont à faire relire par un juriste avant l&apos;ouverture au public.
+        vous résidez habituellement.
       </p>
     </Doc>
   );
