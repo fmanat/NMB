@@ -53,16 +53,49 @@ export function reportIdFrom(url: string): string {
   return m[1];
 }
 
-export async function fillQuestionnaire(page: Page, o: { length?: string; girth?: string; adult?: boolean } = {}) {
-  await page.goto("/analyse/questionnaire");
-  await page.getByLabel("Longueur (cm)").fill(o.length ?? "14,2");
-  await page.getByLabel("Circonférence (cm)").fill(o.girth ?? "12,1");
+export type QuestionnaireInput = {
+  /** Page de départ : « /analyse/questionnaire » (version payante) ou « /analyse » (bêta gratuite). */
+  path?: string;
+  /** État mesuré. Le test n'a plus de choix par défaut ; l'ancien formulaire proposait « Au repos », on le garde pour ne pas changer le sens des tests. */
+  state?: "erect" | "rest";
+  length?: string;
+  girth?: string;
+  curvature?: "Légère" | "Marquée";
+  direction?: "Gauche" | "Droite" | "Haut" | "Bas";
+  adult?: boolean;
+  /** Case de consentement (bêta uniquement). */
+  consent?: boolean;
+  /** Faux : s'arrête sur l'écran de validation, sans envoyer. */
+  submit?: boolean;
+};
+
+/** Écrans 1 à 3 du test en quatre écrans (état, dimensions, courbure), puis arrivée sur l'écran de validation. */
+export async function fillQuestionnaireSteps(page: Page, o: QuestionnaireInput = {}) {
+  await page.getByRole("radio", { name: o.state === "erect" ? "En érection" : "Au repos" }).check();
+  // Choix de l'état : passage automatique à l'écran suivant (160 ms).
+  await page.getByLabel("Longueur (cm)", { exact: true }).fill(o.length ?? "14,2");
+  await page.getByLabel("Circonférence (cm)", { exact: true }).fill(o.girth ?? "12,1");
+  await page.getByRole("button", { name: "Continuer" }).click();
+  if (o.curvature) {
+    await page.getByRole("radio", { name: o.curvature }).check();
+    await page.getByRole("radio", { name: o.direction ?? "Gauche" }).check(); // passage automatique à l'écran de validation
+  } else {
+    await page.getByRole("button", { name: "Continuer" }).click();
+  }
+  await expect(page.getByLabel("J'ai 18 ans ou plus.")).toBeVisible();
+}
+
+/** Parcours complet du test : ouverture de la page, quatre écrans, validation. */
+export async function fillQuestionnaire(page: Page, o: QuestionnaireInput = {}) {
+  await page.goto(o.path ?? "/analyse/questionnaire");
+  await fillQuestionnaireSteps(page, o);
   if (o.adult !== false) await page.getByLabel("J'ai 18 ans ou plus.").check();
-  await page.getByRole("button", { name: "Calculer mon rapport" }).click();
+  if (o.consent) await page.getByLabel(/Je consens au traitement des valeurs que je saisis/).check();
+  if (o.submit !== false) await page.getByRole("button", { name: "Révéler mon percentile" }).click();
 }
 
 /** Remplit le questionnaire valide, attend la page du rapport et renvoie son identifiant. */
-export async function createReportA(page: Page, o: { length?: string; girth?: string } = {}): Promise<string> {
+export async function createReportA(page: Page, o: QuestionnaireInput = {}): Promise<string> {
   await fillQuestionnaire(page, o);
   await page.waitForURL(/\/r\/[A-Za-z0-9_-]+/);
   return reportIdFrom(page.url());
@@ -74,8 +107,8 @@ export async function payReport(page: Page) {
   await page.getByLabel(/Je demande l'accès immédiat/).check();
   await page.getByRole("button", { name: /^Payer/ }).click();
   await page.getByRole("button", { name: "Simuler un paiement réussi" }).click();
-  // Questionnaire : « Rapport morphologique » ; photo (photo-report/2) : « Rapport d'analyse morphométrique n° … ».
-  await expect(page.getByRole("heading", { name: /Rapport morphologique|Rapport d'analyse morphométrique/ })).toBeVisible();
+  // Questionnaire : « Votre résultat est prêt. » ; photo (photo-report/2) : « Rapport d'analyse morphométrique n° … ».
+  await expect(page.getByRole("heading", { name: /Votre résultat est prêt|Rapport d'analyse morphométrique/ })).toBeVisible();
 }
 
 /** Parcours photo : vérification d'âge simulée, cases, captcha simulé, envoi d'une image neutre. */

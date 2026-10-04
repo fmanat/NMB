@@ -1,18 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
-import { E2E, expect, fakeIp, reportIdFrom, test } from "./helpers";
+import { E2E, expect, fakeIp, fillQuestionnaire, reportIdFrom, test } from "./helpers";
 
 // Accessibilité (clavier, focus visible, lecteurs d'écran, mouvement réduit) sur la copie du site en mode bêta gratuite (port 3204).
 // Contrôle automatique avec axe-core (règles WCAG 2.0, 2.1 et 2.2 niveaux A et AA, plus les bonnes pratiques) : il ne remplace pas un
 // essai avec un vrai lecteur d'écran, que ce test ne peut pas faire.
 
 async function betaReport(page: Page): Promise<string> {
-  await page.goto("/analyse/questionnaire");
-  await page.getByLabel("Longueur (cm)").fill("14,2");
-  await page.getByLabel("Circonférence (cm)").fill("12,1");
-  await page.getByLabel("J'ai 18 ans ou plus.").check();
-  await page.getByLabel(/Je consens au traitement des valeurs que je saisis/).check();
-  await page.getByRole("button", { name: "Calculer mon rapport" }).click();
+  await fillQuestionnaire(page, { path: "/analyse", consent: true });
   await page.waitForURL(/\/r\/[A-Za-z0-9_-]+/);
   return reportIdFrom(page.url());
 }
@@ -29,7 +24,7 @@ async function scan(page: Page, label: string) {
 
 test.describe("Accessibilité : contrôle automatique axe-core", () => {
   test("pages publiques", async ({ page }) => {
-    for (const path of ["/", "/analyse/questionnaire", "/methode", "/conditions", "/confidentialite", "/mentions-legales", "/contact", "/admin/connexion"]) {
+    for (const path of ["/", "/analyse", "/methode", "/conditions", "/confidentialite", "/mentions-legales", "/contact", "/admin/connexion"]) {
       await page.goto(path);
       await scan(page, path);
     }
@@ -40,7 +35,7 @@ test.describe("Accessibilité : contrôle automatique axe-core", () => {
     await scan(page, "rapport");
     await page.goto(`/r/${id}/partager`);
     await scan(page, "partager");
-    await page.getByRole("button", { name: "Créer la carte" }).click();
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
     await expect(page).toHaveURL(/\/c\//);
     await scan(page, "carte");
     await page.goto(`/r/${id}/defi`);
@@ -48,7 +43,7 @@ test.describe("Accessibilité : contrôle automatique axe-core", () => {
     await page.getByRole("button", { name: "Créer mon lien de défi" }).click();
     await expect(page.getByText("En attente : personne n'a encore relevé le défi.")).toBeVisible();
     await scan(page, "défi (lien créé)");
-    const path = new URL(await page.locator("input[readonly]").inputValue()).pathname;
+    const path = new URL(await page.getByLabel("Lien du défi à envoyer à votre ami").inputValue()).pathname;
     const friend = await browser.newContext({ baseURL, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword }, extraHTTPHeaders: { "x-forwarded-for": fakeIp() } });
     const fp = await friend.newPage();
     await fp.goto(path);
@@ -57,14 +52,32 @@ test.describe("Accessibilité : contrôle automatique axe-core", () => {
   });
 
   test("états d'erreur (formulaire invalide, fenêtre d'âge)", async ({ page }) => {
-    await page.goto("/analyse/questionnaire");
-    await page.getByLabel("Longueur (cm)").fill("14,2");
-    await page.getByLabel("Circonférence (cm)").fill("12,1");
-    await page.getByRole("button", { name: "Calculer mon rapport" }).click();
+    // Chaque écran du test en quatre écrans, puis les erreurs : de saisie (écran des dimensions) et du serveur (consentement absent).
+    await page.goto("/analyse");
+    await scan(page, "test, écran 1 (état)");
+    await page.getByRole("radio", { name: "Au repos" }).check();
+    await page.getByLabel("Longueur (cm)", { exact: true }).fill("abc");
+    await page.getByRole("button", { name: "Continuer" }).click();
+    await expect(page.getByText("Vérifiez la longueur")).toBeVisible();
+    await expect(page.getByLabel("Longueur (cm)", { exact: true })).toHaveAttribute("aria-invalid", "true");
+    await scan(page, "test, écran 2 (dimensions avec erreur)");
+    await page.getByLabel("Longueur (cm)", { exact: true }).fill("14,2");
+    await page.getByLabel("Circonférence (cm)", { exact: true }).fill("12,1");
+    await page.getByRole("button", { name: "Continuer" }).click();
+    await expect(page.getByRole("radio", { name: "Marquée" })).toBeVisible();
+    await scan(page, "test, écran 3 (courbure)");
+    await page.getByRole("radio", { name: "Marquée" }).check();
+    await expect(page.getByRole("radio", { name: "Droite" })).toBeVisible();
+    await scan(page, "test, écran 3 (direction)");
+    await page.getByRole("radio", { name: "Droite" }).check();
+    await expect(page.getByLabel("J'ai 18 ans ou plus.")).toBeVisible();
+    await scan(page, "test, écran 4 (validation)");
+    await page.getByLabel("J'ai 18 ans ou plus.").check();
+    await page.getByRole("button", { name: "Révéler mon percentile" }).click();
     await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toBeVisible();
     await scan(page, "formulaire avec erreur");
     await page.goto("/");
-    await page.getByRole("button", { name: "Démarrer mon analyse" }).first().click();
+    await page.getByRole("button", { name: "Découvrir mon percentile" }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByLabel("Année de naissance").fill("2030");
     await page.getByLabel(/J'ai 18 ans ou plus/).check();
@@ -88,7 +101,7 @@ test.describe("Accessibilité : clavier et focus", () => {
 
   test("la fenêtre d'âge se manipule entièrement au clavier : ouverture, focus piégé, Échap, retour du focus", async ({ page }) => {
     await page.goto("/");
-    const open = page.getByRole("button", { name: "Démarrer mon analyse" }).first();
+    const open = page.getByRole("button", { name: "Découvrir mon percentile" }).first();
     await open.focus();
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("dialog");
@@ -107,7 +120,7 @@ test.describe("Accessibilité : clavier et focus", () => {
 
   test("focus toujours visible : chaque élément atteint au clavier a un contour d'au moins 2 px, sur les pages principales", async ({ page }) => {
     const bad: string[] = [];
-    for (const path of ["/", "/analyse/questionnaire", "/conditions", "/admin/connexion"]) {
+    for (const path of ["/", "/analyse", "/conditions", "/admin/connexion"]) {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
       const seen = new Set<string>();
@@ -147,7 +160,7 @@ test.describe("Accessibilité : clavier et focus", () => {
 });
 
 test.describe("Accessibilité : structure pour lecteurs d'écran", () => {
-  for (const path of ["/", "/analyse/questionnaire", "/methode", "/conditions", "/confidentialite", "/mentions-legales", "/contact"]) {
+  for (const path of ["/", "/analyse", "/methode", "/conditions", "/confidentialite", "/mentions-legales", "/contact"]) {
     test(`${path} : langue, un seul titre de niveau 1, repères (en-tête, contenu, pied de page), navigations nommées, titre de page`, async ({ page }) => {
       await page.goto(path);
       expect(await page.locator("html").getAttribute("lang")).toBe("fr");
@@ -171,7 +184,7 @@ test.describe("Accessibilité : structure pour lecteurs d'écran", () => {
     const heads = page.locator("table thead th");
     expect(await heads.count()).toBeGreaterThanOrEqual(5);
     for (const th of await heads.all()) expect(await th.getAttribute("scope")).toBe("col");
-    for (const svg of await page.locator("figure svg").all()) expect(await svg.getAttribute("aria-label")).toMatch(/percentile/);
+    for (const svg of await page.locator("figure svg").all()) expect(await svg.getAttribute("aria-label")).toMatch(/percentile|population de référence/);
     // Accueil : chaque graphique de l'exemple de rapport porte un nom ; les icônes décoratives sont masquées aux lecteurs d'écran.
     await page.goto("/");
     for (const svg of await page.locator('svg[role="img"]').all()) expect((await svg.getAttribute("aria-label"))?.length ?? 0).toBeGreaterThan(5);
@@ -182,7 +195,7 @@ test.describe("Accessibilité : structure pour lecteurs d'écran", () => {
 test.describe("Accessibilité : mouvement réduit", () => {
   test("prefers-reduced-motion : aucune animation ni transition, défilement instantané", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    for (const path of ["/", "/analyse/questionnaire"]) {
+    for (const path of ["/", "/analyse"]) {
       await page.goto(path);
       const moving = await page.evaluate(() => {
         const out: string[] = [];

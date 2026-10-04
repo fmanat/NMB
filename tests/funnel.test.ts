@@ -51,10 +51,10 @@ describe("collecte anonyme", () => {
     const cols = (await pool().query("SELECT column_name FROM information_schema.columns WHERE table_name = 'funnel_events' AND table_schema = current_schema() ORDER BY column_name")).rows.map((r) => r.column_name);
     expect(cols).toEqual(["created_at", "id", "kind"]);
   });
-  it("le navigateur ne peut envoyer que les 4 événements prévus ; le serveur écrit les autres", async () => {
+  it("le navigateur ne peut envoyer que les 6 événements prévus ; le serveur écrit les autres", async () => {
     expect([...CLIENT_KINDS].sort()).toEqual(["home_view", "locked_preview", "questionnaire_start", "report_view", "share_click", "upsell_click"]);
     for (const k of CLIENT_KINDS) expect((await post({ k })).status).toBe(204);
-    expect(await count()).toBe(4);
+    expect(await count()).toBe(CLIENT_KINDS.length);
     await pool().query(TABLES);
     for (const k of ["questionnaire_done", "card_created", "paid", "n_importe_quoi", "", 5, null, { x: 1 }]) expect((await post({ k })).status).toBe(204);
     expect(await count()).toBe(0); // 204 identique, mais rien d'écrit : on ne révèle pas ce qui est accepté

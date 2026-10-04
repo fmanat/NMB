@@ -19,8 +19,8 @@ test.describe("Aperçu de la formule photo (PHOTO_BETA=admin)", () => {
     }
     expect((await request.post("/api/analyse", { failOnStatusCode: false, multipart: { formula: "B" } })).status()).toBe(404);
     await page.goto("/analyse");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Vos mesures");
-    await expect(page.locator("[data-protocol=B]")).toHaveCount(0);
+    await expect(page.getByText("Dans quel état mesurez-vous ?")).toBeVisible();
+    await expect(page.locator("[data-protocol=B], [data-photo-link], [data-photo-preview]")).toHaveCount(0); // ni choix, ni lien discret vers la photo
   });
 
   test("session d'administration : lien depuis le tableau de bord, choix A ou B, âge remplacé par la session, rapport complet", async ({ page }) => {
@@ -30,6 +30,23 @@ test.describe("Aperçu de la formule photo (PHOTO_BETA=admin)", () => {
     expect(session).toMatchObject({ path: "/", sameSite: "Lax", httpOnly: true });
     await page.locator("[data-photo-preview-link]").click();
     await expect(page.locator("[data-photo-preview]")).toBeVisible();
+    // L'aperçu administrateur garde l'écran de choix (le public a directement le test) ; ses libellés restent vrais.
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Choisissez un protocole");
+    await expect(page.locator('[data-protocol="A"]')).toBeVisible();
+    await expect(page.locator('[data-protocol="C"]')).toHaveCount(0);
+    const choice = await page.locator("main").innerText();
+    expect(choice).not.toMatch(/€|PROTOCOLE C|paiement unique|Recommandé/i);
+    expect(choice).toMatch(/Gratuit/);
+    expect(choice).toMatch(/estimation visuelle, ou mesure calibrée si une carte au format bancaire figure sur la photo/);
+    expect(choice).not.toMatch(/± 10 %/);
+    expect(choice).toMatch(/Vérification d'âge par un prestataire tiers/);
+    expect(choice).toMatch(/jamais enregistrée par Bitomètre/);
+    expect(choice).toMatch(/30 jours/);
+    // Le protocole A mène au test (aperçu : /analyse/questionnaire ne renvoie pas vers /analyse).
+    await page.locator("[data-protocol=A]").click();
+    await expect(page).toHaveURL(/\/analyse\/questionnaire$/);
+    await expect(page.getByText("Dans quel état mesurez-vous ?")).toBeVisible();
+    await page.goBack();
     await page.locator("[data-protocol=B]").click();
     await expect(page).toHaveURL(/\/verification-age\?f=B/);
     await expect(page.getByText("Aucun prestataire de vérification d'âge n'est encore branché")).toBeVisible();

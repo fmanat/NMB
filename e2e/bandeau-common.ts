@@ -69,11 +69,12 @@ export function bandeauTests(beta: boolean) {
       expect([parisDate(now), parisDate(new Date(now.getTime() - 24 * 3600_000))]).toContain(text);
     });
 
-    test("le nombre de mesures est celui des cartes de « Ce que mesure le rapport »", async ({ page }) => {
+    test("le nombre de mesures est celui des indicateurs du résultat d'exemple de l'accueil (longueur, circonférence, courbure, score)", async ({ page }) => {
       await page.goto("/");
-      const cards = await page.locator("section", { has: page.getByRole("heading", { name: /Quatre indicateurs/ }) }).locator("ul > li").count();
-      await expect(item(page, "measures")).toContainText(`Indicateurs dans chaque rapport ${cards} `);
-      expect(cards).toBeGreaterThan(0);
+      // La section « Ce que mesure le rapport » n'existe plus : les indicateurs sont les tuiles du résultat d'exemple du premier écran.
+      const labels = (await page.locator("[data-result-hero]").first().locator("dl dt").allTextContents()).map((t) => t.trim().toLowerCase());
+      expect(labels.length).toBeGreaterThan(0);
+      await expect(item(page, "measures")).toContainText(`Indicateurs dans chaque rapport ${labels.length} (${labels.join(", ")})`);
     });
 
     test("aux bornes : 500 analyses = pas de compteur ; 501 = compteur et score moyen réels", async ({ page }) => {
@@ -281,7 +282,7 @@ export function bandeauTests(beta: boolean) {
     test("le premier écran à 390 px ne change pas : bouton principal entièrement visible", async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto("/");
-      const cta = (await page.locator("main").getByRole("button", { name: "Démarrer mon analyse" }).first().boundingBox())!;
+      const cta = (await page.locator("main").getByRole("button", { name: "Découvrir mon percentile" }).first().boundingBox())!;
       expect(cta.y + cta.height).toBeLessThanOrEqual(844);
     });
   });

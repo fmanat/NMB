@@ -1,15 +1,11 @@
 import { request as pwRequest, type Page } from "@playwright/test";
-import { E2E, expect, fakeIp, reportIdFrom, test, withDb } from "./helpers";
+import { E2E, expect, fakeIp, fillQuestionnaire, fillQuestionnaireSteps, reportIdFrom, test, withDb } from "./helpers";
 
 // Mode « bêta gratuite » (FREE_BETA=on) et site protégé par mot de passe : copie dédiée du site (port 3204), moteurs simulés.
 
 async function betaReport(page: Page, o: { length?: string; girth?: string } = {}): Promise<string> {
-  await page.goto("/analyse/questionnaire");
-  await page.getByLabel("Longueur (cm)").fill(o.length ?? "14,2");
-  await page.getByLabel("Circonférence (cm)").fill(o.girth ?? "12,1");
-  await page.getByLabel("J'ai 18 ans ou plus.").check();
-  await page.getByLabel(/Je consens au traitement des valeurs que je saisis/).check();
-  await page.getByRole("button", { name: "Calculer mon rapport" }).click();
+  // En bêta, le test est directement sur /analyse ; la case de consentement s'ajoute à la case « 18 ans ».
+  await fillQuestionnaire(page, { ...o, path: "/analyse", consent: true });
   await page.waitForURL(/\/r\/[A-Za-z0-9_-]+/);
   return reportIdFrom(page.url());
 }
@@ -48,8 +44,11 @@ test.describe("Site protégé par mot de passe", () => {
 test.describe("Bêta gratuite : formule A seule", () => {
   test("l'accueil ne parle ni de prix, ni de photo, ni des protocoles B et C", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Gratuit pendant la bêta", { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Calculateur de taille du pénis");
+    // Sous le bouton principal : « Gratuit · environ 1 minute · sans compte » (la question de la FAQ sur le prix est repliée).
+    await expect(page.getByText("Gratuit", { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Calculateur de taille du pénis");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("À quel percentile êtes-vous ?");
+    await expect(page.getByRole("button", { name: "Découvrir mon percentile" }).first()).toBeVisible();
     await expect(page.locator("text=Exemple · valeurs fictives >> visible=true").first()).toBeVisible();
     const text = await page.locator("body").innerText();
     expect(text).not.toMatch(/€|PROTOCOLE [BC]|Trois protocoles|paiement unique|Photo jamais stockée/i);
@@ -78,22 +77,22 @@ test.describe("Bêta gratuite : formule A seule", () => {
   test("en bêta, /analyse est directement le questionnaire (un seul protocole), /analyse/questionnaire y renvoie", async ({ page }) => {
     await page.goto("/analyse/questionnaire");
     await expect(page).toHaveURL(/\/analyse$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Vos mesures");
-    await expect(page.getByRole("navigation", { name: "Étapes du parcours" })).toBeVisible();
-    await expect(page.getByText("Bêta gratuite : le rapport s'affiche immédiatement, sans paiement.")).toBeVisible();
+    // Pas d'écran de choix de protocole : le test commence par sa première question, et la formule photo n'est pas proposée (bêta sans photo).
+    await expect(page.getByText("Choisissez un protocole")).toHaveCount(0);
+    await expect(page.getByText("Dans quel état mesurez-vous ?")).toBeVisible();
+    await expect(page.getByText("Étape 1 sur 4")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Analyse photo/ })).toHaveCount(0);
+    await fillQuestionnaireSteps(page);
+    await expect(page.getByText("Gratuit · résultat immédiat · aucun compte")).toBeVisible();
   });
 
   test("sans consentement, pas de rapport ; avec, le rapport est débloqué sans paiement, avec la mention Bêta gratuite", async ({ page, request, baseURL }) => {
-    await page.goto("/analyse/questionnaire");
-    await page.getByLabel("Longueur (cm)").fill("14,2");
-    await page.getByLabel("Circonférence (cm)").fill("12,1");
-    await page.getByLabel("J'ai 18 ans ou plus.").check();
-    await page.getByRole("button", { name: "Calculer mon rapport" }).click();
+    await fillQuestionnaire(page, { path: "/analyse" }); // case « 18 ans » cochée, consentement non coché
     await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText("consentir au traitement");
     await expect(page).toHaveURL(/\/analyse$/);
 
     const id = await betaReport(page);
-    await expect(page.getByRole("heading", { name: "Rapport morphologique" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Votre résultat est prêt." })).toBeVisible();
     await expect(page.getByText("BÊTA GRATUITE", { exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "14,2 cm" })).toBeVisible();
     await expect(page.getByText(/Bêta gratuite : ce rapport est conservé 90 jours au plus/)).toBeVisible();
@@ -115,9 +114,9 @@ test.describe("Bêta gratuite : formule A seule", () => {
   test("carte de partage fonctionnelle en bêta", async ({ page, browser, baseURL, ip }) => {
     const id = await betaReport(page, { length: "13,7", girth: "11,9" });
     await page.goto(`/r/${id}/partager`);
-    await page.getByRole("button", { name: "Créer la carte" }).click();
-    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+$/);
-    const cardId = page.url().split("/c/")[1];
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
+    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+(\?nouvelle=1)?$/);
+    const cardId = new URL(page.url()).pathname.split("/c/")[1];
     // Page publique lue sans cookie : ni identifiant du rapport privé, ni mesure.
     const anon = await browser.newContext({ baseURL, httpCredentials: { username: E2E.betaUser, password: E2E.betaPassword }, extraHTTPHeaders: { "x-forwarded-for": ip } });
     const pub = await anon.newPage();
@@ -138,7 +137,7 @@ test.describe("Bêta gratuite : formule A seule", () => {
     await expect(page.getByText(/gratuit pendant la bêta/)).toBeVisible();
     expect(await page.locator("body").innerText()).not.toMatch(/protocoles photo|paie son propre/i);
     await page.getByRole("button", { name: "Créer mon lien de défi" }).click();
-    const path = new URL(await page.locator("input[readonly]").inputValue()).pathname;
+    const path = new URL(await page.getByLabel("Lien du défi à envoyer à votre ami").inputValue()).pathname;
 
     const friend = await browser.newContext({
       baseURL,
@@ -205,11 +204,16 @@ test.describe("Entonnoir de conversion (événements anonymes)", () => {
     const id = await betaReport(page); // questionnaire_start, questionnaire_done, report_view
     await expect.poll(async () => n(await counts(), "report_view")).toBe(n(before, "report_view") + 1);
     await page.goto(`/r/${id}/partager`);
-    await page.getByRole("button", { name: "Créer la carte" }).click();
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
     await expect(page).toHaveURL(/\/c\//);
+    // Un clic sur une messagerie, depuis la carte (vue de l'auteur), est un partage compté ; la fenêtre externe est interceptée (aucun envoi à un tiers).
+    await page.context().route(/^https:\/\/(wa\.me|t\.me|x\.com)\//, (route) => route.abort());
+    const [popup] = await Promise.all([page.waitForEvent("popup"), page.getByRole("link", { name: "WhatsApp", exact: true }).click()]);
+    await popup.close();
+    await expect.poll(async () => n(await counts(), "share_click")).toBeGreaterThanOrEqual(n(before, "share_click") + 1);
     await page.goto(`/r/${id}/defi`);
     await page.getByRole("button", { name: "Créer mon lien de défi" }).click();
-    const path = new URL(await page.locator("input[readonly]").inputValue()).pathname;
+    const path = new URL(await page.getByLabel("Lien du défi à envoyer à votre ami").inputValue()).pathname;
     // Aucun cookie posé par la mesure d'audience ni par le parcours du créateur.
     expect(await page.context().cookies()).toEqual([]);
 
@@ -222,7 +226,7 @@ test.describe("Entonnoir de conversion (événements anonymes)", () => {
     await friend.close();
 
     const after = await counts();
-    for (const k of ["questionnaire_start", "questionnaire_done", "card_created", "challenge_created", "challenge_taken"]) {
+    for (const k of ["questionnaire_start", "questionnaire_done", "card_created", "challenge_created", "challenge_visit", "challenge_taken"]) {
       expect(n(after, k), k).toBeGreaterThanOrEqual(n(before, k) + 1);
     }
     expect(n(after, "locked_preview")).toBe(n(before, "locked_preview")); // pas d'aperçu verrouillé en bêta

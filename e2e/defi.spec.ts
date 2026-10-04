@@ -9,7 +9,9 @@ test.describe("Défi entre amis", () => {
     await page.goto(`/r/${myId}/defi`);
     await page.getByRole("button", { name: "Créer mon lien de défi" }).click();
     await expect(page.getByText("En attente : personne n'a encore relevé le défi.")).toBeVisible();
-    const inviteUrl = await page.locator("input[readonly]").inputValue();
+    const share = page.locator("[data-share-toolbar]");
+    for (const name of ["Copier", "WhatsApp", "Telegram", "X"]) await expect(share.getByRole(name === "Copier" ? "button" : "link", { name, exact: true })).toBeVisible();
+    const inviteUrl = await page.getByLabel("Lien du défi à envoyer à votre ami").inputValue();
     const path = new URL(inviteUrl).pathname;
     expect(path).toMatch(/^\/defi\/[A-Za-z0-9_-]+$/);
     // Le lien ne révèle rien du créateur.
@@ -56,7 +58,7 @@ test.describe("Défi entre amis", () => {
     await payReport(page);
     await page.goto(`/r/${id}/defi`);
     await page.getByRole("button", { name: "Créer mon lien de défi" }).click();
-    const path = new URL(await page.locator("input[readonly]").inputValue()).pathname;
+    const path = new URL(await page.getByLabel("Lien du défi à envoyer à votre ami").inputValue()).pathname;
     await page.goto(path);
     await page.getByRole("button", { name: "Relever le défi" }).click();
     await expect(page).toHaveURL(/\/analyse$/);
@@ -64,6 +66,8 @@ test.describe("Défi entre amis", () => {
     // Un troisième visiteur : défi indisponible.
     await page.context().clearCookies();
     await page.goto(path);
-    await expect(page.getByText(/déjà été relevé|n'est plus disponible/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ce défi n'est plus disponible" })).toBeVisible();
+    await expect(page.getByText(/déjà été relevé ou retiré/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Relever le défi" })).toHaveCount(0);
   });
 });

@@ -9,7 +9,11 @@ import { layoutProblems } from "./layout";
 
 const band = (page: Page) => page.getByLabel("Scanner : aperçu d'un rapport d'exemple");
 const canvas = (page: Page) => band(page).locator("canvas");
-const live = (page: Page) => expect(band(page)).toHaveAttribute("data-scanner", "live");
+// Le bandeau est plus bas dans l'accueil (section « La science derrière le chiffre ») : on l'amène à l'écran, où le moteur se met à tourner.
+const live = async (page: Page) => {
+  await band(page).scrollIntoViewIfNeeded();
+  await expect(band(page)).toHaveAttribute("data-scanner", "live");
+};
 
 /** Contenu du canevas (image PNG encodée) : sert à savoir si le dessin change. */
 const snapshot = (page: Page) => canvas(page).evaluate((c: HTMLCanvasElement) => c.toDataURL());
@@ -173,7 +177,7 @@ test.describe("Bandeau scanner : animé", () => {
   test("le bandeau ne gêne pas les boutons : le bouton principal garde son nom et ouvre la fenêtre d'âge", async ({ page }) => {
     await page.goto("/");
     await live(page);
-    await page.getByRole("button", { name: "Démarrer mon analyse" }).first().click();
+    await page.getByRole("button", { name: "Découvrir mon percentile" }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();
   });
 });

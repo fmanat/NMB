@@ -12,16 +12,26 @@ test.describe("Carte de partage", () => {
     await expect(page).toHaveURL(new RegExp(`/r/${other}$`));
 
     await page.goto(`/r/${id}/partager`);
-    await page.getByRole("button", { name: "Créer la carte" }).click();
-    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+$/);
-    const cardUrl = page.url();
-    const cardId = cardUrl.split("/c/")[1];
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
+    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+(\?nouvelle=1)?$/);
+    // L'auteur arrive sur sa carte avec ?nouvelle=1 : la barre de partage passe en premier.
+    expect(new URL(page.url()).searchParams.get("nouvelle")).toBe("1");
+    const cardId = new URL(page.url()).pathname.split("/c/")[1];
+    const share = page.getByRole("region", { name: "Partager la carte" });
+    const link = share.getByLabel("Lien à partager");
+    await expect(link).toHaveValue(new RegExp(`/c/${cardId}$`));
+    for (const name of ["Copier", "WhatsApp", "Telegram", "X"]) await expect(share.getByRole(name === "Copier" ? "button" : "link", { name, exact: true })).toBeVisible();
+    await expect(share.getByRole("link", { name: /Télécharger l'image/ })).toHaveAttribute("href", `/c/${cardId}/story`);
 
     // Page publique : lisible sans aucun cookie, sans donnée du rapport privé (ni mesure en cm, ni identifiant du rapport).
     const anon = await browser.newContext({ baseURL, extraHTTPHeaders: { "x-forwarded-for": ip } });
     const pub = await anon.newPage();
     await pub.goto(`/c/${cardId}`);
     await expect(pub.getByText(/RAPPORT CLINIQUE N°/)).toBeVisible();
+    // Le visiteur n'a pas la barre de partage de l'auteur : il a l'invitation à faire le test.
+    await expect(pub.getByRole("heading", { name: "Et vous, à quel percentile êtes-vous ?" })).toBeVisible();
+    await expect(pub.getByRole("region", { name: "Et vous, à quel percentile êtes-vous ?" }).getByRole("button", { name: "Découvrir mon percentile" })).toBeVisible();
+    await expect(pub.getByLabel("Lien à partager")).toHaveCount(0);
     const html = await pub.content();
     expect(html).not.toContain(id);
     expect(html).not.toContain("14,2");
@@ -56,8 +66,8 @@ test.describe("Carte de partage", () => {
     const id = await createReportA(page);
     await payReport(page);
     await page.goto(`/r/${id}/partager`);
-    await page.getByRole("button", { name: "Créer la carte" }).click();
-    const cardId = page.url().split("/c/")[1];
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
+    const cardId = new URL(page.url()).pathname.split("/c/")[1];
     await page.goto(`/r/${id}`);
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Supprimer mon rapport" }).click();

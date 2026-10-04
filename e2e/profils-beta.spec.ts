@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import sharp from "sharp";
 import { PROFILES, profileById } from "../src/lib/profiles";
-import { expect, fakeIp, reportIdFrom, test, withDb } from "./helpers";
+import { expect, fakeIp, fillQuestionnaire, reportIdFrom, test, withDb } from "./helpers";
 import { layoutProblems } from "./layout";
 
 // Profils morphologiques (grille 3 × 3), copie du site en bêta gratuite (port 3204) : le rapport affiche le profil attendu, la carte de partage
@@ -26,12 +26,7 @@ const ALL_NAMES = CASES.map((c) => c.name);
 /** Rapport de la bêta (valeurs au repos), avec une adresse IP différente à chaque appel (limite de 5 analyses par 24 h et par adresse). */
 async function betaReport(page: Page, length: string, girth: string): Promise<string> {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": fakeIp() });
-  await page.goto("/analyse/questionnaire");
-  await page.getByLabel("Longueur (cm)").fill(length);
-  await page.getByLabel("Circonférence (cm)").fill(girth);
-  await page.getByLabel("J'ai 18 ans ou plus.").check();
-  await page.getByLabel(/Je consens au traitement des valeurs que je saisis/).check();
-  await page.getByRole("button", { name: "Calculer mon rapport" }).click();
+  await fillQuestionnaire(page, { path: "/analyse", state: "rest", length, girth, consent: true });
   await page.waitForURL(/\/r\/[A-Za-z0-9_-]+/);
   return reportIdFrom(page.url());
 }
@@ -68,7 +63,8 @@ test.describe("Profils : le rapport affiche le profil attendu", () => {
     // Repos, longueur 9,16 cm = médiane (percentile 50), circonférence 9,31 cm = médiane : case centrale.
     await betaReport(page, "9,2", "9,3");
     await expect(page.locator('[data-profile="l2c2"]')).toBeVisible();
-    await expect(page.getByText("Au-dessus de 51 % de la population de référence").first()).toBeVisible();
+    await expect(page.getByText("Au-dessus d'environ 51 % des hommes de la population de référence.").first()).toBeVisible(); // le percentile en grand (longueur)
+    await expect(page.locator("[data-result-hero]").getByText("51e percentile", { exact: true })).toBeVisible(); // tuile de la longueur
   });
 });
 
@@ -94,9 +90,9 @@ test.describe("Profils : accueil et carte de partage", () => {
     const create = async (withProfile: boolean) => {
       await page.goto(`/r/${id}/partager`);
       if (withProfile) await page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" }).check();
-      await page.getByRole("button", { name: "Créer la carte" }).click();
-      await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+$/);
-      return page.url().split("/c/")[1];
+      await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
+      await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+(\?nouvelle=1)?$/);
+      return new URL(page.url()).pathname.split("/c/")[1];
     };
 
     // Deux cartes sans l'option (case non cochée, puis case cochée puis décochée) : aucune trace du profil, images identiques.
@@ -104,9 +100,9 @@ test.describe("Profils : accueil et carte de partage", () => {
     await page.goto(`/r/${id}/partager`);
     await page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" }).check();
     await page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" }).uncheck();
-    await page.getByRole("button", { name: "Créer la carte" }).click();
-    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+$/);
-    const plainB = page.url().split("/c/")[1];
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
+    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+(\?nouvelle=1)?$/);
+    const plainB = new URL(page.url()).pathname.split("/c/")[1];
     const withProfile = await create(true);
 
     for (const cid of [plainA, plainB]) {
@@ -231,7 +227,7 @@ for (const width of [320, 375, 390] as const) {
         await page.goto(`/r/${id}/partager`);
         await page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" }).check();
         await check("partager (case cochée)");
-        await page.getByRole("button", { name: "Créer la carte" }).click();
+        await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
         await expect(page).toHaveURL(/\/c\//);
         await expect(page.locator("[data-card-profile]")).toContainText(c.name);
         await check(`carte avec profil ${c.name}`);
@@ -254,7 +250,7 @@ test("axe-core sur écran large : méthode, rapport, partage, carte avec profil"
   await page.goto(`/r/${id}/partager`);
   await page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" }).check();
   for (const l of await axeLines(page)) out.push(`partager : ${l}`);
-  await page.getByRole("button", { name: "Créer la carte" }).click();
+  await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
   await expect(page).toHaveURL(/\/c\//);
   for (const l of await axeLines(page)) out.push(`carte : ${l}`);
   expect(out).toEqual([]);
