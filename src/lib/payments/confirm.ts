@@ -1,6 +1,7 @@
 import { pool } from "../db";
 import { reportKey } from "../repo";
 import { getPaymentProvider } from "./index";
+import type { PaymentProvider } from "./types";
 
 export type ConfirmResult =
   | { ok: true; alreadyConfirmed: boolean }
@@ -13,8 +14,8 @@ export type ConfirmResult =
  *  - paiement réussi : déblocage (une seule fois, montant vérifié) ;
  *  - remboursement ou contestation : le rapport se reverrouille (conservé 30 jours, voir purgeExpired).
  */
-export async function handleWebhook(rawBody: string, signature: string | null): Promise<ConfirmResult> {
-  const event = getPaymentProvider().verifyWebhook(rawBody, signature); // lève une erreur si invalide
+export async function handleWebhook(rawBody: string, signature: string | null, provider: PaymentProvider = getPaymentProvider()): Promise<ConfirmResult> {
+  const event = provider.verifyWebhook(rawBody, signature); // lève une erreur si invalide
   if (!event) return { ok: false, reason: "ignored_event" };
 
   const client = await pool().connect();

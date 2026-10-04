@@ -4,6 +4,8 @@ import { formatEur } from "@/config/site";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { getReportView } from "@/lib/view";
 import { PayForm } from "./PayForm";
+import { paymentProviderFor } from "@/lib/payments";
+import { paymentAllowed } from "@/lib/payments/policy";
 
 export const metadata = { title: "Paiement", robots: { index: false, follow: false }, ...PRIVATE_SOCIAL };
 
@@ -12,10 +14,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const view = await getReportView(id);
   if (view.status === "not_found") notFound();
   if (view.status === "unlocked" || view.relocked) redirect(`/r/${id}`); // un rapport reverrouillé (remboursement, contestation) ne se repaie pas ici
+  if (!paymentAllowed(view.formula)) notFound(); // bêta : seul un rapport photo payable par Plisio se paie
+  const crypto = paymentProviderFor(view.formula).id === "plisio";
   return (
     <Doc title="Débloquer mon rapport">
       <div className="mt-6">
-        <PayForm reportId={id} price={formatEur(view.priceEur)} />
+        <PayForm reportId={id} price={formatEur(view.priceEur)} crypto={crypto} />
       </div>
     </Doc>
   );

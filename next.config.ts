@@ -21,9 +21,9 @@ const csp = [
   "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
-  // Les formulaires renvoient vers la page de paiement (Verotel, FlexPay) et de vérification d'âge (AgeVerif) : seulement ces deux origines
+  // Les formulaires renvoient vers la page de paiement (Verotel, FlexPay ; Plisio pour la cryptomonnaie) et de vérification d'âge (AgeVerif) : seulement ces origines
   // en plus du site. Stripe, exclu définitivement par le propriétaire, n'est plus autorisé (son adaptateur reste désactivé dans le code).
-  "form-action 'self' https://secure.verotel.com https://api.ageverif.com",
+  "form-action 'self' https://secure.verotel.com https://api.ageverif.com https://plisio.net",
   "frame-ancestors 'none'",
   ...(!isDev && httpsSite ? ["upgrade-insecure-requests"] : []),
 ].join("; ");

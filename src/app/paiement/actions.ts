@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PAY_COOKIE, PAY_COOKIE_MAX_AGE_SECONDS } from "@/lib/payments/return";
-import { CheckoutError, startCheckout } from "@/lib/payments/checkout";
+import { CheckoutError, startCheckoutWith } from "@/lib/payments/checkout";
 import { handleWebhook } from "@/lib/payments/confirm";
 import { signSimulated } from "@/lib/payments/simulation";
 import { getPaymentProvider } from "@/lib/payments";
@@ -14,9 +14,10 @@ export type PayState = { error?: string };
 export async function pay(reportId: string, _prev: PayState, fd: FormData): Promise<PayState> {
   let url: string;
   try {
-    url = await startCheckout(reportId, fd.get("waiver") === "on");
+    const started = await startCheckoutWith(reportId, fd.get("waiver") === "on");
+    url = started.url;
     // Prestataire externe : il ne connaît pas l'adresse du rapport ; le retour du client la retrouve par ce cookie fonctionnel.
-    if (getPaymentProvider().id !== "simulation") {
+    if (started.external) {
       (await cookies()).set(PAY_COOKIE, reportId, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/paiement", maxAge: PAY_COOKIE_MAX_AGE_SECONDS });
     }
   } catch (e) {

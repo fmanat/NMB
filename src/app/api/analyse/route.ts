@@ -1,3 +1,4 @@
+import { photoReportIsFree } from "@/lib/payments/policy";
 import { clientIp } from "@/lib/clientIp";
 import { cookies } from "next/headers";
 import { UPLOAD } from "@/config/site";
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
       formula === "C"
         ? { length: num(fd.get("declared_length")), girth: num(fd.get("declared_girth")) }
         : undefined,
-    freeBeta: photoBeta,
+    freeBeta: photoReportIsFree(photoBeta), // payant par Plisio dès que PLISIO_SECRET_KEY est renseignée (src/lib/payments/policy.ts)
   };
 
   const encoder = new TextEncoder();

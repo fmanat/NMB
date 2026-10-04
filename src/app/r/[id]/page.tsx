@@ -1,3 +1,4 @@
+import { paymentAllowed } from "@/lib/payments/policy";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { REPORT_ACCESS, SITE, formatEur } from "@/config/site";
@@ -34,7 +35,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const view = await getReportView(id);
   if (view.status === "not_found") notFound();
   // Bêta gratuite : il n'y a plus de paiement, donc plus de rapport verrouillé (un rapport antérieur non payé n'est pas proposé).
-  if (view.status === "locked" && isFreeBeta()) notFound();
+  // Exception : un rapport photo payable par Plisio (src/lib/payments/policy.ts).
+  if (view.status === "locked" && isFreeBeta() && !paymentAllowed(view.formula)) notFound();
 
   const banner = (
     <p className="flex items-start gap-2 rounded-[10px] border border-[var(--bm-blue-100)] bg-[var(--bm-blue-050)] px-4 py-3 t-small text-muted no-print">

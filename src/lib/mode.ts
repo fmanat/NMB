@@ -27,13 +27,16 @@ export const BETA = { reportTtlDays: 90 } as const;
 
 /** Chemins de la formule photo (B) : masqués en bêta gratuite, SAUF si la bêta photo est active. */
 const PHOTO_PATHS = ["/analyse/photo", "/verification-age", "/api/analyse", "/api/age", "/api/captcha"];
-/** Chemins qui n'existent jamais en bêta gratuite (réponse 404) : paiement, CGV. */
-const ALWAYS_HIDDEN_IN_BETA = ["/paiement", "/api/payments", "/cgv"];
+/** Chemins qui n'existent jamais en bêta gratuite (réponse 404) : prestataire général, CGV. */
+const ALWAYS_HIDDEN_IN_BETA = ["/api/payments", "/cgv"];
+/** Pages de paiement : masquées en bêta, sauf si la formule photo est payante par Plisio (PLISIO_SECRET_KEY renseignée). */
+const PAYMENT_PAGES = ["/paiement"];
 
 const under = (pathname: string, prefixes: string[]) => prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
 export function isHiddenInBeta(pathname: string, env: Record<string, string | undefined> = process.env, adminSession = false): boolean {
   if (under(pathname, ALWAYS_HIDDEN_IN_BETA)) return true;
+  if (under(pathname, PAYMENT_PAGES)) return (env.PLISIO_SECRET_KEY ?? "").trim() === "";
   return under(pathname, PHOTO_PATHS) && !isPhotoAvailable(adminSession, env);
 }
 
