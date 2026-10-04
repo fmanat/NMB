@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { track } from "@/lib/track";
 import { pay, type PayState } from "../actions";
 
 export function PayForm({ reportId, price, crypto = false, termsHref }: { reportId: string; price: string; crypto?: boolean; termsHref: string }) {
   const [state, action, pending] = useActionState<PayState, FormData>(pay.bind(null, reportId), {});
   return (
-    <form action={action} className="panel p-5 md:p-6 space-y-5">
+    <form action={action} onSubmit={() => track("purchase_start")} className="panel p-5 md:p-6 space-y-5">
       <div className="text-center">
         <p className="num t-data-xl !text-[var(--foreground)]">{price}</p>
         <p className="mt-2 t-small text-muted">
@@ -16,6 +17,22 @@ export function PayForm({ reportId, price, crypto = false, termsHref }: { report
           {crypto ? "Paiement sécurisé en cryptomonnaie par notre prestataire" : "Paiement sécurisé par notre prestataire"}
         </p>
       </div>
+      {crypto && (
+        <details className="rounded-[10px] border border-[var(--border)] px-4 py-3 t-small">
+          <summary className="cursor-pointer font-semibold">Comment payer en cryptomonnaie ?</summary>
+          <div className="mt-2 space-y-2 text-muted">
+            <p>
+              La page de paiement de Plisio s&apos;ouvre : choisissez une monnaie (Bitcoin, Ethereum, USDT, USDC, Solana, Litecoin), puis envoyez le
+              montant indiqué depuis votre portefeuille, en scannant le QR code ou en copiant l&apos;adresse.
+            </p>
+            <p>
+              Pas encore de portefeuille ? Une application de portefeuille de cryptomonnaie permet généralement d&apos;en acheter par carte bancaire avant
+              d&apos;envoyer le paiement ; comptez ses frais et un délai lors de la première utilisation.
+            </p>
+            <p>Votre rapport se débloque dès que le réseau confirme le paiement, en général en quelques minutes.</p>
+          </div>
+        </details>
+      )}
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="waiver" className="mt-1 accent-[var(--accent)]" />
         <span>Je demande l&apos;accès immédiat à mon rapport, je renonce à mon droit de rétractation et je reconnais le perdre dès que l&apos;accès commence.</span>

@@ -17,7 +17,7 @@ const CURVE_LABEL = { none: "Aucune", light: "Légère", marked: "Marquée" } as
  * Tableau de bord d'un rapport : score, position statistique, indicateurs, repères de taille.
  * Reçoit des résultats déjà calculés (aucun calcul statistique ici). Sert au rapport réel et à l'exemple fictif de l'accueil.
  */
-export function ReportDashboard({ results: r, example = false, lead = "score" }: { results: ReportResults; example?: boolean; lead?: "score" | "percentile" }) {
+export function ReportDashboard({ results: r, example = false, lead = "score" }: { results: ReportResults; example?: boolean; lead?: "score" | "percentile" | "none" }) {
   const declared = r.formula === "A";
   const curve = r.curvature;
   const medical = curve.angleDeg >= 30;
@@ -26,7 +26,8 @@ export function ReportDashboard({ results: r, example = false, lead = "score" }:
   return (
     <div className="space-y-6 md:space-y-8">
       {/* 1. Position statistique en tête (accueil : le percentile est l'information principale), score au second plan */}
-      {lead === "percentile" && r.length.percentile !== undefined ? (
+      {/* lead « none » : la position est déjà affichée au-dessus par ResultHero (page du rapport) */}
+      {lead === "none" ? null : lead === "percentile" && r.length.percentile !== undefined ? (
         <Card as="section" className="!p-6 md:!p-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-10">
             <div className="flex-1">

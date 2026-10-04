@@ -7,10 +7,12 @@ import { getChallengeState, type Side } from "@/lib/challenge";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { getReportView } from "@/lib/view";
 import { startChallenge } from "../actions";
-import { CopyLink } from "./CopyLink";
+import { ShareToolbar } from "@/components/ShareToolbar";
 import { WithdrawButton } from "./WithdrawButton";
 
 export const metadata = { title: "Défier un ami", robots: { index: false, follow: false, nocache: true }, ...PRIVATE_SOCIAL };
+
+const INVITE_TEXT = "J'ai fait le test Bitomètre. À ton tour de découvrir ton percentile, puis on compare :";
 
 const f1 = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 const basisLabel = (s: Side) => (s.basis === "declared" ? "valeurs déclarées" : "analyse de photo");
@@ -63,8 +65,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
       {state.status === "creator_waiting_friend" && (
         <>
-          <p className="mt-4">Envoyez ce lien à votre ami. Il ne révèle rien de votre rapport.</p>
-          <div className="mt-4"><CopyLink url={inviteUrl} /></div>
+          <p className="mt-4">Votre défi est prêt. Envoyez ce lien à un ami : il ne révèle rien de votre rapport.</p>
+          <div className="mt-4 card !p-5"><ShareToolbar url={inviteUrl} text={INVITE_TEXT} linkLabel="Lien du défi à envoyer à votre ami" countShare={false} /></div>
           <p className="mt-4 text-sm">En attente : personne n&apos;a encore relevé le défi.</p>
           <div className="mt-6"><WithdrawButton id={id} /></div>
         </>
@@ -73,7 +75,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       {state.status === "waiting_payment" && (
         <>
           <p className="mt-4">Le défi est relevé. La comparaison apparaîtra dès que vos deux rapports seront débloqués.</p>
-          {state.role === "creator" && <div className="mt-4"><CopyLink url={inviteUrl} /></div>}
+          {state.role === "creator" && <div className="mt-4 card !p-5"><ShareToolbar url={inviteUrl} text={INVITE_TEXT} linkLabel="Lien du défi à envoyer à votre ami" countShare={false} /></div>}
           <div className="mt-6"><WithdrawButton id={id} /></div>
         </>
       )}

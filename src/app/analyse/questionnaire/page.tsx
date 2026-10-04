@@ -5,9 +5,13 @@ import { QuestionnairePage } from "../QuestionnairePage";
 
 export const metadata = { title: "Questionnaire", robots: { index: false } };
 
-// Bêta gratuite : le questionnaire est directement sur /analyse (sauf en bêta photo, où /analyse propose le choix A ou B).
-// Version payante : protocole A après le choix du protocole.
+// Bêta gratuite : le test est directement sur /analyse. Seule exception : l'aperçu administrateur, dont /analyse garde l'écran de choix
+// et renvoie ici pour le questionnaire. Version payante : protocole A après le choix du protocole.
 export default async function Page() {
-  if (isFreeBeta() && !(await photoAccess()).available) redirect("/analyse");
+  if (isFreeBeta()) {
+    const { available, preview } = await photoAccess();
+    if (!preview) redirect("/analyse");
+    return <QuestionnairePage photo={available} />;
+  }
   return <QuestionnairePage />;
 }

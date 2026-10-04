@@ -23,14 +23,14 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const cards = await listCards(id);
 
   return (
-    <Doc title="Partager ma carte">
+    <Doc title="Partager mon résultat">
       <p className="mt-4">
-        La carte publique ne montre que ce que vous choisissez ici. Par défaut : le score seul. Aucune image de vous, aucune
-        silhouette. Le score est une note de présentation, pas un percentile.
+        Créez une carte à envoyer : elle ne montre que ce que vous choisissez ici, jamais votre rapport. Par défaut : le score seul. Aucune image
+        de vous, aucune silhouette. Le score est une note de présentation, pas un percentile.
       </p>
       {erreur && <p className="mt-4 text-[var(--bm-error-text)]" role="alert">{erreur}</p>}
 
-      <form action={createShareCard.bind(null, id)} className="panel p-5 mt-6 space-y-4">
+      <form action={createShareCard.bind(null, id)} className="card !p-5 md:!p-6 mt-6 space-y-5">
         <label className="flex items-start gap-2 text-sm">
           <input type="radio" name="mode" value="score" defaultChecked className="mt-1 accent-[var(--accent)]" />
           <span className="text-foreground">Score seul (par défaut)</span>
@@ -38,7 +38,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <div className="space-y-2">
           <label className="flex items-start gap-2 text-sm">
             <input type="radio" name="mode" value="percentiles" className="mt-1 accent-[var(--accent)]" />
-            <span className="text-foreground">Score et un ou deux percentiles</span>
+            <span className="text-foreground">Score et un ou deux percentiles <span className="badge badge-blue ml-1 align-middle">Recommandé</span></span>
           </label>
           <div className="pl-6 flex gap-4 text-sm">
             {hasLength && <label className="flex items-center gap-2"><input type="checkbox" name="p_length" className="accent-[var(--accent)]" /> Longueur</label>}
@@ -67,7 +67,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             </p>
           </div>
         )}
-        <button type="submit" className="btn btn-primary btn-block-mobile">Créer la carte</button>
+        <button type="submit" className="btn btn-primary btn-block-mobile">Créer la carte et la partager</button>
       </form>
 
       {cards.length > 0 && (

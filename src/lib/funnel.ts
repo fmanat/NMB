@@ -3,11 +3,14 @@
 import { pool } from "./db";
 
 /** Événements écrits dans funnel_events. Les défis (créé, relevé) restent dans stat_events ; le paiement se lit dans payments. */
-export const FUNNEL_KINDS = ["home_view", "questionnaire_start", "questionnaire_done", "report_view", "card_created", "locked_preview"] as const;
+export const FUNNEL_KINDS = [
+  "home_view", "questionnaire_start", "questionnaire_done", "report_view", "card_created", "locked_preview",
+  "upsell_click", "share_click", "challenge_visit",
+] as const;
 export type FunnelKind = (typeof FUNNEL_KINDS)[number];
 
 /** Seuls ces événements peuvent être envoyés par le navigateur ; les autres sont écrits par le serveur à l'action réelle. */
-export const CLIENT_KINDS: readonly FunnelKind[] = ["home_view", "questionnaire_start", "report_view", "locked_preview"];
+export const CLIENT_KINDS: readonly FunnelKind[] = ["home_view", "questionnaire_start", "report_view", "locked_preview", "upsell_click", "share_click"];
 
 const BOT_UA = /bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit|curl|wget|python-requests|httpclient/i;
 
@@ -29,7 +32,7 @@ export async function recordEvent(kind: FunnelKind): Promise<void> {
 
 export type StepKey =
   | "home_view" | "questionnaire_start" | "questionnaire_done" | "report_view" | "card_created" | "challenge_created" | "challenge_taken"
-  | "locked_preview" | "checkout_started" | "paid";
+  | "locked_preview" | "checkout_started" | "paid" | "upsell_click" | "share_click" | "challenge_visit";
 
 export type StepDef = { key: StepKey; label: string; parent: StepKey | null; paidOnly?: boolean };
 
@@ -39,8 +42,11 @@ export const STEPS: StepDef[] = [
   { key: "questionnaire_start", label: "Début du questionnaire", parent: "home_view" },
   { key: "questionnaire_done", label: "Questionnaire terminé", parent: "questionnaire_start" },
   { key: "report_view", label: "Rapport affiché", parent: "questionnaire_done" },
+  { key: "upsell_click", label: "Clic vers l'analyse photo", parent: "report_view" },
   { key: "card_created", label: "Carte de partage créée", parent: "report_view" },
+  { key: "share_click", label: "Carte partagée (lien, messagerie, partage natif)", parent: "card_created" },
   { key: "challenge_created", label: "Défi créé", parent: "report_view" },
+  { key: "challenge_visit", label: "Visite d'un lien de défi", parent: "challenge_created" },
   { key: "challenge_taken", label: "Défi relevé", parent: "challenge_created" },
   { key: "locked_preview", label: "Aperçu verrouillé affiché (version payante)", parent: "questionnaire_done", paidOnly: true },
   { key: "checkout_started", label: "Paiement lancé (version payante)", parent: "locked_preview", paidOnly: true },

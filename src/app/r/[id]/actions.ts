@@ -23,7 +23,7 @@ export async function createShareCard(reportId: string, fd: FormData): Promise<v
     throw e;
   }
   await recordEvent("card_created");
-  redirect(`/c/${cardId}`);
+  redirect(`/c/${cardId}?nouvelle=1`);
 }
 
 export async function removeShareCard(reportId: string, cardId: string): Promise<void> {

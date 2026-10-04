@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 // Signale une étape du parcours au serveur (mesure d'audience anonyme : aucun cookie, aucune adresse IP, aucun identifiant).
 // `once` : ne l'envoie qu'une fois par onglet et par clé (sessionStorage), pour ne pas compter les rechargements.
-export function TrackView({ event, once }: { event: "home_view" | "questionnaire_start" | "report_view" | "locked_preview"; once?: string }) {
+export function TrackView({ event, once }: { event: "home_view" | "questionnaire_start" | "report_view" | "locked_preview" | "upsell_click" | "share_click"; once?: string }) {
   const sent = useRef(false);
   useEffect(() => {
     if (sent.current) return;

@@ -132,9 +132,9 @@ export function buildQuestionnaireReport(input: QuestionnaireInput): Questionnai
 
   const stateLabel = input.state === "rest" ? "au repos" : "en érection";
   let comment =
-    `Les mesures déclarées ${stateLabel} placent la longueur au percentile ${Math.round(length.percentile)} ` +
+    `Les mesures déclarées ${stateLabel} placent la longueur au percentile ${Math.floor(length.percentile)} ` +
     `(${fmt(length.value)} cm, médiane de référence ${fmt(length.referenceMedian)} cm) et la circonférence au percentile ` +
-    `${Math.round(girth.percentile)} (${fmt(girth.value)} cm, médiane de référence ${fmt(girth.referenceMedian)} cm). ` +
+    `${Math.floor(girth.percentile)} (${fmt(girth.value)} cm, médiane de référence ${fmt(girth.referenceMedian)} cm). ` +
     `Le score composite ressort à ${score}/100. ` +
     `Ce score est une note de présentation calibrée de façon indulgente : pour situer une mesure dans la population, ` +
     `seuls les percentiles font foi. Ces résultats reposent sur des valeurs déclarées et n'ont pas été vérifiés.`;

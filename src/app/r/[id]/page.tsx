@@ -1,4 +1,4 @@
-import { paymentAllowed } from "@/lib/payments/policy";
+import { paymentAllowed, photoPaidByPlisio } from "@/lib/payments/policy";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { REPORT_ACCESS, SITE, formatEur } from "@/config/site";
@@ -15,6 +15,10 @@ import { Icon } from "@/components/ui/Icon";
 import { MorphoReport } from "@/components/report/MorphoReport";
 import { ReportDashboard } from "@/components/report/ReportDashboard";
 import { TrackView } from "@/components/TrackView";
+import { TrackOnView, TrackedLink } from "@/components/Tracked";
+import { PhotoOffer } from "@/components/PhotoOffer";
+import { ResultHero } from "@/components/report/ResultHero";
+import { photoAccess } from "@/lib/photoAccess";
 import { AwaitPayment } from "./AwaitPayment";
 import { ReportActions } from "./ReportActions";
 
@@ -49,27 +53,44 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     return (
       <div className="container-bm container-narrow py-8 md:py-14 space-y-6">
         <TrackView event="locked_preview" once={id} />
+        <TrackOnView event="analysis_view" once={id} />
         {banner}
-        <Card className="text-center space-y-5 md:!p-8">
-          <Badge tone="success">Analyse terminée</Badge>
-          <h1 className="t-h1 !text-[30px] !leading-[34px] md:!text-[40px] md:!leading-[44px]">Votre rapport est prêt</h1>
+        <Card className="space-y-6 md:!p-8">
+          <div className="text-center space-y-3">
+            <Badge tone="success">Analyse terminée</Badge>
+            <h1 className="t-h1 !text-[30px] !leading-[34px] md:!text-[40px] md:!leading-[44px]">Votre rapport est prêt</h1>
+            <p className="t-lead text-muted max-w-[34rem] mx-auto">
+              {view.formula === "A"
+                ? "Votre position exacte, calculée sur vos valeurs : il ne reste qu'à la débloquer."
+                : "Votre analyse a abouti. Découvrez ce que la photo révèle et que le questionnaire ne peut pas calculer."}
+            </p>
+          </div>
           {view.preview && (
-            <div className="grid grid-cols-2 gap-3 text-left">
-              {view.preview.map((p) => (
-                <div key={p.label} className="rounded-[10px] bg-[var(--bm-blue-050)] border border-[var(--bm-blue-100)] p-4">
-                  <p className="t-small text-muted">{p.label}</p>
-                  <p className="num t-data-l text-accent">{Math.round(p.value)}<span className="text-[16px] text-muted"> / 100</span></p>
-                </div>
-              ))}
+            <div>
+              <p className="t-caption uppercase tracking-[0.08em] text-muted mb-2">Déjà visible</p>
+              <div className="grid grid-cols-2 gap-3 text-left">
+                {view.preview.map((p) => (
+                  <div key={p.label} className="rounded-[10px] bg-[var(--bm-blue-050)] border border-[var(--bm-blue-100)] p-4">
+                    <p className="t-small text-muted">{p.label}</p>
+                    <p className="num t-data-l text-accent">{Math.round(p.value)}<span className="text-[16px] text-muted"> / 100</span></p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-          <div className="grid grid-cols-3 gap-3 select-none" aria-hidden="true">
-            {["Score", "Longueur", "Percentiles"].map((l) => (
-              <div key={l} className="rounded-[10px] border border-[var(--border)] p-3">
-                <p className="t-small text-muted">{l}</p>
-                <p className="num t-data-l blur-sm">00</p>
-              </div>
-            ))}
+          <div>
+            <p className="t-caption uppercase tracking-[0.08em] text-muted mb-2">Débloqué avec votre rapport</p>
+            <ul className="divide-y divide-[var(--border)] rounded-[12px] border border-[var(--border)]" data-locked-contents>
+              {(view.formula === "A"
+                ? ["Vos percentiles de longueur et de circonférence", "Votre profil morphologique", "Votre score global sur 100", "Les courbes de distribution et vos repères de taille", "Le PDF et la carte de partage"]
+                : ["Longueur et circonférence estimées, avec leur marge", "Vos percentiles, et votre profil morphologique en érection", "La courbure en degrés, la conicité et l'indice de typicité", "Le compte rendu rédigé : six rubriques, points remarquables, conclusion", "Votre score global, le PDF et la carte de partage"]
+              ).map((t) => (
+                <li key={t} className="flex items-center gap-3 px-4 py-3 t-small">
+                  <Icon name="lock" size={16} className="flex-none text-accent" />
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
           </div>
           {retour && <AwaitPayment />}
           {view.relocked ? (
@@ -78,10 +99,13 @@ export default async function Page({ params, searchParams }: { params: Promise<{
               <Link href="/contact" className="underline">Contact et signalement</Link>.
             </p>
           ) : (
-            <>
-              <p className="t-small text-muted">Les résultats sont verrouillés jusqu&apos;au paiement.</p>
-              <Button href={`/paiement/${id}`} fullOnMobile arrow>Débloquer pour {formatEur(view.priceEur)}</Button>
-            </>
+            <div className="space-y-3 text-center">
+              <Button href={`/paiement/${id}`} fullOnMobile arrow className="sm:min-w-[320px]">Débloquer pour {formatEur(view.priceEur)}</Button>
+              <p className="t-small text-muted">
+                Paiement unique, sans abonnement
+                {isFreeBeta() ? " · en cryptomonnaie par Plisio" : ""} · accès par ce lien privé.
+              </p>
+            </div>
           )}
         </Card>
       </div>
@@ -97,15 +121,14 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     return (
       <div className="container-bm container-narrow py-8 md:py-14 space-y-8">
         <TrackView event="report_view" once={id} />
+        <TrackOnView event="result_view" once={id} />
+        {retour && <TrackOnView event="purchase_success" once={id} />}
         {banner}
         <MorphoReport results={r} date={dateFr} beta={view.freeBeta} />
         {r.declared && <DeclaredComparison results={r} />}
         <section aria-label="Actions" className="space-y-4 no-print">
           {!partial && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button href={`/r/${id}/partager`} fullOnMobile>Partager ma carte</Button>
-              <Button href={`/r/${id}/defi`} variant="secondary" fullOnMobile>Défier un ami</Button>
-            </div>
+            <ShareButtons id={id} />
           )}
           {partial && <Button href="/analyse/photo?f=B" fullOnMobile arrow>Reprendre la photo</Button>}
           <ReportActions id={id} />
@@ -123,24 +146,37 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   }
   const state = r.state === "rest" ? "Au repos" : "En érection";
   const declared = r.formula === "A";
+  // Offre d'analyse photo, juste après un résultat du questionnaire, si la formule photo est accessible.
+  const photo = declared ? await photoAccess() : { available: false };
 
   return (
-    <div className="container-bm py-8 md:py-14 space-y-8">
+    <div className="container-bm py-6 md:py-12 space-y-8">
       <TrackView event="report_view" once={id} />
-      <div className="container-narrow !max-w-none">{banner}</div>
+      <TrackOnView event="result_view" once={id} />
+      {retour && <TrackOnView event="purchase_success" once={id} />}
 
-      <header className="flex flex-col gap-2">
+      <header className="flex flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <p className="t-eyebrow">Rapport · {SITE.name}</p>
           {view.freeBeta && <Badge tone="warning">BÊTA GRATUITE</Badge>}
         </div>
-        <h1 className="t-h1 !text-[32px] !leading-[36px] md:!text-[44px] md:!leading-[48px]">Rapport morphologique</h1>
+        <h1 className="t-h1 !text-[30px] !leading-[34px] md:!text-[44px] md:!leading-[48px]">Votre résultat est prêt.</h1>
         <p className="mono t-small text-muted">
           Référence #{id.slice(0, 8).toUpperCase()} · {dateFr} · {state}
         </p>
       </header>
 
-      <ReportDashboard results={r} />
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-start">
+        <ResultHero results={r} animate />
+        <div className="space-y-4 no-print">
+          <ShareButtons id={id} />
+          {banner}
+        </div>
+      </div>
+
+      {photo.available && <PhotoOffer variant="result" paid={photoPaidByPlisio()} />}
+
+      <ReportDashboard results={r} lead="none" />
 
       {r.declared && <DeclaredComparison results={r} />}
 
@@ -261,10 +297,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
       {/* Actions */}
       <section aria-label="Actions" className="space-y-4 no-print">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Button href={`/r/${id}/partager`} fullOnMobile>Partager ma carte</Button>
-          <Button href={`/r/${id}/defi`} variant="secondary" fullOnMobile>Défier un ami</Button>
-        </div>
+        <ShareButtons id={id} />
         <ReportActions id={id} />
         {view.freeBeta ? (
           <p className="t-small text-muted">
@@ -296,5 +329,25 @@ function DeclaredComparison({ results: r }: { results: ReportResults }) {
       </p>
       {r.declared.flagged && <p className="font-semibold" style={{ color: "var(--bm-warning-text)" }}>Écart important : vérifiez votre méthode de mesure.</p>}
     </Card>
+  );
+}
+
+/** Partager et défier : les deux gestes de la boucle de croissance, visibles dès le résultat. */
+function ShareButtons({ id }: { id: string }) {
+  return (
+    <div className="card !p-5 space-y-3" data-share-buttons>
+      <p className="font-semibold">Comparez-vous à vos amis</p>
+      <p className="t-small text-muted -mt-1">Une carte avec ce que vous choisissez de montrer, ou un défi : votre ami fait le test, vous comparez.</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <TrackedLink href={`/r/${id}/partager`} event="share_click" className="btn btn-primary btn-block">
+          <Icon name="share" size={18} />
+          <span>Partager mon résultat</span>
+        </TrackedLink>
+        <TrackedLink href={`/r/${id}/defi`} event="challenge_click" className="btn btn-secondary btn-block">
+          <Icon name="users" size={18} />
+          <span>Défier un ami</span>
+        </TrackedLink>
+      </div>
+    </div>
   );
 }

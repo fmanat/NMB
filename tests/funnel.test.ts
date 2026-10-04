@@ -52,7 +52,7 @@ describe("collecte anonyme", () => {
     expect(cols).toEqual(["created_at", "id", "kind"]);
   });
   it("le navigateur ne peut envoyer que les 4 événements prévus ; le serveur écrit les autres", async () => {
-    expect([...CLIENT_KINDS].sort()).toEqual(["home_view", "locked_preview", "questionnaire_start", "report_view"]);
+    expect([...CLIENT_KINDS].sort()).toEqual(["home_view", "locked_preview", "questionnaire_start", "report_view", "share_click", "upsell_click"]);
     for (const k of CLIENT_KINDS) expect((await post({ k })).status).toBe(204);
     expect(await count()).toBe(4);
     await pool().query(TABLES);

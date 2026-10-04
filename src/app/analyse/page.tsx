@@ -77,7 +77,10 @@ export default async function Page() {
   // Bêta gratuite : un seul protocole, donc pas de choix : /analyse est le questionnaire ; bêta photo (ou aperçu administrateur) : choix A ou B.
   if (isFreeBeta()) {
     const { available, preview } = await photoAccess();
-    return available ? <BetaChoice preview={preview} photoPaid={photoPaidByPlisio()} /> : <QuestionnairePage />;
+    // Le test d'abord, pour tous : la formule photo se vend après le résultat (lien discret sous le test pour qui vient avec cette intention).
+    // L'aperçu administrateur garde l'ancien écran de choix (repère visible de la formule masquée au public).
+    if (available && preview) return <BetaChoice preview photoPaid={photoPaidByPlisio()} />;
+    return <QuestionnairePage photo={available} photoPaid={photoPaidByPlisio()} />;
   }
   return (
     <div className="container-bm container-narrow py-8 md:py-14">

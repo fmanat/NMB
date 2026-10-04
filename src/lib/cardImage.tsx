@@ -69,8 +69,8 @@ export function cardImage(content: CardContent, kind: keyof typeof CARD_SIZES): 
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontSize: 30 * s }}>
-          <div style={{ display: "flex", color: C.fg }}>{SITE.name}</div>
-          <div style={{ display: "flex", color: C.muted }}>{SITE.domain}</div>
+          <div style={{ display: "flex", color: C.fg, fontWeight: 700 }}>{SITE.name}</div>
+          <div style={{ display: "flex", color: C.accent }}>{`Et vous ? ${SITE.domain}`}</div>
         </div>
       </div>
     ),

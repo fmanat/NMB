@@ -9,7 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 // Première barrière d'âge. L'année reste sur cet appareil (localStorage) et n'est jamais envoyée.
 // Elle ne remplace pas la vérification par prestataire exigée pour les formules photo (étape 3).
 export function ScanButton({
-  label = "Démarrer mon analyse",
+  label = "Découvrir mon percentile",
   variant = "primary",
   fullOnMobile = false,
   small = false,
