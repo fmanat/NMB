@@ -163,7 +163,7 @@ Le plus rigoureux est donc d'indiquer la source utilisée plutôt que de parler 
 
 Vous pouvez consulter [l'analyse du Bitomètre](/analyse) pour obtenir une comparaison statistique.
 
-Pour comprendre les méthodes de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis). Les moyennes de référence sont détaillées sur la page [taille moyenne du pénis](/taille-moyenne-penis), et la position de chaque centimètre dans le [tableau des percentiles](/percentile-penis).
+La technique de mesure fait l'objet d'un [guide pas à pas](/comment-mesurer-son-penis) ; les valeurs moyennes sont détaillées dans [la taille moyenne du pénis](/taille-moyenne-penis), et le [tableau des percentiles](/percentile-penis) traduit chaque centimètre en rang.
 
 ## À retenir
 

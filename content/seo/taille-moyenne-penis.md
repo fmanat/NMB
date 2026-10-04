@@ -35,7 +35,7 @@ La question de la **taille moyenne du pénis** revient souvent, en particulier p
 
 ## Quelle est la taille moyenne du pénis selon les meilleures données disponibles ?
 
-La référence la plus souvent utilisée est la revue systématique de Veale et al., publiée dans le *BJU International* en 2015.
+Le chiffre le plus cité provient d'une revue systématique : celle de Veale et al., parue en 2015 dans le *BJU International*.
 
 Les chercheurs ont regroupé des mesures réalisées par des professionnels de santé et ont construit des courbes de distribution portant sur jusqu’à {{effectif-total}} hommes.
 
@@ -51,7 +51,7 @@ Les valeurs moyennes rapportées sont :
 
 La valeur de **{{moyenne:erect-length}} en érection** est donc une référence internationale importante lorsqu’on cherche à situer une mesure individuelle.
 
-Ces moyennes ne reposent pas sur le même nombre d'hommes. Les moyennes en érection reposent sur {{effectif:erect-length}} hommes pour la longueur et {{effectif:erect-girth}} hommes pour la circonférence, contre {{effectif:rest-length}} hommes pour la longueur flaccide pendante. Les auteurs signalent eux-mêmes que relativement peu de mesures en érection ont été réalisées en contexte clinique.
+Ces chiffres n'ont pas tous la même solidité : la longueur au repos s'appuie sur {{effectif:rest-length}} hommes, alors que les valeurs en érection n'en réunissent que {{effectif:erect-length}} pour la longueur et {{effectif:erect-girth}} pour la circonférence. Les auteurs l'expliquent eux-mêmes : les mesures en érection faites en milieu clinique restent rares.
 
 D'autres synthèses existent. La méta-analyse de Belladelli et al. (2023), qui regroupe 75 études publiées entre 1942 et 2021, rapporte une moyenne en érection de 13,93 cm. Les écarts entre synthèses tiennent aux études incluses, aux populations et aux méthodes de mesure. La page [ce que disent les études](/etudes-taille-penis) les compare.
 
@@ -125,4 +125,4 @@ La meilleure référence internationale couramment utilisée donne une longueur 
 
 Ces valeurs ne doivent pas être présentées comme des moyennes spécifiquement françaises.
 
-La comparaison statistique doit tenir compte de la méthode de mesure, de la population étudiée et de l'état du pénis. Pour mesurer correctement, voyez [comment mesurer son pénis](/comment-mesurer-son-penis) ; pour situer votre mesure, utilisez le calculateur ci-dessous ou [le questionnaire complet](/analyse).
+Pour comparer, trois éléments comptent : la façon de mesurer, le groupe de référence et l'état au moment de la mesure. La méthode est expliquée dans [comment mesurer son pénis](/comment-mesurer-son-penis) ; le calculateur ci-dessous, ou [le questionnaire complet](/analyse), fait ensuite le calcul.

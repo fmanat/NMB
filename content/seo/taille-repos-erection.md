@@ -37,7 +37,7 @@ C'est pourquoi les mesures flaccides et érectiles doivent être considérées s
 
 ## Les valeurs moyennes
 
-La grande revue systématique de Veale et al. publiée en 2015 fournit des références particulièrement utilisées.
+Côté chiffres, on s'appuie le plus souvent sur la synthèse de Veale et al. (2015).
 
 Elle rapporte :
 
@@ -51,7 +51,7 @@ La différence entre {{moyenne:rest-length}} au repos et {{moyenne:erect-length}
 
 Ces valeurs sont des moyennes internationales et non des normes individuelles.
 
-Ces moyennes ne reposent pas sur les mêmes effectifs : {{effectif:rest-length}} hommes pour la longueur flaccide pendante, 14 160 pour la longueur étirée, mais {{effectif:erect-length}} seulement pour la longueur en érection.
+Leur fiabilité diffère : la valeur au repos résume {{effectif:rest-length}} mesures, la longueur étirée 14 160, la longueur en érection {{effectif:erect-length}} seulement.
 
 ## La taille au repos permet-elle de prédire la taille en érection ?
 
@@ -119,7 +119,7 @@ Un exemple montre l'enjeu. Une longueur de 10 cm mesurée au repos correspond au
 
 Vous pouvez utiliser [l'analyse statistique](/analyse) pour obtenir une comparaison structurée.
 
-Pour la méthode de mesure, consultez [comment mesurer son pénis](/comment-mesurer-son-penis). Pour l'ensemble des moyennes, voyez [la taille moyenne du pénis](/taille-moyenne-penis) et [la taille normale du pénis](/taille-penis-normale).
+Mesurer dans le bon état suppose une méthode précise, décrite dans [ce guide](/comment-mesurer-son-penis). Toutes les moyennes, état par état, figurent dans [la taille moyenne du pénis](/taille-moyenne-penis) ; [la taille normale du pénis](/taille-penis-normale) décrit l'éventail des valeurs habituelles.
 
 ## À retenir
 

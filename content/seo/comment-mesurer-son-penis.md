@@ -94,11 +94,11 @@ Pour une analyse statistique, il est donc important de préciser quelle circonf�
 
 ## Et lorsqu'il est flaccide ?
 
-La mesure flaccide est possible, mais elle ne permet pas de prédire précisément la longueur en érection.
+On peut mesurer au repos, à condition de ne pas en déduire la longueur en érection : le lien entre les deux est trop lâche pour cela.
 
 Dans l'étude de Wessells et al., portant sur 80 hommes, ni l'âge ni la taille du pénis flaccide ne prédisaient de façon fiable la longueur en érection.
 
-La revue de Veale et al. rapporte une moyenne de **{{moyenne:rest-length}}** pour la longueur flaccide pendante et **{{moyenne:rest-girth}}** pour la circonférence flaccide.
+Pour situer une mesure prise au repos, les repères de Veale et al. sont de **{{moyenne:rest-length}}** de longueur et de **{{moyenne:rest-girth}}** de tour.
 
 ## La longueur étirée
 
@@ -108,7 +108,7 @@ Elle est particulièrement utilisée dans les études médicales.
 
 Les données de Veale donnent une moyenne de **13,24 cm** pour la longueur étirée.
 
-Une étude portant sur 200 hommes a également trouvé une corrélation plus importante entre longueur étirée et longueur en érection qu'entre longueur flaccide et longueur en érection.
+Sengezer et ses collègues l'ont confirmé en 2002 sur 200 hommes : l'étirement donne une meilleure idée de la longueur en érection que la mesure au repos.
 
 Cela explique pourquoi la longueur étirée est parfois utilisée comme mesure de référence lorsqu'une mesure en érection n'est pas disponible.
 
@@ -122,7 +122,7 @@ Pour une comparaison statistique, une méthode constante est plus utile qu'une s
 
 Vous pouvez ensuite utiliser [l'analyse statistique](/analyse) pour situer votre résultat.
 
-Pour comprendre les valeurs de référence, consultez aussi [la taille moyenne du pénis](/taille-moyenne-penis) et [la taille normale du pénis](/taille-penis-normale). Une fois la mesure prise, le [tableau des percentiles](/percentile-penis) donne la position de chaque centimètre, par exemple [12 cm](/taille-penis-12-cm), [14 cm](/taille-penis-14-cm) ou [16 cm](/taille-penis-16-cm) en érection. Le calculateur plus bas fait le même calcul avec vos valeurs.
+Les chiffres de comparaison sont réunis dans [la taille moyenne du pénis](/taille-moyenne-penis) et [la taille normale du pénis](/taille-penis-normale). Votre rang se lit ensuite dans le [tableau des percentiles](/percentile-penis), avec une page par centimètre, par exemple [12 cm](/taille-penis-12-cm), [14 cm](/taille-penis-14-cm) ou [16 cm](/taille-penis-16-cm), ou directement dans le calculateur plus bas.
 
 ## À retenir
 

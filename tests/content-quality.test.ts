@@ -4,9 +4,8 @@ import { CONTENT_RULES, forbiddenWords, isNewPage, paragraphsOf, sharedParagraph
 
 // Contrôles de qualité des pages de contenu (content/seo) :
 //  - aucun mot interdit par les règles d'écriture héritées du rapport (aucun dénigrement) ;
-//  - aucun paragraphe partagé à plus de 30 % entre deux pages dont l'une au moins est une page nouvelle de la session SEO 1
-//    (pages par centimètre, taille normale, percentile, à propos) : pas de pages quasi identiques. Les recoupements entre
-//    guides d'origine (textes du propriétaire) sont signalés par `npm run seo:check`, sans faire échouer les tests ;
+//  - aucun paragraphe partagé à plus de 30 % entre deux pages, quelles qu'elles soient (pas de pages quasi identiques ; étendu aux
+//    guides d'origine le 04/10/2026, après reformulation des passages répétés) ;
 //  - questions fréquentes jamais répétées d'une page par centimètre à l'autre ;
 //  - longueurs cibles (texte propre à la page : corps et questions-réponses) : 700 à 1 100 mots par page par centimètre,
 //    900 à 1 500 mots par nouvelle page pilier.
@@ -28,12 +27,11 @@ describe("règles d'écriture", () => {
 });
 
 describe("pages quasi identiques", () => {
-  it(`aucun paragraphe partagé à plus de ${CONTENT_RULES.maxShared * 100} % entre une page nouvelle et une autre page`, () => {
-    const all = pages.map((p) => ({ slug: p.slug, fresh: isNewPage(p), paragraphs: paragraphsOf(p.bodyHtml) }));
+  it(`aucun paragraphe partagé à plus de ${CONTENT_RULES.maxShared * 100} % entre deux pages`, () => {
+    const all = pages.map((p) => ({ slug: p.slug, paragraphs: paragraphsOf(p.bodyHtml) }));
     const offenders: string[] = [];
     for (let i = 0; i < all.length; i++)
       for (let j = i + 1; j < all.length; j++)
-        if (all[i].fresh || all[j].fresh)
         for (const s of sharedParagraphs(all[i].paragraphs, all[j].paragraphs))
           offenders.push(`${all[i].slug} ↔ ${all[j].slug} (${Math.round(s.score * 100)} %) : « ${s.a.slice(0, 80)}… »`);
     expect(offenders).toEqual([]);

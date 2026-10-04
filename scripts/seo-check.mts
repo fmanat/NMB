@@ -8,7 +8,7 @@
 // et se fait page par page, à la relecture.
 
 import { SEO_LIMITS, SEO_SLUGS, loadSeoPagesReport } from "@/lib/seo";
-import { CONTENT_RULES, forbiddenWords, isNewPage, paragraphsOf, sharedParagraphs } from "@/lib/contentQuality";
+import { CONTENT_RULES, forbiddenWords, paragraphsOf, sharedParagraphs } from "@/lib/contentQuality";
 
 const checkUrls = process.argv.includes("--urls");
 let errors = 0;
@@ -79,8 +79,8 @@ for (const p of pages) {
   }
 }
 
-// Paragraphes partagés entre deux pages (plus de 30 % de triplets de mots communs). Bloquant si une page nouvelle est en cause
-// (le test tests/content-quality.test.ts le vérifie aussi) ; simple avertissement entre deux guides d'origine.
+// Paragraphes partagés entre deux pages (plus de 30 % de triplets de mots communs) : bloquant, pour toutes les pages
+// (le test tests/content-quality.test.ts le vérifie aussi).
 console.log(`\nParagraphes partagés à plus de ${CONTENT_RULES.maxShared * 100} % entre deux pages :`);
 let shared = 0;
 for (let i = 0; i < pages.length; i++)
@@ -88,8 +88,7 @@ for (let i = 0; i < pages.length; i++)
     for (const s of sharedParagraphs(paragraphsOf(pages[i].bodyHtml), paragraphsOf(pages[j].bodyHtml))) {
       shared++;
       const msg = `${pages[i].slug} ↔ ${pages[j].slug} (${Math.round(s.score * 100)} %) : « ${s.a.slice(0, 70)}… »`;
-      if (isNewPage(pages[i]) || isNewPage(pages[j])) err(msg);
-      else warn(msg);
+      err(msg);
     }
 if (shared === 0) console.log("  aucun");
 

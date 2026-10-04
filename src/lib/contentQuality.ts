@@ -36,12 +36,22 @@ const words = (t: string) =>
     .split(/[^\p{L}'’-]+/u)
     .filter(Boolean);
 
-const shingles = (w: string[]) => new Set(w.slice(0, Math.max(0, w.length - 2)).map((_, i) => `${w[i]} ${w[i + 1]} ${w[i + 2]}`));
+// Mémoire des triplets par texte : chaque paragraphe est comparé à tous ceux des autres pages, on ne le découpe qu'une fois.
+const cache = new Map<string, Set<string>>();
+const shingles = (t: string) => {
+  let s = cache.get(t);
+  if (!s) {
+    const w = words(t);
+    s = new Set(w.slice(0, Math.max(0, w.length - 2)).map((_, i) => `${w[i]} ${w[i + 1]} ${w[i + 2]}`));
+    cache.set(t, s);
+  }
+  return s;
+};
 
 /** Part de triplets de mots communs, rapportée au plus bref des deux textes (0 à 1). */
 export function sharedScore(a: string, b: string): number {
-  const A = shingles(words(a));
-  const B = shingles(words(b));
+  const A = shingles(a);
+  const B = shingles(b);
   if (A.size === 0 || B.size === 0) return 0;
   let n = 0;
   for (const s of A) if (B.has(s)) n++;

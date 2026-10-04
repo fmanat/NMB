@@ -55,19 +55,19 @@ Comparer directement deux études réalisées avec des protocoles différents pe
 
 ## Les grandes méta-analyses sont plus intéressantes
 
-La revue de Veale et al. publiée en 2015 a regroupé les données disponibles provenant de mesures réalisées par des professionnels de santé.
+En 2015, l'équipe de Veale n'a retenu que des séries mesurées par des soignants.
 
 Elle rapportait notamment une longueur moyenne en érection de **{{moyenne:erect-length}}** et une circonférence moyenne en érection de **{{moyenne:erect-girth}}**. Ces deux moyennes en érection reposent respectivement sur {{effectif:erect-length}} et {{effectif:erect-girth}} hommes.
 
-Une méta-analyse plus récente consacrée aux tendances mondiales a également sélectionné les études dans lesquelles les mesures étaient réalisées par des investigateurs et excluait les études reposant sur l'auto-mesure.
+Belladelli et al. (2023), qui ont suivi l'évolution des mesures dans le monde, ont eux aussi écarté l'auto-mesure pour ne garder que des relevés faits par les investigateurs.
 
 Cette approche est particulièrement importante lorsqu'on souhaite comparer des populations.
 
 ## Les différences géographiques existent-elles ?
 
-Une méta-analyse publiée plus récemment a regroupé 33 études représentant **36 883 hommes** et a analysé les données selon les régions géographiques de l'Organisation mondiale de la santé.
+En 2025, Mostafaei et al. ont repris 33 études, soit **36 883 hommes**, en les classant par grande région de l'Organisation mondiale de la santé.
 
-Elle rapporte notamment une moyenne mondiale de 13,84 cm pour la longueur en érection dans les études disposant de données correspondantes.
+Toutes régions confondues, la longueur en érection y ressort à 13,84 cm en moyenne, calculée sur les seules études qui la mesuraient.
 
 Elle observe également des différences entre régions pour certaines mesures.
 
@@ -142,7 +142,7 @@ Si ces informations ne sont pas disponibles, le chiffre mérite d'être considé
 
 Pour connaître votre position statistique, vous pouvez utiliser [l'analyse du Bitomètre](/analyse).
 
-Pour comprendre la méthode de mesure, consultez également [comment mesurer son pénis](/comment-mesurer-son-penis). Pour la référence internationale et la question d'une moyenne française, voyez [la taille moyenne du pénis](/taille-moyenne-penis) ; pour ce que « normal » veut dire en statistique, [la taille normale du pénis](/taille-penis-normale) ; et pour la position de chaque centimètre, par exemple [13 cm](/taille-penis-13-cm) ou [18 cm](/taille-penis-18-cm), le [tableau des percentiles](/percentile-penis).
+Avant toute comparaison, mieux vaut savoir [mesurer correctement](/comment-mesurer-son-penis). La référence internationale, et l'absence de moyenne française, sont traitées dans [la taille moyenne du pénis](/taille-moyenne-penis) ; le sens statistique du mot « normal » dans [la taille normale du pénis](/taille-penis-normale) ; le rang de chaque centimètre, de [13 cm](/taille-penis-13-cm) à [18 cm](/taille-penis-18-cm) et au-delà, dans le [tableau des percentiles](/percentile-penis).
 
 ## À retenir
 

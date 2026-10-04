@@ -35,7 +35,7 @@ Comme pour la longueur, il faut distinguer clairement le pénis flaccide du pén
 
 ## Quelle est la circonférence moyenne ?
 
-La revue systématique de Veale et al., publiée en 2015 dans le *BJU International*, constitue l'une des principales références disponibles.
+Pour le tour du pénis comme pour sa longueur, on se réfère d'abord au travail de Veale et ses collègues (*BJU International*, 2015).
 
 Elle rapporte :
 
@@ -46,7 +46,7 @@ Elle rapporte :
 
 La valeur de **{{moyenne:erect-girth}}** correspond donc à la circonférence moyenne en érection dans cette grande synthèse internationale.
 
-Cette moyenne en érection repose sur {{effectif:erect-girth}} hommes (contre {{effectif:rest-girth}} hommes pour la circonférence flaccide), et les auteurs signalent que relativement peu de mesures en érection ont été réalisées en contexte clinique.
+Le chiffre en érection s'appuie sur un échantillon modeste : {{effectif:erect-girth}} hommes, quand la mesure au repos en réunit {{effectif:rest-girth}}. Les auteurs le reconnaissent : la circonférence en érection a rarement été mesurée lors d'un examen clinique.
 
 Elle ne doit pas être interprétée comme une valeur spécifiquement française.
 
