@@ -134,10 +134,14 @@ export async function createPlisioInvoice(
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 15_000);
   let body: unknown;
+  const t0 = Date.now();
   try {
     const res = await (deps.fetch ?? fetch)(url, { method: "GET", signal: ctl.signal, headers: { accept: "application/json" } });
     body = await res.json().catch(() => null);
-  } catch {
+  } catch (e) {
+    // Journal sans l'adresse appelée (elle contient la clé) : seulement le type d'erreur et la durée.
+    const err = e as Error & { cause?: { code?: string } };
+    console.error(JSON.stringify({ event: "plisio_unreachable", error: err.name, code: err.cause?.code ?? null, ms: Date.now() - t0 }));
     throw new Error("Plisio injoignable");
   } finally {
     clearTimeout(timer);
@@ -145,7 +149,7 @@ export async function createPlisioInvoice(
   const b = body as { status?: string; data?: { txn_id?: string; invoice_url?: string; message?: string } } | null;
   if (!b || b.status !== "success" || !b.data?.invoice_url || !b.data.txn_id) {
     // Le message d'erreur de Plisio est journalisé (jamais la clé, qui n'apparaît pas dans la réponse).
-    console.error("paiement : Plisio a refusé la création de facture :", b?.data?.message ?? "réponse inattendue");
+    console.error(JSON.stringify({ event: "plisio_refused", message: b?.data?.message ?? "réponse inattendue", code: (b?.data as { code?: number } | undefined)?.code ?? null }));
     throw new Error("Plisio a refusé la création de la facture");
   }
   const invoice = new URL(b.data.invoice_url);
