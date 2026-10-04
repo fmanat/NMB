@@ -7,11 +7,11 @@ Vous aurez besoin :
 - de l'accès à votre compte **Cloudflare** (celui qui gère le domaine bitometre.com) ;
 - d'un ordinateur (plus simple qu'un téléphone pour ces écrans).
 
-## Avant de commencer : le site doit être ouvert
+## Avant de commencer : état du site (vérifié le 04/10/2026)
 
-Google et Bing ne lisent que ce qu'un visiteur anonyme peut lire. Tant que le site demande un mot de passe (variable `SITE_PASSWORD` sur Railway) ou affiche la page « site en préparation » (code 503), **la déclaration fonctionne mais aucune page ne sera indexée**. Vous pouvez faire les étapes 1 à 3 dès maintenant (la vérification par DNS ne dépend pas du mot de passe) ; l'envoi du sitemap (étape 4) donnera une erreur tant que le site est fermé : refaites-le le jour de l'ouverture.
+Contrôle fait depuis un navigateur sans session : le site est **ouvert au public**, sans mot de passe. L'accueil, les guides, les pages par centimètre et `/presse` répondent normalement ; aucune page publique n'est en `noindex` ; https://bitometre.com/sitemap.xml liste 29 adresses ; https://bitometre.com/robots.txt autorise les robots (sauf les pages privées : rapports, paiement, analyse) ; les robots de Google et de Bing reçoivent bien les pages. Vous pouvez donc faire toutes les étapes, sitemap compris, dès aujourd'hui.
 
-Pour vérifier : ouvrez https://bitometre.com/sitemap.xml dans une fenêtre de navigation privée. Si vous voyez une liste d'adresses sans qu'on vous demande de mot de passe, le site est prêt.
+Un seul point à connaître : **l'adresse avec « www » (www.bitometre.com) ne répond pas**, faute d'enregistrement DNS. Ce n'est pas bloquant (Google indexera bitometre.com), mais une personne qui tape « www » tombe sur une erreur. Pour la corriger, voir l'annexe en fin de document.
 
 ## 1. Google Search Console : ajouter le domaine
 
@@ -55,7 +55,7 @@ Le sitemap est la liste des pages du site, tenue à jour automatiquement à chaq
 3. Cliquez sur **Envoyer**.
 4. Le tableau « Sitemaps envoyés » affiche une ligne. L'état passe à **Opération effectuée** en quelques minutes à quelques jours. La colonne « Pages découvertes » doit indiquer le même nombre que de pages listées dans le sitemap.
 
-Vous n'aurez **jamais à renvoyer** le sitemap : Google le relit de lui-même. Si l'état affiche « Impossible de récupérer », vérifiez que le site est bien ouvert (voir « Avant de commencer »), puis renvoyez-le.
+Vous n'aurez **jamais à renvoyer** le sitemap : Google le relit de lui-même. Si l'état affiche « Impossible de récupérer », ouvrez https://bitometre.com/sitemap.xml dans une fenêtre de navigation privée : si la liste s'affiche, attendez un jour et renvoyez-le.
 
 ### Demander l'indexation des pages principales (facultatif, accélère)
 
@@ -112,3 +112,9 @@ Sur certains sujets jugés sensibles, Google peut masquer ou limiter les donnée
 - **Après 3 à 7 jours** : Search Console, menu **Pages**, montre combien de pages sont indexées et pourquoi les autres ne le sont pas. Les pages d'analyse, de rapport et de paiement sont volontairement exclues (« Exclue par la balise noindex » ou « Bloquée par robots.txt ») : c'est normal.
 - **Après 2 à 4 semaines** : menu **Performances**, pour voir les requêtes qui affichent le site, le nombre de clics et la position moyenne.
 - Le sitemap, les balises canoniques et les données structurées sont produits par le site lui-même : aucune action de votre part n'est nécessaire quand de nouvelles pages sont ajoutées.
+
+## Annexe : faire fonctionner www.bitometre.com (facultatif, 5 minutes)
+
+1. Cloudflare › bitometre.com › **DNS** › **Enregistrements** › **Ajouter un enregistrement** : Type `CNAME`, Nom `www`, Cible `bitometre.com`, nuage **orange** (proxy activé). Enregistrer.
+2. Menu de gauche **Règles** › **Règles de redirection** (« Redirect Rules ») › **Créer une règle** › modèle « Rediriger de WWW vers le domaine racine » (« Redirect from WWW to root »), s'il est proposé. Sinon : condition « Nom d'hôte égal à www.bitometre.com », action « Redirection dynamique », expression `concat("https://bitometre.com", http.request.uri.path)`, code **301**, cocher « Conserver la chaîne de requête ». Déployer.
+3. Vérifier : https://www.bitometre.com/presse doit mener à https://bitometre.com/presse.
