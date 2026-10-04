@@ -11,7 +11,7 @@ export type PageImageContent = { title: string; figure: string; label: string };
 
 /** Pages hors contenu Markdown qui ont leur image. */
 const FIXED: Record<string, () => PageImageContent> = {
-  accueil: () => ({ title: "Calculateur de taille du pénis", figure: evalFigure("moyenne:erect-length"), label: `longueur moyenne en érection (${REFERENCE_SOURCE})` }),
+  accueil: () => ({ title: "À quel percentile êtes-vous ?", figure: evalFigure("moyenne:erect-length"), label: `longueur moyenne en érection (${REFERENCE_SOURCE})` }),
   presse: () => ({ title: "Graphiques et chiffres pour la presse", figure: evalFigure("effectif-total"), label: `hommes mesurés dans la synthèse de référence (${REFERENCE_SOURCE})` }),
 };
 

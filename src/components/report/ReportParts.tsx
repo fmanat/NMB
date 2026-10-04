@@ -64,13 +64,13 @@ export function SizeReferences({ results: r, headingLevel = 2 }: { results: Repo
     <div>
       <Heading className="t-h3 mb-1">Repères de taille</Heading>
       <p className="t-small text-muted mb-4">Votre longueur exprimée en multiples d&apos;objets et de monuments connus (hauteurs publiques).</p>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         {[...r.everyday, ...r.landmarks].map((o) => (
           <Card key={o.label} as="li" className="!p-4 list-none">
             <p className="t-small text-muted">{o.label}</p>
-            <p className="num t-data-l mt-1">
+            <p className="num mt-1 font-bold text-[22px] leading-[28px] sm:text-[28px] sm:leading-[32px]">
               {o.times.toLocaleString("fr-FR")}
-              <span className="text-[16px] font-semibold text-muted ml-1.5">× vous</span>
+              <span className="text-[14px] sm:text-[16px] font-semibold text-muted ml-1.5 whitespace-nowrap">× vous</span>
             </p>
           </Card>
         ))}

@@ -1,7 +1,7 @@
 import { paymentAllowed, photoPaidByPlisio } from "@/lib/payments/policy";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { REPORT_ACCESS, SITE, formatEur } from "@/config/site";
+import { FORMULAS, REPORT_ACCESS, SITE, formatEur } from "@/config/site";
 import { BETA, isFreeBeta } from "@/lib/mode";
 import { PRIVATE_SOCIAL } from "@/lib/metadata";
 import { f1 } from "@/lib/format";
@@ -17,6 +17,7 @@ import { ReportDashboard } from "@/components/report/ReportDashboard";
 import { TrackView } from "@/components/TrackView";
 import { TrackOnView, TrackedLink } from "@/components/Tracked";
 import { PhotoOffer } from "@/components/PhotoOffer";
+import { StickyCta } from "@/components/StickyCta";
 import { ResultHero } from "@/components/report/ResultHero";
 import { photoAccess } from "@/lib/photoAccess";
 import { AwaitPayment } from "./AwaitPayment";
@@ -175,6 +176,14 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </div>
 
       {photo.available && <PhotoOffer variant="result" paid={photoPaidByPlisio()} />}
+      {photo.available && (
+        <StickyCta hideWhen="[data-photo-offer], [data-share-buttons]" after={900}>
+          <TrackedLink href="/analyse/photo?f=B" event="analysis_cta_click" kind="upsell_click" className="btn btn-primary btn-block">
+            <Icon name="camera" size={18} />
+            <span>Mon analyse complète{photoPaidByPlisio() ? ` · ${formatEur(FORMULAS.B.priceEur)}` : ""}</span>
+          </TrackedLink>
+        </StickyCta>
+      )}
 
       <ReportDashboard results={r} lead="none" />
 

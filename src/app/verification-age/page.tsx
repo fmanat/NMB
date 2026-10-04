@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Doc } from "@/components/Doc";
 import { adminPreviewBypassesAge } from "@/lib/photoAccess";
+import { FORMULAS, formatEur } from "@/config/site";
+import { paymentAllowed } from "@/lib/payments/policy";
 import { startAgeVerification } from "./actions";
 
 export const metadata = { title: "Vérification d'âge", robots: { index: false, follow: false } };
@@ -8,6 +10,7 @@ export const metadata = { title: "Vérification d'âge", robots: { index: false,
 export default async function Page({ searchParams }: { searchParams: Promise<{ f?: string; refus?: string }> }) {
   const { f, refus } = await searchParams;
   const formula = f === "C" ? "C" : "B";
+  const photoPaid = paymentAllowed(formula);
   if (await adminPreviewBypassesAge()) {
     // Aperçu administrateur sans prestataire réel : on le dit tel quel, sans rien présenter comme une vérification d'âge.
     return (
@@ -30,6 +33,18 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         L&apos;envoi d&apos;une photo est réservé aux adultes : un prestataire tiers vérifie votre âge (il peut savoir que la demande vient de ce site) et ne nous transmet qu&apos;une réponse
         « majeur : oui », sans donnée d&apos;identité (<Link href="/confidentialite" className="underline">détails</Link>).
       </p>
+      <ol className="mt-6 grid gap-2 t-small" aria-label="Les étapes de l'analyse photo">
+        {[
+          ["1", "Vérification d'âge", "chez le prestataire, puis retour ici"],
+          ["2", "Votre photo", "réduite et nettoyée de ses métadonnées dans votre navigateur"],
+          ["3", "Votre rapport", photoPaid ? `${formatEur(FORMULAS[formula].priceEur)}, demandé seulement si l'analyse aboutit` : "affiché dès la fin de l'analyse"],
+        ].map(([n, t, d]) => (
+          <li key={n} className="flex items-center gap-3 rounded-[12px] border border-[var(--border)] px-4 py-3">
+            <span className="grid size-7 flex-none place-items-center rounded-full bg-[var(--bm-blue-100)] font-semibold text-accent num">{n}</span>
+            <span><span className="font-semibold">{t}</span> <span className="text-muted">· {d}</span></span>
+          </li>
+        ))}
+      </ol>
       {refus && <p className="mt-4 text-[var(--bm-error-text)]" role="alert">La vérification n&apos;a pas abouti. Vous ne pouvez pas envoyer de photo.</p>}
       <form action={startAgeVerification.bind(null, formula)} className="mt-6">
         <button type="submit" className="btn btn-primary btn-block">Vérifier mon âge</button>

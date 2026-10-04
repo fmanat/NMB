@@ -65,3 +65,6 @@ playwright.local.config.ts
 
 # Captures d'écran locales (non versionnées)
 captures/
+
+# copies de travail des agents (Claude Code)
+/.claude/worktrees/
