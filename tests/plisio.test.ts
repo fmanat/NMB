@@ -7,7 +7,8 @@ import { FINANCE } from "@/config/site";
 import { isHiddenInBeta } from "@/lib/mode";
 import { CheckoutError, startCheckout, startCheckoutWith } from "@/lib/payments/checkout";
 import { paymentProviderFor } from "@/lib/payments";
-import { createPlisioInvoice, invoiceParams, PLISIO_API, PLISIO_CURRENCIES, verifyPlisioCallback } from "@/lib/payments/plisio";
+import { createPlisioInvoice, invoiceParams, PLISIO_API, PLISIO_CURRENCIES, plisioEndpoint, verifyPlisioCallback } from "@/lib/payments/plisio";
+import relay from "../cloudflare/plisio-relais.js";
 import { paymentAllowed, photoReportIsFree } from "@/lib/payments/policy";
 import { buildQuestionnaireReport } from "@/lib/report";
 import { createReport } from "@/lib/repo";
@@ -122,6 +123,51 @@ describe("notification signée", () => {
     expect(verifyPlisioCallback(callback({ ipn_type: "cash-in", status: "completed", order_number: "1" }), KEY)).toBeNull();
     expect(() => verifyPlisioCallback(callback({ status: "completed", order_number: "1", source_currency: undefined, source_amount: "4.99" }), KEY)).toThrow("Devise");
     expect(() => verifyPlisioCallback(callback({ status: "completed", source_amount: "4.99" }), KEY)).toThrow("order_number");
+  });
+});
+
+describe("relais Cloudflare Worker (api.plisio.net injoignable depuis Railway)", () => {
+  const RELAY = "https://plisio-relais.exemple.workers.dev";
+  it("sans PLISIO_API_BASE : appel direct ; avec : le relais, l'en-tête secret obligatoire, https obligatoire", () => {
+    expect(plisioEndpoint({})).toEqual({ url: PLISIO_API, headers: {} });
+    expect(plisioEndpoint({ PLISIO_API_BASE: RELAY + "/", PLISIO_RELAY_SECRET: "s3cret" })).toEqual({ url: RELAY + "/api/v1/invoices/new", headers: { "x-relais-secret": "s3cret" } });
+    expect(() => plisioEndpoint({ PLISIO_API_BASE: RELAY })).toThrow("PLISIO_RELAY_SECRET");
+    expect(() => plisioEndpoint({ PLISIO_API_BASE: "http://relais.test", PLISIO_RELAY_SECRET: "s" })).toThrow("https");
+  });
+
+  it("le site appelle le relais avec l'en-tête secret et les mêmes paramètres", async () => {
+    vi.stubEnv("PLISIO_API_BASE", RELAY);
+    vi.stubEnv("PLISIO_RELAY_SECRET", "s3cret");
+    const seen: { url: string; headers: Record<string, string> }[] = [];
+    const f = vi.fn(async (url: string, init: { headers: Record<string, string> }) => {
+      seen.push({ url, headers: init.headers });
+      return new Response(JSON.stringify({ status: "success", data: { txn_id: "t1", invoice_url: "https://plisio.net/invoice/t1" } }));
+    });
+    await createPlisioInvoice({ amountCents: 499, currency: "EUR" }, { fetch: f as unknown as typeof fetch, key: KEY, siteUrl: SITE });
+    const u = new URL(seen[0].url);
+    expect(u.origin + u.pathname).toBe(RELAY + "/api/v1/invoices/new");
+    expect(u.searchParams.get("api_key")).toBe(KEY);
+    expect(u.searchParams.get("allowed_psys_cids")).toBe(PLISIO_CURRENCIES.join(","));
+    expect(seen[0].headers["x-relais-secret"]).toBe("s3cret");
+    vi.unstubAllEnvs();
+  });
+
+  it("Worker : seul GET /api/v1/invoices/new avec le bon secret est transmis, à l'identique, à api.plisio.net", async () => {
+    const env = { RELAIS_SECRET: "s3cret" };
+    const upstream = vi.fn(async (url: string) => new Response(JSON.stringify({ status: "error", data: { code: 101 }, echo: url }), { status: 422, headers: { "content-type": "application/json" } }));
+    vi.stubGlobal("fetch", upstream);
+    const q = "?source_currency=EUR&source_amount=4.99&api_key=k";
+    expect((await relay.fetch(new Request(`https://r.test/autre${q}`, { headers: { "x-relais-secret": "s3cret" } }), env)).status).toBe(404);
+    expect((await relay.fetch(new Request(`https://r.test/api/v1/invoices/new${q}`, { method: "POST", headers: { "x-relais-secret": "s3cret" } }), env)).status).toBe(404);
+    expect((await relay.fetch(new Request(`https://r.test/api/v1/invoices/new${q}`), env)).status).toBe(403);
+    expect((await relay.fetch(new Request(`https://r.test/api/v1/invoices/new${q}`, { headers: { "x-relais-secret": "mauvais" } }), env)).status).toBe(403);
+    expect((await relay.fetch(new Request(`https://r.test/api/v1/invoices/new${q}`, { headers: { "x-relais-secret": "s3cret" } }), {})).status).toBe(403); // secret non réglé : tout est refusé
+    expect(upstream).not.toHaveBeenCalled();
+    const ok = await relay.fetch(new Request(`https://r.test/api/v1/invoices/new${q}`, { headers: { "x-relais-secret": "s3cret" } }), env);
+    expect(ok.status).toBe(422);
+    expect(upstream).toHaveBeenCalledWith(`https://api.plisio.net/api/v1/invoices/new${q}`, expect.objectContaining({ method: "GET" }));
+    expect((await ok.json()).data.code).toBe(101);
+    vi.unstubAllGlobals();
   });
 });
 

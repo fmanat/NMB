@@ -29,6 +29,21 @@ import type { PaymentEvent, PaymentProvider } from "./types";
  */
 
 export const PLISIO_API = "https://api.plisio.net/api/v1/invoices/new";
+export const PLISIO_INVOICE_PATH = "/api/v1/invoices/new";
+
+/**
+ * Point d'appel de l'API : Plisio directement, ou le relais Cloudflare Worker (cloudflare/plisio-relais.js, docs/PLISIO-RELAIS.md) si
+ * PLISIO_API_BASE est renseignée — api.plisio.net ne répond pas aux connexions venant de Railway. Le relais exige l'en-tête
+ * « x-relais-secret » (PLISIO_RELAY_SECRET). Adresse en https obligatoire.
+ */
+export function plisioEndpoint(env: Record<string, string | undefined> = process.env): { url: string; headers: Record<string, string> } {
+  const base = (env.PLISIO_API_BASE ?? "").trim().replace(/\/$/, "");
+  if (!base) return { url: PLISIO_API, headers: {} };
+  if (!base.startsWith("https://")) throw new Error("Plisio : PLISIO_API_BASE doit être en https.");
+  const secretHeader = (env.PLISIO_RELAY_SECRET ?? "").trim();
+  if (!secretHeader) throw new Error("Plisio : PLISIO_RELAY_SECRET est obligatoire avec PLISIO_API_BASE.");
+  return { url: base + PLISIO_INVOICE_PATH, headers: { "x-relais-secret": secretHeader } };
+}
 /**
  * Monnaies proposées à chaque facture (identifiants Plisio) : USDT et USDC sur Ethereum, USDT sur Tron (USDT_TRX), USDC sur Solana
  * (USDC_SOL), SOL sur Solana. Décision du propriétaire du 04/10/2026 (Tron et Solana : frais de réseau très faibles).
@@ -130,13 +145,14 @@ export async function createPlisioInvoice(
   const key = deps.key ?? secret();
   const orderNumber = newOrderNumber();
   const params = invoiceParams({ orderNumber, amountCents: p.amountCents, currency: p.currency, siteUrl: deps.siteUrl ?? site() });
-  const url = `${PLISIO_API}?${new URLSearchParams({ ...params, api_key: key }).toString()}`;
+  const endpoint = plisioEndpoint();
+  const url = `${endpoint.url}?${new URLSearchParams({ ...params, api_key: key }).toString()}`;
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 15_000);
   let body: unknown;
   const t0 = Date.now();
   try {
-    const res = await (deps.fetch ?? fetch)(url, { method: "GET", signal: ctl.signal, headers: { accept: "application/json" } });
+    const res = await (deps.fetch ?? fetch)(url, { method: "GET", signal: ctl.signal, headers: { accept: "application/json", ...endpoint.headers } });
     body = await res.json().catch(() => null);
   } catch (e) {
     // Journal sans l'adresse appelée (elle contient la clé) : seulement le type d'erreur et la durée.

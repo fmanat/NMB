@@ -21,6 +21,20 @@ function attempt(family: 4 | 6, timeoutMs = 8000): Promise<string> {
   });
 }
 
+/** Appel du relais (s'il est configuré) avec une fausse clé : Plisio doit répondre 422 à travers lui. */
+async function viaRelay(): Promise<string | null> {
+  const base = (process.env.PLISIO_API_BASE ?? "").trim().replace(/\/$/, "");
+  if (!base) return null;
+  const t0 = Date.now();
+  try {
+    const res = await fetch(`${base}${PATH}`, { headers: { accept: "application/json", "x-relais-secret": (process.env.PLISIO_RELAY_SECRET ?? "").trim() }, signal: AbortSignal.timeout(8000) });
+    const body = (await res.json().catch(() => null)) as { data?: { code?: number } } | null;
+    return `HTTP ${res.status}${body?.data?.code ? ` (code Plisio ${body.data.code})` : ""} en ${Date.now() - t0} ms`;
+  } catch (e) {
+    return `échec (${(e as Error).name}) en ${Date.now() - t0} ms`;
+  }
+}
+
 export async function probePlisio(): Promise<void> {
   let dns = "";
   try {
@@ -28,6 +42,6 @@ export async function probePlisio(): Promise<void> {
   } catch (e) {
     dns = `échec (${(e as NodeJS.ErrnoException).code ?? "?"})`;
   }
-  const [v4, v6] = await Promise.all([attempt(4), attempt(6)]);
-  console.warn(JSON.stringify({ event: "plisio_probe", dns, ipv4: v4, ipv6: v6 }));
+  const [v4, v6, relay] = await Promise.all([attempt(4), attempt(6), viaRelay()]);
+  console.warn(JSON.stringify({ event: "plisio_probe", dns, ipv4: v4, ipv6: v6, relais: relay ?? "non configuré" }));
 }
