@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { REPORT_ACCESS } from "@/config/site";
 import { pay, type PayState } from "../actions";
@@ -13,7 +14,8 @@ export function PayForm({ reportId, price, crypto = false }: { reportId: string;
       {crypto && (
         <p className="text-sm text-muted">
           Paiement en cryptomonnaie (BTC, ETH, LTC, SOL, ou USDT et USDC sur Ethereum, Tron ou Solana) sur la page de paiement de Plisio, notre prestataire. Le rapport
-          s&apos;ouvre dès que Plisio confirme le paiement complet : selon la monnaie, de quelques minutes à environ une heure.
+          s&apos;ouvre dès que Plisio confirme le paiement complet : selon la monnaie, de quelques minutes à environ une heure. Voir les{" "}
+          <Link href="/conditions" className="underline">conditions d&apos;utilisation</Link>.
         </p>
       )}
       <label className="flex items-start gap-2 text-sm">

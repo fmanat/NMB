@@ -1,6 +1,8 @@
 import { Doc } from "@/components/Doc";
+import { REPORT_ACCESS } from "@/config/site";
 import { COMPANY, HOST } from "@/config/company";
 import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
+import { photoPaidByPlisio } from "@/lib/payments/policy";
 
 export const metadata = { title: "Politique de confidentialité", alternates: { canonical: "/confidentialite" } };
 
@@ -88,11 +90,15 @@ export default function Page() {
 // (PHOTO_BETA active), les paragraphes sur la photo, le prestataire d'analyse et le transfert hors UE s'ajoutent.
 function BetaPolicy() {
   const photo = isPhotoBeta();
+  // Protocole photo payant par Plisio : paragraphes factuels ajoutés le 04/10/2026, À FAIRE RELIRE PAR LE JURISTE.
+  const paid = photo && photoPaidByPlisio();
   return (
     <Doc title="Politique de confidentialité (bêta)">
       <p>
         Responsable du traitement : l&apos;éditeur du site (contact : {COMPANY.contactEmail}). Pendant la bêta, le
-        service ne demande {photo ? "aucun compte, aucun e-mail et aucune donnée de paiement ; la photo du protocole photo est facultative et n'est jamais enregistrée par le site" : "aucune photo, aucun compte, aucun e-mail et aucune donnée de paiement"}.
+        service ne demande {paid
+          ? "aucun compte et aucun e-mail ; la photo du protocole photo est facultative et n'est jamais enregistrée par le site ; le paiement du protocole photo se fait sur la page de notre prestataire Plisio (voir plus bas)"
+          : photo ? "aucun compte, aucun e-mail et aucune donnée de paiement ; la photo du protocole photo est facultative et n'est jamais enregistrée par le site" : "aucune photo, aucun compte, aucun e-mail et aucune donnée de paiement"}.
       </p>
 
       {photo && (
@@ -115,6 +121,23 @@ function BetaPolicy() {
             points à partir desquels notre programme calcule la longueur et la circonférence), puis, sans la photo, les valeurs calculées par notre
             programme pour rédiger le rapport. Ses observations descriptives ne sont ni enregistrées ni journalisées : seul le rapport final est conservé.
           </p>
+          {paid && (
+            <>
+              <h2>Paiement du protocole photo (Plisio)</h2>
+              <p>
+                Le paiement en cryptomonnaie est traité par Plisio, Inc., sur sa propre page de paiement. Nous lui transmettons seulement le
+                montant en euros, un numéro de commande aléatoire, un libellé fixe (« Rapport Bitomètre ») et les adresses de retour vers notre
+                site : ni votre adresse e-mail, ni l&apos;adresse de votre rapport, ni aucune donnée sur votre analyse. Sur sa page, Plisio peut
+                vous demander une adresse e-mail pour vous envoyer sa confirmation ; ce traitement relève de sa propre politique de
+                confidentialité. Les transactions en cryptomonnaie sont, par nature, inscrites sur des registres publics (chaînes de blocs).
+              </p>
+              <p>
+                Nous conservons, pour chaque paiement : le montant, la formule, la date, le numéro de commande, l&apos;identifiant de la facture
+                chez Plisio et le statut du paiement. Ces informations sont conservées pour la comptabilité, même si le rapport est supprimé ;
+                elles ne contiennent aucune donnée de portefeuille et ne permettent pas, seules, de vous identifier.
+              </p>
+            </>
+          )}
           <h2>Filtrage d&apos;images déjà répertoriées</h2>
           <p>
             Lorsqu&apos;un prestataire de comparaison d&apos;empreintes est configuré, la photo est comparée, avant analyse, à des bases d&apos;images
@@ -129,8 +152,10 @@ function BetaPolicy() {
         Les mesures et réponses que vous déclarez (état, longueur, circonférence, courbure), le rapport calculé (score, percentiles,
         commentaire), la date de création et l&apos;identifiant aléatoire du rapport. Ces données sont des données de santé ou
         relatives à la vie sexuelle (RGPD, art. 9) : elles ne sont traitées qu&apos;avec votre consentement explicite, que vous
-        donnez en cochant la case prévue avant de soumettre le questionnaire. Le rapport est effacé automatiquement au plus tard {BETA.reportTtlDays} jours après sa création, ou
-        immédiatement si vous le supprimez depuis sa page.
+        donnez en cochant la case prévue avant de soumettre le questionnaire. {paid ? "Un rapport gratuit" : "Le rapport"} est effacé automatiquement au plus tard {BETA.reportTtlDays} jours après sa création, ou
+        immédiatement si vous le supprimez depuis sa page.{paid
+          ? ` Un rapport du protocole photo non payé est effacé 24 heures après sa création ; un rapport payé est conservé au moins ${REPORT_ACCESS.minYears} ans, sauf si vous le supprimez.`
+          : ""}
       </p>
 
       <h2>Adresse IP</h2>
@@ -153,7 +178,7 @@ function BetaPolicy() {
 
       <h2>Cookies</h2>
       <p>
-        Aucun cookie de suivi, de publicité ou de mesure d&apos;audience. {photo ? "Seuls des cookies fonctionnels peuvent être posés, illisibles par les scripts de la page : « défi » (24 heures) lorsque vous relevez le défi d'un ami ; « âge » (30 minutes, sans donnée d'identité) après la vérification d'âge du protocole photo." : "Un seul cookie fonctionnel peut être posé : lorsque vous relevez le défi d'un ami, un cookie « défi » (24 heures, illisible par les scripts de la page) rattache votre rapport à ce défi. Il ne sert à rien d'autre."}{" "}
+        Aucun cookie de suivi, de publicité ou de mesure d&apos;audience. {photo ? `Seuls des cookies fonctionnels peuvent être posés, illisibles par les scripts de la page : « défi » (24 heures) lorsque vous relevez le défi d'un ami ; « âge » (30 minutes, sans donnée d'identité) après la vérification d'âge du protocole photo${paid ? " ; « paiement » (2 heures) pour vous ramener à votre rapport après la page de paiement de Plisio" : ""}.` : "Un seul cookie fonctionnel peut être posé : lorsque vous relevez le défi d'un ami, un cookie « défi » (24 heures, illisible par les scripts de la page) rattache votre rapport à ce défi. Il ne sert à rien d'autre."}{" "}
         L&apos;administration du site utilise en plus un cookie de session réservé à ses administrateurs.
       </p>
 
