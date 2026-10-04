@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { StickyCta } from "@/components/StickyCta";
 import { notFound } from "next/navigation";
 import { Fragment } from "react";
 import { SITE } from "@/config/site";
@@ -8,6 +9,7 @@ import { EDITORIAL_NAME, article, ogImagePath, toJsonLd, type Crumb } from "@/li
 import {
   Breadcrumbs,
   CmAnswer,
+  InlineCta,
   MeasureCheck,
   MiniCalculator,
   NeighborSizes,
@@ -116,6 +118,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
       {/* Le premier paragraphe (la réponse courte) vient avant le sommaire. */}
       {lead && <div className="prose-lab mt-6" dangerouslySetInnerHTML={{ __html: lead }} />}
+      {!page.size && page.kind !== "info" && <InlineCta />}
 
       {toc.length >= 3 && (
         <nav aria-label="Sommaire" className="card !p-4 mt-6 text-sm">
@@ -190,6 +193,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <p className="mt-10 text-xs text-muted">
         Contenu informatif, sans valeur de conseil médical. {SITE.name} ne fournit pas de diagnostic ; en cas de gêne ou de douleur, consultez un professionnel de santé.
       </p>
+
+      {page.kind !== "info" && <StickyCta />}
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: articleLd }} />
       {faq && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faq }} />}

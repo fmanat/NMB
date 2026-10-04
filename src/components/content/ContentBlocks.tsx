@@ -93,6 +93,10 @@ export function CmAnswer({ size }: { size: SizeRef }) {
       <div className="mt-4">
         <DistributionChart label={`${girth ? "Circonférence" : "Longueur"} en érection, repère à ${cm} cm`} value={cm} mean={ref.mean} sd={ref.sd} marker="Repère" />
       </div>
+      <div className="mt-5 flex flex-col gap-3 border-t border-[var(--border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-semibold">Et vous, où vous situez-vous&nbsp;?</p>
+        <ScanButton fullOnMobile label="Vérifier mon propre percentile" />
+      </div>
     </Card>
   );
 }
@@ -286,16 +290,26 @@ export function MeasureCheck({ axis = "length" }: { axis?: SizeAxis }) {
 
 /** Appel à l'action vers le questionnaire. */
 export function QuestionnaireCta({ size }: { size?: SizeRef | null }) {
-  const title = !size ? "Situer vos propres mesures" : size.axis === "girth" ? `Situer une circonférence de ${size.cm} cm avec vos autres mesures` : `Situer ${size.cm} cm avec vos autres mesures`;
+  const title = !size ? "Et vous, à quel percentile êtes-vous ?" : size.axis === "girth" ? `Et vous, au-dessus ou en dessous de ${size.cm} cm de tour ?` : `Et vous, au-dessus ou en dessous de ${size.cm} cm ?`;
   return (
-    <aside className="card !p-6 mt-10 text-center">
-      <p className="t-h4">{title}</p>
-      <p className="t-small text-muted mt-2 max-w-[36rem] mx-auto">
-        Le questionnaire combine longueur, circonférence et courbure dans un rapport chiffré : percentiles, courbes et repères. Environ une minute, aucun compte.
+    <aside className="mt-10 rounded-[22px] bg-[var(--bm-navy-900)] p-6 text-center text-white md:p-8" data-content-cta>
+      <p className="t-h3">{title}</p>
+      <p className="t-small mt-2 max-w-[36rem] mx-auto text-[#c9d6ea]">
+        Quatre questions : longueur, circonférence, courbure. Votre percentile exact, votre profil et vos repères, en une minute, sans compte.
       </p>
       <div className="mt-5 flex justify-center">
-        <ScanButton label="Remplir le questionnaire" />
+        <ScanButton fullOnMobile label="Découvrir mon percentile" className="!bg-white !text-[var(--bm-navy-900)] hover:!bg-[var(--bm-blue-100)]" />
       </div>
+    </aside>
+  );
+}
+
+/** Rappel compact sous la réponse courte des guides : le test, à un clic, sans quitter la lecture. */
+export function InlineCta() {
+  return (
+    <aside className="mt-6 flex flex-col gap-3 rounded-[14px] border border-[var(--bm-blue-100)] bg-[var(--bm-blue-050)] p-4 sm:flex-row sm:items-center sm:justify-between" data-inline-cta>
+      <p className="font-semibold">Où vous situez-vous, vous&nbsp;? <span className="font-normal text-muted">Une minute, sans compte.</span></p>
+      <ScanButton small fullOnMobile label="Découvrir mon percentile" />
     </aside>
   );
 }
