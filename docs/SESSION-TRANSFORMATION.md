@@ -35,6 +35,10 @@ Voir `docs/SPEC.md` §29 pour le détail. Fichiers principaux :
 - Mesure : `src/lib/track.ts`, `src/components/Tracked.tsx`, `src/lib/funnel.ts`, `db/migrations/011_funnel_growth.sql`, `src/app/confidentialite/page.tsx`.
 
 ## Bugs corrigés
+- Page du test sans titre de niveau 1 après la refonte (signalé par axe) : titre masqué ajouté.
+- Pages de contenu avec tableau (ex. /percentile-penis) : défilement horizontal de toute la page sous 385 px ; les tableaux défilent
+  désormais dans leur cadre sur mobile.
+- Liens dans les en-têtes de tableau : contraste 4,25:1 (AA non atteint) ; bleu foncé, environ 6,6:1.
 - Synthèse du rapport du questionnaire : le percentile y était arrondi à l'entier le plus proche (« percentile 66 ») alors que tout le
   reste du site affiche la partie entière (« 65e percentile »), règle du propriétaire. Corrigé (`src/lib/reportCore.ts`).
 
@@ -46,3 +50,35 @@ Le cahier des charges limite le site au français (§1). Plan proposé pour l'an
    `hreflang` réciproques + `x-default` vers le français ; un sitemap par langue.
 4. Prix en euros partout ; textes juridiques traduits et relus avant toute ouverture d'une langue.
 Décision du propriétaire nécessaire avant de commencer (cahier des charges §1).
+
+## Ce qui reste à faire
+
+P0 (avant de pousser du trafic)
+- Déployer (`railway up --service web`, sur votre accord) : la migration 011 s'applique au démarrage.
+- Relire la politique de confidentialité complétée (événements) avec le juriste.
+- Vérifier dans Umami que les événements arrivent (onglet « Events ») et créer l'entonnoir test_start → test_complete → result_view →
+  analysis_cta_click → purchase_start → purchase_success.
+
+P1
+- Paiement par carte (Verotel ou autre) : la cryptomonnaie seule reste le premier plafond de conversion de l'analyse photo.
+- Préremplir l'analyse photo avec les valeurs déclarées du test et afficher l'écart déclaré / estimé (les composants existent, formule C).
+- Carte de partage par défaut avec percentile et profil (aujourd'hui score seul, choix du cahier des charges §9 : décision du propriétaire).
+- Titres et méta-descriptions des pages de contenu plus orientés clic (textes du propriétaire : à réécrire par lui ou sur sa demande).
+- Version anglaise (plan ci-dessus).
+
+P2
+- Supprimer la double case d'âge (fenêtre d'année + case du test) si le juriste l'accepte.
+- Lighthouse mobile de l'accueil à remesurer sur le site déployé (le bandeau 3D est désormais plus bas dans la page).
+
+## Dix expériences à tester (par priorité)
+1. Offre photo sur le résultat : bloc seul / bloc + barre collante (mesure : clics vers l'analyse photo, puis paiements, par résultat affiché).
+2. Titre de l'offre : « Votre analyse complète vous attend » / « Une seconde lecture, indépendante de votre règle » / « Quatre indicateurs qu'aucun questionnaire ne mesure ».
+3. Annonce de la cryptomonnaie : sur l'offre (actuel) / seulement au paiement (mesure : paiements réussis par offre vue, pas seulement clics).
+4. Hero de l'accueil : « À quel percentile êtes-vous ? » / « Votre pénis est-il vraiment dans la moyenne ? » (mesure : test_start par visite).
+5. Exemple de résultat dans le hero : présent / absent sur mobile (le bouton remonte).
+6. Test : 4 écrans / page unique (mesure : test_complete par test_start).
+7. Carte par défaut : score seul / percentile + profil (mesure : visites de /c/ par carte, puis tests commencés).
+8. Défi : bouton à côté du résultat / après l'offre photo (mesure : défis créés, puis relevés).
+9. Barre collante des pages de contenu : présente / absente (mesure : test_start depuis les pages de contenu).
+10. Prix affiché dans le bouton de l'offre / sous le bouton (mesure : clics et paiements).
+Sans cookie ni identifiant, une variante peut être attribuée par la parité de l'identifiant du rapport ou par période.
