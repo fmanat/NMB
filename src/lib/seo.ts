@@ -25,23 +25,38 @@ export const CM_SIZES = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
 export type CmSize = (typeof CM_SIZES)[number];
 export const cmSlug = (n: number) => `taille-penis-${n}-cm` as const;
 const CM_SLUGS = CM_SIZES.map(cmSlug);
+/** Pages par centimètre de circonférence en érection, de 9 à 15 cm (phase 2, 04/10/2026). */
+export const GIRTH_SIZES = [9, 10, 11, 12, 13, 14, 15] as const;
+export const girthSlug = (n: number) => `circonference-penis-${n}-cm` as const;
+const GIRTH_SLUGS = GIRTH_SIZES.map(girthSlug);
 
-export const SEO_SLUGS = [...PILLAR_SLUGS, ...GUIDE_SLUGS, ...INFO_SLUGS, ...CM_SLUGS] as const;
+/** Les deux séries de pages par centimètre : leur série statistique, leurs tailles et leur adresse. */
+export const SIZE_AXES = {
+  length: { series: "erect-length", sizes: CM_SIZES as readonly number[], slug: cmSlug as (n: number) => string, noun: "longueur", hub: "Percentile du pénis" },
+  girth: { series: "erect-girth", sizes: GIRTH_SIZES as readonly number[], slug: girthSlug as (n: number) => string, noun: "circonférence", hub: "Percentile du pénis" },
+} as const;
+export type SizeAxis = keyof typeof SIZE_AXES;
+export type SizeRef = { axis: SizeAxis; cm: number };
+
+export const SEO_SLUGS = [...PILLAR_SLUGS, ...GUIDE_SLUGS, ...INFO_SLUGS, ...CM_SLUGS, ...GIRTH_SLUGS] as const;
 export type SeoSlug = (typeof SEO_SLUGS)[number];
 export type SeoKind = "pilier" | "guide" | "info" | "centimetre";
 
 export function kindOf(slug: SeoSlug): SeoKind {
   if ((PILLAR_SLUGS as readonly string[]).includes(slug)) return "pilier";
   if ((INFO_SLUGS as readonly string[]).includes(slug)) return "info";
-  if ((CM_SLUGS as readonly string[]).includes(slug)) return "centimetre";
+  if ((CM_SLUGS as readonly string[]).includes(slug) || (GIRTH_SLUGS as readonly string[]).includes(slug)) return "centimetre";
   return "guide";
 }
 
-/** Taille (cm) d'une page par centimètre, sinon null. */
-export function cmOf(slug: string): CmSize | null {
-  const m = slug.match(/^taille-penis-(\d+)-cm$/);
-  const n = m ? Number(m[1]) : NaN;
-  return (CM_SIZES as readonly number[]).includes(n) ? (n as CmSize) : null;
+/** Série et taille (cm) d'une page par centimètre (longueur ou circonférence), sinon null. */
+export function sizeOf(slug: string): SizeRef | null {
+  for (const axis of Object.keys(SIZE_AXES) as SizeAxis[]) {
+    const a = SIZE_AXES[axis];
+    const n = a.sizes.find((s) => a.slug(s) === slug);
+    if (n !== undefined) return { axis, cm: n };
+  }
+  return null;
 }
 
 export { RENAMED_SLUGS } from "./seoRenamed";
@@ -66,8 +81,8 @@ export type Heading = { depth: 2 | 3; text: string; id: string };
 export type SeoPage = {
   slug: SeoSlug;
   kind: SeoKind;
-  /** Taille de la page par centimètre (longueur en érection), sinon null. */
-  cm: CmSize | null;
+  /** Page par centimètre : série (longueur ou circonférence en érection) et taille, sinon null. */
+  size: SizeRef | null;
   /** Titre de la page pour les moteurs (balise title, 60 caractères au plus). */
   title: string;
   /** Titre affiché (H1) ; à défaut, le titre. */
@@ -336,7 +351,7 @@ export function parseSeoFile(raw: string, filename: string, existingSlugs: Set<s
   return {
     slug,
     kind: kindOf(slug),
-    cm: cmOf(slug),
+    size: sizeOf(slug),
     title,
     h1,
     breadcrumb,

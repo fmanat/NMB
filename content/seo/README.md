@@ -7,7 +7,7 @@ Une page = un fichier `content/seo/<slug>.md`. Ce fichier README n'est pas une p
 - **Pages piliers** : `taille-moyenne-penis` (ancienne `taille-moyenne-penis-france`, redirigée), `taille-penis-normale`, `percentile-penis`.
 - **Guides** : `taille-penis-par-pays`, `comment-mesurer-son-penis`, `circonference-moyenne-penis`, `courbure-penis-normale`, `taille-repos-erection`, `etudes-taille-penis`, `faq`.
 - **Information** : `a-propos`.
-- **Pages par centimètre** (longueur en érection) : `taille-penis-10-cm` à `taille-penis-20-cm`.
+- **Pages par centimètre** : longueur en érection, `taille-penis-10-cm` à `taille-penis-20-cm` ; circonférence en érection, `circonference-penis-9-cm` à `circonference-penis-15-cm`.
 
 La liste fait foi dans `src/lib/seo.ts`. Le nom du fichier doit être exactement `<slug>.md`. La nature de la page (pilier, guide, information, centimètre) se déduit du slug et décide de la mise en page.
 
@@ -65,6 +65,7 @@ Séries : `erect-length`, `erect-girth`, `rest-length`, `rest-girth`.
 | `dans-sigma:k`, `pct-sigma:k` | `{{dans-sigma:1}}` | part à moins de k écarts-types ; percentile à +k écarts-types |
 | `borne-basse`, `borne-haute`, `max-sigma` | `{{max-sigma}}` | règles d'affichage du rapport |
 | `pouces:cm`, `pouces-en-cm:pouces` | `{{pouces:18}}` | conversions (1 pouce = 2,54 cm) |
+| `diametre:cm` | `{{diametre:12}}` | diamètre d'une section ronde de cette circonférence (÷ π) |
 
 Les chiffres tirés d'une autre source (par exemple une méta-analyse récente) s'écrivent tels quels, après vérification sur la source.
 
@@ -87,7 +88,7 @@ Si une page ne place pas le calculateur ou la grille des tailles, la mise en pag
 - Liens internes : `/`, `/analyse`, le slug d'une page de contenu, ou `/methode`, `/confidentialite`, `/cgv`, `/contact`, `/mentions-legales`, `/presse`. Un lien vers une page de contenu absente est affiché en texte simple (jamais de lien cassé) et signalé. Les liens externes sont en `https://`.
 - `title` ≤ 60 caractères, `metaDescription` ≤ 155 caractères, `targetKeyword` obligatoire.
 - **Mots interdits** (règles d'écriture héritées du rapport, aucun dénigrement) : « court », « petit », « insuffisant », « anormal », « défaut », sous toutes leurs formes.
-- **Pages quasi identiques** : aucun paragraphe ne doit partager plus de 30 % de ses suites de trois mots avec un paragraphe d'une autre page, dès qu'une page nouvelle (page par centimètre, taille normale, percentile, à propos) est en cause (test `tests/content-quality.test.ts`). Entre deux guides d'origine, simple avertissement.
+- **Pages quasi identiques** : aucun paragraphe ne doit partager plus de 30 % de ses suites de trois mots avec un paragraphe d'une autre page, quelle qu'elle soit (test `tests/content-quality.test.ts`, et erreur dans `npm run seo:check`).
 - Longueurs : pages par centimètre, 700 à 1 100 mots (corps et questions-réponses) et 4 à 6 questions ; nouvelles pages piliers, 900 à 1 500 mots ; autres pages, corps de 600 à 1 500 mots (avertissement).
 
 ## Vérifier

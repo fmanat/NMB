@@ -47,7 +47,7 @@ const DATE_FR = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long"
 /** Fil d'Ariane : Accueil › (Percentile du pénis, pour les pages par centimètre) › page. */
 function crumbsFor(page: SeoPage): Crumb[] {
   const crumbs: Crumb[] = [{ name: "Accueil", path: "/" }];
-  if (page.kind === "centimetre") crumbs.push({ name: "Percentile du pénis", path: "/percentile-penis" });
+  if (page.size) crumbs.push({ name: "Percentile du pénis", path: "/percentile-penis" });
   crumbs.push({ name: page.breadcrumb, path: `/${page.slug}` });
   return crumbs;
 }
@@ -55,7 +55,7 @@ function crumbsFor(page: SeoPage): Crumb[] {
 function Block({ name, page }: { name: BlockName; page: SeoPage }) {
   switch (name) {
     case "calculateur":
-      return <MiniCalculator cm={page.cm} />;
+      return <MiniCalculator size={page.size} />;
     case "distribution":
       return (
         <>
@@ -66,9 +66,9 @@ function Block({ name, page }: { name: BlockName; page: SeoPage }) {
     case "tableau-percentiles":
       return <PercentileTables />;
     case "tailles":
-      return <SizeLinks current={page.cm} />;
+      return <SizeLinks axis={page.size?.axis} current={page.size?.cm} />;
     case "mesure":
-      return <MeasureCheck />;
+      return <MeasureCheck axis={page.size?.axis} />;
   }
 }
 
@@ -112,7 +112,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         )}
       </p>
 
-      {page.cm && <CmAnswer cm={page.cm} />}
+      {page.size && <CmAnswer size={page.size} />}
 
       {/* Le premier paragraphe (la réponse courte) vient avant le sommaire. */}
       {lead && <div className="prose-lab mt-6" dangerouslySetInnerHTML={{ __html: lead }} />}
@@ -136,9 +136,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         )}
       </div>
 
-      {page.cm && !placed.has("mesure") && <MeasureCheck />}
-      {!placed.has("calculateur") && page.kind !== "info" && <MiniCalculator cm={page.cm} />}
-      {page.cm && <NeighborSizes cm={page.cm} />}
+      {page.size && !placed.has("mesure") && <MeasureCheck axis={page.size.axis} />}
+      {!placed.has("calculateur") && page.kind !== "info" && <MiniCalculator size={page.size} />}
+      {page.size && <NeighborSizes size={page.size} />}
 
       {page.faq.length > 0 && (
         <section className="mt-10" aria-labelledby="faq-titre">
@@ -154,9 +154,11 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </section>
       )}
 
-      <QuestionnaireCta cm={page.cm} />
+      <QuestionnaireCta size={page.size} />
 
-      {!placed.has("tailles") && page.kind !== "info" && <SizeLinks current={page.cm} title={page.cm ? "Les autres tailles" : "Où vous situez-vous ?"} />}
+      {!placed.has("tailles") && page.kind !== "info" && (
+        <SizeLinks axis={page.size?.axis} current={page.size?.cm} title={page.size ? "Les autres tailles" : "Où vous situez-vous ?"} />
+      )}
 
       {page.sources.length > 0 && (
         <section className="mt-10" aria-labelledby="references-titre">

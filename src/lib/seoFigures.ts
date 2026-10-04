@@ -130,6 +130,8 @@ const TOKENS: Record<string, (args: string[]) => string> = {
   "borne-basse": () => f1(clampPercentile(0)),
   "borne-haute": () => f1(clampPercentile(100)),
   // {{pouces:18}} → « 7,1 pouces » ; {{pouces-en-cm:7}} → « 17,78 cm » (1 pouce = 2,54 cm exactement)
+  // {{diametre:12}} → « 3,8 cm » : diamètre d'une section circulaire de cette circonférence (circonférence ÷ π)
+  diametre: ([cm]) => `${f1(num(cm, "cm") / Math.PI)} cm`,
   pouces: ([cm]) => `${f1(num(cm, "cm") / CM_PER_INCH)} pouces`,
   "pouces-en-cm": ([inch]) => `${frNumber(num(inch, "pouces") * CM_PER_INCH)} cm`,
   // {{max-sigma}} → nombre d'écarts-types au-delà duquel le questionnaire refuse une valeur

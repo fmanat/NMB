@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CM_SIZES, cmSlug, PILLAR_SLUGS, visibleSeoPages } from "@/lib/seo";
+import { CM_SIZES, cmSlug, GIRTH_SIZES, girthSlug, PILLAR_SLUGS, visibleSeoPages } from "@/lib/seo";
 import { SizeLinks } from "./ContentBlocks";
 
 /**
@@ -10,6 +10,7 @@ export function HomeGuides() {
   const pages = visibleSeoPages();
   const pillars = PILLAR_SLUGS.map((s) => pages.find((p) => p.slug === s)).filter((p) => p !== undefined);
   const hasSizes = CM_SIZES.some((n) => pages.some((p) => p.slug === cmSlug(n)));
+  const hasGirths = GIRTH_SIZES.some((n) => pages.some((p) => p.slug === girthSlug(n)));
   if (!hasSizes && pillars.length === 0) return null;
   return (
     <section id="reperes" aria-labelledby="reperes-titre" className="section bg-[var(--bm-gray-050)] border-y border-[var(--bm-gray-200)]">
@@ -25,6 +26,15 @@ export function HomeGuides() {
               <SizeLinks bare />
             </div>
           </>
+        )}
+        {hasGirths && (
+          <div className="mt-10">
+            <h3 className="t-h4">Et la circonférence ?</h3>
+            <p className="t-small text-muted mt-2 max-w-[46rem]">Circonférence en érection, de 9 à 15 cm : le même calcul, sur la courbe du tour du pénis.</p>
+            <div className="mt-4">
+              <SizeLinks axis="girth" bare />
+            </div>
+          </div>
         )}
         {pillars.length > 0 && (
           <div className="mt-10">

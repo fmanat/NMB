@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { REFERENCE_SOURCE, SITE } from "@/config/site";
-import { getSeoPage, loadSeoPages } from "./seo";
+import { getSeoPage, loadSeoPages, SIZE_AXES } from "./seo";
 import { evalFigure, rankLabel, rawPercentile } from "./seoFigures";
 
 // Image de partage propre à chaque page publique : titre et un chiffre clé calculé par le site. Texte uniquement, aucune silhouette.
@@ -22,9 +22,11 @@ export function pageImageContent(slug: string): PageImageContent | null {
   if (FIXED[slug]) return FIXED[slug]();
   const page = getSeoPage(slug);
   if (!page) return null;
-  if (page.cm) {
-    const rank = rankLabel(rawPercentile("erect-length", page.cm));
-    return { title: page.h1, figure: rank.charAt(0).toUpperCase() + rank.slice(1), label: `${page.cm} cm en érection (${REFERENCE_SOURCE})` };
+  if (page.size) {
+    const { axis, cm } = page.size;
+    const rank = rankLabel(rawPercentile(SIZE_AXES[axis].series, cm));
+    const what = axis === "girth" ? `circonférence de ${cm} cm en érection` : `${cm} cm en érection`;
+    return { title: page.h1, figure: rank.charAt(0).toUpperCase() + rank.slice(1), label: `${what} (${REFERENCE_SOURCE})` };
   }
   if (page.ogFigure && page.ogLabel) return { title: page.h1, figure: page.ogFigure, label: page.ogLabel };
   return { title: page.h1, figure: evalFigure("moyenne:erect-length"), label: `longueur moyenne en érection (${REFERENCE_SOURCE})` };

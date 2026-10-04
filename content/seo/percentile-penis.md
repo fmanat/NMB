@@ -58,7 +58,7 @@ Deux règles de prudence complètent le calcul. Le percentile est affiché avec 
 
 ## Tableau des percentiles
 
-Les tableaux ci-dessous sont calculés par le site, avec les mêmes fonctions que le rapport. Chaque ligne de longueur renvoie vers une page qui détaille la position correspondante.
+Les tableaux ci-dessous sont calculés par le site, avec les mêmes fonctions que le rapport. Chaque ligne, en longueur comme en circonférence, renvoie vers une page qui détaille la position correspondante.
 
 [[tableau-percentiles]]
 

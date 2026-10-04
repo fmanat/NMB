@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { REFERENCE_SOURCE } from "@/config/site";
 import { f1 } from "@/lib/format";
-import { CM_SIZES, cmSlug, existingSlugs } from "@/lib/seo";
+import { cmSlug, existingSlugs, girthSlug, SIZE_AXES, type SizeAxis, type SizeRef } from "@/lib/seo";
 import { outOfCalculatorRange, percentileRows, perThousandBelow, rankLabel, rawPercentile, seriesRef, shownPercentile, type Series } from "@/lib/seoFigures";
 import { valueAtPercentile } from "@/lib/stats";
 import { frInt, frNumber } from "@/lib/ticker";
@@ -40,15 +40,22 @@ export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
 }
 
 /** Mini-calculateur « Essayez » des pages de contenu (même simulation locale que l'accueil, version compacte). */
-export function MiniCalculator({ cm }: { cm?: number | null }) {
-  const girth = snap("girth", seriesRef("erect-girth").mean);
-  const initial = cm ? { state: "erect" as const, length: cm, girth } : undefined;
+export function MiniCalculator({ size }: { size?: SizeRef | null }) {
+  // Page par centimètre : la dimension de la page est préremplie avec sa taille, l'autre avec la valeur médiane de référence.
+  const medianGirth = snap("girth", seriesRef("erect-girth").mean);
+  const medianLength = snap("length", seriesRef("erect-length").mean);
+  const initial = size
+    ? { state: "erect" as const, length: size.axis === "length" ? size.cm : medianLength, girth: size.axis === "girth" ? size.cm : medianGirth }
+    : undefined;
+  const other = size?.axis === "girth" ? "La longueur" : "La circonférence";
   return (
     <section aria-labelledby="essayez-titre" className="mt-10">
-      <h2 id="essayez-titre" className="t-h3">{cm ? `Essayez : ${cm} cm, et vos autres valeurs` : "Essayez avec vos valeurs"}</h2>
+      <h2 id="essayez-titre" className="t-h3">
+        {size ? `Essayez : ${size.axis === "girth" ? "circonférence de " : ""}${size.cm} cm, et vos autres valeurs` : "Essayez avec vos valeurs"}
+      </h2>
       <p className="t-small text-muted mt-2">
         Mêmes références et mêmes calculs que le rapport, exécutés dans votre navigateur : rien n&apos;est enregistré ni envoyé.
-        {cm ? " La circonférence est préremplie à la valeur médiane de référence : ajustez-la." : ""}
+        {size ? ` ${other} est préremplie à la valeur médiane de référence : ajustez-la.` : ""}
       </p>
       <noscript>
         <p className="t-small text-muted mt-2">La simulation demande JavaScript. Le questionnaire, lui, fonctionne sans.</p>
@@ -61,8 +68,10 @@ export function MiniCalculator({ cm }: { cm?: number | null }) {
 }
 
 /** Réponse immédiate d'une page par centimètre : percentile et « sur 1 000 hommes ». */
-export function CmAnswer({ cm }: { cm: number }) {
-  const s: Series = "erect-length";
+export function CmAnswer({ size }: { size: SizeRef }) {
+  const { cm } = size;
+  const girth = size.axis === "girth";
+  const s: Series = SIZE_AXES[size.axis].series;
   const raw = rawPercentile(s, cm);
   const shown = shownPercentile(s, cm);
   const ref = seriesRef(s);
@@ -71,18 +80,18 @@ export function CmAnswer({ cm }: { cm: number }) {
   return (
     <Card as="section" className="!p-5 md:!p-6 mt-6" >
       <h2 className="sr-only">En bref</h2>
-      <p className="t-eyebrow">{cm} cm en érection</p>
+      <p className="t-eyebrow">{girth ? `Circonférence de ${cm} cm en érection` : `${cm} cm en érection`}</p>
       <p className="num text-[28px] leading-[34px] md:text-[34px] md:leading-[40px] font-bold mt-2 text-accent">{rankLabel(raw)}</p>
       <p className="mt-2 font-semibold">
-        Sur 1 000 hommes de la population de référence, environ {frInt(below)} mesurent moins de {cm} cm.
+        Sur 1 000 hommes de la population de référence, environ {frInt(below)} {girth ? `ont une circonférence inférieure à ${cm} cm` : `mesurent moins de ${cm} cm`}.
       </p>
       <p className="t-small text-muted mt-3">
-        Percentile {f1(shown)} pour une longueur en érection de {cm} cm (loi normale, moyenne {frNumber(ref.mean)} cm, écart-type {frNumber(ref.sd)} cm,{" "}
+        Percentile {f1(shown)} pour une {girth ? "circonférence" : "longueur"} en érection de {cm} cm (loi normale, moyenne {frNumber(ref.mean)} cm, écart-type {frNumber(ref.sd)} cm,{" "}
         {REFERENCE_SOURCE}).
         {out ? " Cette valeur se situe au-delà de la plage que le calculateur du site positionne : l'estimation n'est donnée qu'à titre indicatif." : ""}
       </p>
       <div className="mt-4">
-        <DistributionChart label={`Longueur en érection, repère à ${cm} cm`} value={cm} mean={ref.mean} sd={ref.sd} marker="Repère" />
+        <DistributionChart label={`${girth ? "Circonférence" : "Longueur"} en érection, repère à ${cm} cm`} value={cm} mean={ref.mean} sd={ref.sd} marker="Repère" />
       </div>
     </Card>
   );
@@ -165,7 +174,7 @@ export function PercentileTables() {
           <tbody>
             {girth.map((r) => (
               <tr key={r.cm}>
-                <th scope="row">{r.cm} cm</th>
+                <th scope="row">{exists.has(girthSlug(r.cm)) ? <Link href={`/${girthSlug(r.cm)}`}>{r.cm} cm</Link> : `${r.cm} cm`}</th>
                 <td className="num">{f1(r.shown)}</td>
                 <td className="num">{frInt(r.perThousand)}</td>
               </tr>
@@ -180,29 +189,33 @@ export function PercentileTables() {
   );
 }
 
-/** Les 11 pages par centimètre, avec leur rang. `current` : taille de la page affichée (mise en évidence). */
-export function SizeLinks({ current, title = "Où vous situez-vous ?", bare = false }: { current?: number | null; title?: string; bare?: boolean }) {
+/** Les pages par centimètre d'une série, avec leur rang. `current` : taille de la page affichée (mise en évidence). */
+export function SizeLinks({ axis = "length", current, title = "Où vous situez-vous ?", bare = false }: { axis?: SizeAxis; current?: number | null; title?: string; bare?: boolean }) {
   const exists = existingSlugs();
-  const sizes = CM_SIZES.filter((n) => exists.has(cmSlug(n)));
+  const a = SIZE_AXES[axis];
+  const sizes = a.sizes.filter((n) => exists.has(a.slug(n)));
   if (sizes.length === 0) return null;
+  const id = `tailles-${axis}-titre`;
   return (
-    <nav aria-labelledby={bare ? undefined : "tailles-titre"} aria-label={bare ? "Tailles en centimètres" : undefined} className={bare ? "" : "mt-10"}>
+    <nav aria-labelledby={bare ? undefined : id} aria-label={bare ? (axis === "girth" ? "Circonférences en centimètres" : "Longueurs en centimètres") : undefined} className={bare ? "" : "mt-10"}>
       {!bare && (
         <>
-          <h2 id="tailles-titre" className="t-h3">{title}</h2>
-          <p className="t-small text-muted mt-2">Longueur en érection : choisissez une taille pour voir sa position dans la population de référence.</p>
+          <h2 id={id} className="t-h3">{title}</h2>
+          <p className="t-small text-muted mt-2">
+            {axis === "girth" ? "Circonférence en érection" : "Longueur en érection"} : choisissez une taille pour voir sa position dans la population de référence.
+          </p>
         </>
       )}
       <ul className="mt-4 grid grid-cols-2 gap-2 min-[480px]:grid-cols-3 md:grid-cols-4">
         {sizes.map((n) => (
           <li key={n}>
             <Link
-              href={`/${cmSlug(n)}`}
+              href={`/${a.slug(n)}`}
               aria-current={n === current ? "page" : undefined}
               className={`flex min-h-[48px] flex-col justify-center rounded-[10px] border px-3 py-2 no-underline hover:border-[var(--accent)] ${n === current ? "border-[var(--accent)] bg-[var(--bm-blue-050)]" : "border-[var(--border)] bg-white"}`}
             >
               <span className="num font-semibold text-foreground">{n} cm</span>
-              <span className="t-caption text-muted">{rankLabel(rawPercentile("erect-length", n))}</span>
+              <span className="t-caption text-muted">{rankLabel(rawPercentile(a.series, n))}</span>
             </Link>
           </li>
         ))}
@@ -212,22 +225,24 @@ export function SizeLinks({ current, title = "Où vous situez-vous ?", bare = fa
 }
 
 /** Tailles voisines d'une page par centimètre. */
-export function NeighborSizes({ cm }: { cm: number }) {
+export function NeighborSizes({ size }: { size: SizeRef }) {
   const exists = existingSlugs();
-  const prev = exists.has(cmSlug(cm - 1)) ? cm - 1 : null;
-  const next = exists.has(cmSlug(cm + 1)) ? cm + 1 : null;
+  const { cm } = size;
+  const a = SIZE_AXES[size.axis];
+  const prev = exists.has(a.slug(cm - 1)) ? cm - 1 : null;
+  const next = exists.has(a.slug(cm + 1)) ? cm + 1 : null;
   return (
     <nav aria-label="Tailles voisines" className="mt-8 grid gap-3 sm:grid-cols-2">
       {prev ? (
-        <Link href={`/${cmSlug(prev)}`} className="card card-hover !p-4 no-underline">
+        <Link href={`/${a.slug(prev)}`} className="card card-hover !p-4 no-underline">
           <span className="t-caption text-muted">‹ Taille précédente</span>
-          <span className="block num font-semibold text-foreground mt-1">{prev} cm : {rankLabel(rawPercentile("erect-length", prev))}</span>
+          <span className="block num font-semibold text-foreground mt-1">{prev} cm : {rankLabel(rawPercentile(a.series, prev))}</span>
         </Link>
       ) : <span />}
       {next ? (
-        <Link href={`/${cmSlug(next)}`} className="card card-hover !p-4 no-underline sm:text-right">
+        <Link href={`/${a.slug(next)}`} className="card card-hover !p-4 no-underline sm:text-right">
           <span className="t-caption text-muted">Taille suivante ›</span>
-          <span className="block num font-semibold text-foreground mt-1">{next} cm : {rankLabel(rawPercentile("erect-length", next))}</span>
+          <span className="block num font-semibold text-foreground mt-1">{next} cm : {rankLabel(rawPercentile(a.series, next))}</span>
         </Link>
       ) : <span />}
     </nav>
@@ -235,17 +250,27 @@ export function NeighborSizes({ cm }: { cm: number }) {
 }
 
 /** Comment vérifier sa mesure : liste courte, renvoi vers le guide complet. */
-export function MeasureCheck() {
+const MEASURE_STEPS: Record<SizeAxis, string[]> = {
+  length: [
+    "Mesurer en érection complète, debout, le pénis tenu à l'horizontale.",
+    "Poser une règle rigide sur le dessus, contre le pubis, en appuyant jusqu'à l'os.",
+    "Lire la valeur à l'extrémité, sans compter le prépuce au-delà du gland.",
+    "Recommencer deux ou trois fois, à des moments différents, et retenir la valeur la plus fréquente.",
+  ],
+  girth: [
+    "Mesurer en érection complète, avec un mètre ruban souple (ou une ficelle reportée ensuite sur une règle).",
+    "Faire le tour au milieu de la verge, perpendiculairement à son axe, et noter l'endroit choisi.",
+    "Serrer juste assez pour que le ruban touche la peau sur tout le tour, sans l'enfoncer.",
+    "Recommencer deux ou trois fois, au même endroit, et retenir la valeur la plus fréquente.",
+  ],
+};
+
+export function MeasureCheck({ axis = "length" }: { axis?: SizeAxis }) {
   return (
     <section aria-labelledby="verifier-titre" className="mt-10">
-      <h2 id="verifier-titre" className="t-h3">Vérifier sa mesure en quatre points</h2>
+      <h2 id="verifier-titre" className="t-h3">{axis === "girth" ? "Vérifier sa mesure de circonférence en quatre points" : "Vérifier sa mesure en quatre points"}</h2>
       <ul className="mt-4 space-y-2">
-        {[
-          "Mesurer en érection complète, debout, le pénis tenu à l'horizontale.",
-          "Poser une règle rigide sur le dessus, contre le pubis, en appuyant jusqu'à l'os.",
-          "Lire la valeur à l'extrémité, sans compter le prépuce au-delà du gland.",
-          "Recommencer deux ou trois fois, à des moments différents, et retenir la valeur la plus fréquente.",
-        ].map((t) => (
+        {MEASURE_STEPS[axis].map((t) => (
           <li key={t} className="flex items-start gap-3">
             <Icon name="checkCircle" size={18} className="mt-0.5 flex-none text-accent" />
             <span className="text-muted">{t}</span>
@@ -260,10 +285,11 @@ export function MeasureCheck() {
 }
 
 /** Appel à l'action vers le questionnaire. */
-export function QuestionnaireCta({ cm }: { cm?: number | null }) {
+export function QuestionnaireCta({ size }: { size?: SizeRef | null }) {
+  const title = !size ? "Situer vos propres mesures" : size.axis === "girth" ? `Situer une circonférence de ${size.cm} cm avec vos autres mesures` : `Situer ${size.cm} cm avec vos autres mesures`;
   return (
     <aside className="card !p-6 mt-10 text-center">
-      <p className="t-h4">{cm ? `Situer ${cm} cm avec vos autres mesures` : "Situer vos propres mesures"}</p>
+      <p className="t-h4">{title}</p>
       <p className="t-small text-muted mt-2 max-w-[36rem] mx-auto">
         Le questionnaire combine longueur, circonférence et courbure dans un rapport chiffré : percentiles, courbes et repères. Environ une minute, aucun compte.
       </p>

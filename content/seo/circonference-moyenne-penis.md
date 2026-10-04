@@ -98,7 +98,7 @@ La valeur de {{moyenne:erect-girth}} correspond au centre de la distribution de 
 
 Des valeurs supérieures et inférieures sont donc parfaitement attendues. Selon la loi normale construite sur ces références, la moitié des hommes a une circonférence en érection comprise entre {{quantile:erect-girth:25}} et {{quantile:erect-girth:75}}, et 80 % entre {{quantile:erect-girth:10}} et {{quantile:erect-girth:90}}.
 
-Quelques repères calculés par le site : une circonférence en érection de 11 cm correspond au {{rang:erect-girth:11}}, 12 cm au {{rang:erect-girth:12}}, 13 cm au {{rang:erect-girth:13}}. Le [tableau complet des percentiles](/percentile-penis) donne toutes les valeurs de 9 à 15 cm.
+Quelques repères calculés par le site : une circonférence en érection de [11 cm](/circonference-penis-11-cm) correspond au {{rang:erect-girth:11}}, [12 cm](/circonference-penis-12-cm) au {{rang:erect-girth:12}}, [13 cm](/circonference-penis-13-cm) au {{rang:erect-girth:13}}. Les autres tours, de 9 à 15 cm, disposent eux aussi d'une page. Le [tableau complet des percentiles](/percentile-penis) donne toutes les valeurs de 9 à 15 cm.
 
 Pour interpréter une mesure individuelle, il est plus pertinent d'utiliser une distribution statistique et éventuellement un percentile.
 
