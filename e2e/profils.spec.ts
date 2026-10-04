@@ -1,17 +1,12 @@
 import { PROFILES } from "../src/lib/profiles";
-import { createReportA, expect, payReport, reportIdFrom, test } from "./helpers";
+import { createReportA, expect, fillQuestionnaire, payReport, reportIdFrom, test } from "./helpers";
 
 // Version payante (port 3201) : le profil morphologique n'est pas dans l'aperçu verrouillé, il apparaît dans le rapport débloqué,
-// et la carte de partage ne le montre que si l'option est cochée. Valeurs en érection ; le questionnaire propose « Au repos » par défaut.
+// et la carte de partage ne le montre que si l'option est cochée. Valeurs en érection : l'état se choisit au premier écran du test (aucun choix par défaut).
 
 test.describe("Profils : version payante", () => {
   test("rapport verrouillé : aucun profil ; débloqué : le profil attendu (érection, 16 cm × 14 cm : Le Panoramique)", async ({ page }) => {
-    await page.goto("/analyse/questionnaire");
-    await page.getByLabel("Longueur (cm)").fill("16");
-    await page.getByLabel("Circonférence (cm)").fill("14");
-    await page.getByRole("radio", { name: "En érection" }).check();
-    await page.getByLabel("J'ai 18 ans ou plus.").check();
-    await page.getByRole("button", { name: "Calculer mon rapport" }).click();
+    await fillQuestionnaire(page, { state: "erect", length: "16", girth: "14" });
     await page.waitForURL(/\/r\/[A-Za-z0-9_-]+/);
     const id = reportIdFrom(page.url());
 
@@ -28,12 +23,12 @@ test.describe("Profils : version payante", () => {
     // Carte : sans l'option, aucun profil ; avec l'option, le nom.
     await page.goto(`/r/${id}/partager`);
     await expect(page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" })).not.toBeChecked();
-    await page.getByRole("button", { name: "Créer la carte" }).click();
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
     await expect(page).toHaveURL(/\/c\//);
     await expect(page.locator("[data-card-profile]")).toHaveCount(0);
     await page.goto(`/r/${id}/partager`);
     await page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" }).check();
-    await page.getByRole("button", { name: "Créer la carte" }).click();
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
     await expect(page.locator("[data-card-profile]")).toContainText("Le Panoramique");
   });
 

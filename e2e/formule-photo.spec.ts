@@ -1,10 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { OBSERVATION_MARKER } from "../src/lib/vision/simulation";
-import { E2E, expect, fakeIp, neutralImage, reportIdFrom, sendPhoto, test, withDb } from "./helpers";
+import { E2E, expect, fakeIp, fillQuestionnaire, neutralImage, reportIdFrom, sendPhoto, test, withDb } from "./helpers";
 import { layoutProblems } from "./layout";
 
-// Bêta de la formule photo (FREE_BETA=on + PHOTO_BETA=on, fournisseurs simulés, port 3205) : choix A ou B gratuits, parcours B complet
+// Bêta de la formule photo (FREE_BETA=on + PHOTO_BETA=on, fournisseurs simulés, port 3205) : test directement sur /analyse avec lien vers la formule photo (gratuite), parcours B complet
 // (vérification d'âge simulée, cases, captcha simulé, image NEUTRE fabriquée à la volée), rapport débloqué sans paiement avec le commentaire
 // standardisé et le profil morphologique ; formule C, paiement et CGV introuvables ; petits écrans et axe-core sur les pages photo.
 
@@ -33,30 +33,56 @@ async function submitFromPhotoPage(page: Page): Promise<void> {
 }
 
 test.describe("Bêta photo : choix et libellés vrais", () => {
-  test("/analyse propose les protocoles A et B, gratuits, sans prix ni protocole C ; le questionnaire reste accessible", async ({ page }) => {
+  test("/analyse est directement le test (pas d'écran de choix) ; la formule photo y est un lien discret, gratuit, sans prix ni protocole C", async ({ page }) => {
     await page.goto("/analyse");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Choisissez un protocole");
-    await expect(page.locator('[data-protocol="A"]')).toBeVisible();
-    await expect(page.locator('[data-protocol="B"]')).toBeVisible();
-    await expect(page.locator('[data-protocol="C"]')).toHaveCount(0);
+    await expect(page.getByText("Choisissez un protocole")).toHaveCount(0);
+    await expect(page.locator("[data-protocol]")).toHaveCount(0);
+    await expect(page.getByText("Dans quel état mesurez-vous ?")).toBeVisible();
+    const photo = page.locator("[data-photo-link]");
+    await expect(photo).toContainText("Vous préférez une analyse sur photo ?");
+    const link = photo.getByRole("link", { name: "Analyse photo", exact: true }); // sans prix : gratuite pendant la bêta
+    await expect(link).toHaveAttribute("href", "/analyse/photo?f=B");
     const text = await page.locator("main").innerText();
     expect(text).not.toMatch(/€|PROTOCOLE C|paiement unique|Recommandé/i);
-    expect(text).toMatch(/Gratuit/);
-    expect(text).toMatch(/estimation visuelle, ou mesure calibrée si une carte au format bancaire figure sur la photo/);
+    // /analyse/questionnaire (hors aperçu administrateur) renvoie au test, sur /analyse.
+    await page.goto("/analyse/questionnaire");
+    await expect(page).toHaveURL(/\/analyse$/);
+    await expect(page.getByText("Dans quel état mesurez-vous ?")).toBeVisible();
+    // Le test mène à son résultat (valeurs déclarées, comme avant).
+    await fillQuestionnaire(page, { path: "/analyse", consent: true });
+    await page.waitForURL(/\/r\/[A-Za-z0-9_-]+/);
+  });
+
+  test("après le résultat du test : l'offre d'analyse photo dit ce que fait la photo (estimation, âge, xAI, 30 jours), gratuite, sans prix", async ({ page }) => {
+    await fillQuestionnaire(page, { path: "/analyse", consent: true });
+    await page.waitForURL(/\/r\/[A-Za-z0-9_-]+/);
+    const offer = page.locator('[data-photo-offer="result"]');
+    await expect(offer).toBeVisible();
+    const upsells = () => withDb(async (db) => (await db.query("SELECT count(*)::int AS n FROM funnel_events WHERE kind = 'upsell_click'")).rows[0].n as number);
+    const upsellsBefore = await upsells();
+    await expect(offer.getByRole("link", { name: "Obtenir mon analyse complète" })).toHaveAttribute("href", "/analyse/photo?f=B");
+    const text = await offer.innerText();
+    expect(text).not.toMatch(/€|PROTOCOLE C|paiement unique|Recommandé|Plisio/i);
+    expect(text).toMatch(/Gratuit pendant la bêta/);
+    expect(text).toMatch(/Longueur et circonférence estimées sur votre photo ; mesure calibrée si une carte au format bancaire est posée à côté/);
     expect(text).not.toMatch(/± 10 %/);
     expect(text).toMatch(/Vérification d'âge par un prestataire tiers/);
     expect(text).toMatch(/jamais enregistrée par Bitomètre/);
     expect(text).toMatch(/30 jours/);
-    await page.goto("/analyse/questionnaire");
-    await expect(page).toHaveURL(/\/analyse\/questionnaire$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Vos mesures");
+    // Le clic sur l'offre est compté (compteur interne anonyme) et mène à la vérification d'âge de la formule photo.
+    await offer.getByRole("link", { name: "Obtenir mon analyse complète" }).click();
+    await expect(page).toHaveURL(/\/verification-age/);
+    await expect.poll(upsells).toBeGreaterThanOrEqual(upsellsBefore + 1);
   });
+
 
   test("accueil, méthode, confidentialité et conditions disent ce que fait la photo, sans promesse de plus", async ({ page }) => {
     await page.goto("/");
     const home = await page.locator("body").innerText();
     expect(home).toMatch(/Gratuit pendant la bêta/);
-    expect(home).toMatch(/estimées à partir d'une photo/);
+    expect(home).toMatch(/estimées sur votre photo/);
+    expect(home).toMatch(/jamais enregistrée par Bitomètre/);
+    expect(home).toMatch(/Vérification d'âge par un prestataire tiers/);
     expect(home).not.toMatch(/€|Photo jamais stockée|mineurs détectés|contenus illicites bloqués/i);
     await page.goto("/methode");
     const methode = await page.locator("main").innerText();
@@ -151,9 +177,9 @@ test.describe("Bêta photo : parcours B complet (image neutre, moteurs simulés)
     const id = await photoReport(page);
     await page.goto(`/r/${id}/partager`);
     await page.getByRole("checkbox", { name: "Ajouter mon profil morphologique" }).check();
-    await page.getByRole("button", { name: "Créer la carte" }).click();
-    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+$/);
-    const cardId = page.url().split("/c/")[1];
+    await page.getByRole("button", { name: "Créer la carte et la partager" }).click();
+    await expect(page).toHaveURL(/\/c\/[A-Za-z0-9_-]+(\?nouvelle=1)?$/);
+    const cardId = new URL(page.url()).pathname.split("/c/")[1];
     const anon = await browser.newContext({ baseURL, extraHTTPHeaders: { "x-forwarded-for": fakeIp() } });
     const pub = await anon.newPage();
     await pub.goto(`/c/${cardId}`);
@@ -178,8 +204,10 @@ for (const width of [320, 375, 390] as const) {
         for (const p of await layoutProblems(page)) problems.push(`${label} : ${p}`);
         for (const l of await axeLines(page)) violations.push(`${label} : ${l}`);
       };
+      await page.goto("/");
+      await check("accueil (offre photo)");
       await page.goto("/analyse");
-      await check("choix du protocole");
+      await check("test (écran 1, lien vers l'analyse photo)");
       await page.goto("/analyse/photo?f=B");
       await expect(page).toHaveURL(/\/verification-age/);
       await check("vérification d'âge");

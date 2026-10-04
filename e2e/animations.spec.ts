@@ -93,16 +93,18 @@ test.describe("Animations d'apparition", () => {
     await ctx.close();
   });
 
-  test("simulation « Essayez » : bouger un curseur ne rejoue pas l'animation d'apparition", async ({ page }) => {
-    await page.goto("/");
-    const s = page.locator("#essayez");
+  // La simulation n'est plus sur l'accueil : elle est dans les pages de contenu (mini-calculateur « Essayez »).
+  test("simulation « Essayez » (page de contenu) : bouger un curseur ne rejoue pas l'animation d'apparition", async ({ page }) => {
+    await page.goto("/percentile-penis");
+    const sel = 'section[aria-labelledby="essayez-titre"]';
+    const s = page.locator(sel);
     await s.scrollIntoViewIfNeeded();
     const slider = s.getByRole("slider", { name: "Longueur (cm)" });
     await expect(slider).toBeVisible();
-    await page.waitForFunction(() => ![...document.querySelectorAll("#essayez *")].flatMap((e) => e.getAnimations()).some((a) => a instanceof CSSAnimation && a.playState === "running"), null, { timeout: 5000 });
+    await page.waitForFunction((q) => ![...document.querySelectorAll(`${q} *`)].flatMap((e) => e.getAnimations()).some((a) => a instanceof CSSAnimation && a.playState === "running"), sel, { timeout: 5000 });
     await slider.focus();
     for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowRight");
-    const n = await page.evaluate(() => [...document.querySelectorAll("#essayez *")].flatMap((e) => e.getAnimations()).filter((a) => a instanceof CSSAnimation).length);
+    const n = await page.evaluate((q) => [...document.querySelectorAll(`${q} *`)].flatMap((e) => e.getAnimations()).filter((a) => a instanceof CSSAnimation).length, sel);
     expect(n).toBe(0);
     await expect(s.getByRole("img", { name: /^Percentile de longueur : / })).toBeVisible();
   });

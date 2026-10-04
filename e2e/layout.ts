@@ -68,6 +68,11 @@ export async function layoutProblems(page: Page): Promise<string[]> {
     for (const e of Array.from(document.querySelectorAll("body *"))) {
       const cs = getComputedStyle(e);
       if ((cs.overflowX === "hidden" || cs.overflowX === "clip") && e.scrollWidth > e.clientWidth + 1 && e.clientWidth > 1 && (e.textContent ?? "").trim() && !hiddenAncestor(e)) {
+        // Ce qui déborde doit être du TEXTE : un décor aria-hidden (halo lumineux qui dépasse volontairement d'une carte à coins arrondis)
+        // agrandit scrollWidth sans rien masquer à la lecture. Seul un texte réellement rogné par la boîte est un problème.
+        const box = e.getBoundingClientRect();
+        const clippedText = items.some((it) => e.contains(it.el) && (it.r > box.right + 1 || it.l < box.left - 1));
+        if (!clippedText) continue;
         problems.push(`contenu masqué par overflow : <${e.tagName.toLowerCase()} class="${String((e as HTMLElement).className).slice(0, 50)}"> (${e.scrollWidth}px dans ${e.clientWidth}px)`);
       }
     }

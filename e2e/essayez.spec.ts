@@ -4,19 +4,32 @@ import { EXAMPLE_INPUT } from "../src/lib/exampleReport";
 import { aboveText, f1 } from "../src/lib/format";
 import { OUT_OF_RANGE_MESSAGE, buildQuestionnaireReport } from "../src/lib/reportCore";
 import { LIMITS } from "../src/config/site";
+import { seriesRef } from "../src/lib/seoFigures";
+import { snap } from "../src/lib/tryIt";
 import { expect, test } from "./helpers";
 import { layoutProblems } from "./layout";
 
-// Section « Essayez » de l'accueil : curseurs, mise à jour en direct des percentiles, courbes et repères (mêmes calculs que le rapport),
-// aucun réseau ni stockage, chargement différé, mouvement réduit, petits écrans et accessibilité.
+// Simulation « Essayez » : curseurs, mise à jour en direct des percentiles et des courbes (mêmes calculs que le rapport), aucun réseau ni
+// stockage, chargement différé, mouvement réduit, petits écrans et accessibilité.
+// Elle n'est plus sur l'accueil (le premier écran y est le test) : elle vit dans les pages de contenu, sous forme de mini-calculateur
+// compact (sans les repères de taille). Page générique : « /percentile-penis » (valeurs de l'exemple au départ) ;
+// page par centimètre : « /taille-penis-15-cm » (valeurs préremplies).
 
-const section = (page: Page) => page.locator("#essayez");
+const GENERIC = "/percentile-penis";
+const SIZE_PAGE = "/taille-penis-15-cm";
+// Les tests de mise en page et d'accessibilité de la page entière utilisent la page par centimètre : « /percentile-penis » a, hors simulation, deux défauts
+// antérieurs à la refonte (tableau markdown de 385 px qui déborde sous 385 px de large ; liens de la colonne de gauche à contraste 4,25:1), signalés à part.
+// Circonférence de départ des pages par centimètre : la médiane de référence en érection, au pas de 0,1 cm (calculée par le site).
+const MEDIAN_GIRTH = snap("girth", seriesRef("erect-girth").mean);
+const SECTION = 'section[aria-labelledby="essayez-titre"]';
+
+const section = (page: Page) => page.locator(SECTION);
 const lengthSlider = (page: Page) => section(page).getByRole("slider", { name: "Longueur (cm)" });
 const girthSlider = (page: Page) => section(page).getByRole("slider", { name: "Circonférence (cm)" });
 
 /** Fait apparaître la simulation (chargement différé : elle n'est demandée qu'à l'approche de l'écran). */
-async function openTryIt(page: Page) {
-  await page.goto("/");
+async function openTryIt(page: Page, path = GENERIC) {
+  await page.goto(path);
   await section(page).scrollIntoViewIfNeeded();
   await expect(lengthSlider(page)).toBeVisible();
 }
@@ -38,26 +51,39 @@ async function expectMatchesReport(page: Page, state: "rest" | "erect", length: 
   await expect(s.getByRole("img", { name: new RegExp(`^Circonférence : ${f1(girth)} cm, percentile ${f1(r.girth.percentile)}\\.`) })).toBeVisible();
   await expect(s.getByRole("heading", { name: `Longueur ${st}` })).toBeVisible();
   await expect(s.getByRole("heading", { name: `Circonférence ${st}` })).toBeVisible();
-  for (const o of [...r.everyday, ...r.landmarks]) {
-    const card = s.locator("li").filter({ hasText: o.label });
-    await expect(card).toContainText(`${o.times.toLocaleString("fr-FR")}`);
-    await expect(card).toContainText("× vous");
-  }
 }
 
 test.describe("Essayez : contenu et mention", () => {
-  test("mention de simulation locale, lien vers le vrai questionnaire, valeurs de l'exemple au départ", async ({ page }) => {
+  test("mention de simulation locale, appel vers le vrai test, valeurs de l'exemple au départ", async ({ page }) => {
     await openTryIt(page);
     const s = section(page);
-    await expect(s.getByRole("heading", { level: 2 })).toBeVisible();
-    await expect(s.getByText("Simulation locale : rien n'est enregistré ni envoyé.")).toBeVisible();
-    await expect(s.getByRole("button", { name: "Remplir le vrai questionnaire" })).toBeVisible();
+    await expect(s.getByRole("heading", { level: 2 })).toHaveText("Essayez avec vos valeurs");
+    await expect(s.getByText(/rien n'est enregistré ni envoyé/)).toBeVisible();
     await expect(s.getByText("Exemple · valeurs fictives")).toBeVisible();
+    // Le vrai questionnaire est un clic plus loin : appel de fin de page, sur toutes les pages de contenu.
+    await expect(page.locator("[data-content-cta]").getByRole("button", { name: "Découvrir mon percentile" })).toBeVisible();
     // Valeurs de départ = rapport d'exemple (13,8 cm, 11,9 cm, en érection).
     await expect(lengthSlider(page)).toHaveValue("13.8");
     await expect(girthSlider(page)).toHaveValue("11.9");
     await expect(s.getByRole("radio", { name: "En érection" })).toBeChecked();
     await expectMatchesReport(page, "erect", 13.8, 11.9);
+  });
+
+  test("page par centimètre : la dimension de la page est préremplie, l'autre prend la médiane ; retour aux valeurs de départ", async ({ page }) => {
+    await openTryIt(page, SIZE_PAGE);
+    const s = section(page);
+    await expect(s.getByRole("heading", { level: 2 })).toHaveText("Essayez : 15 cm, et vos autres valeurs");
+    await expect(s.getByText("Valeurs préremplies")).toBeVisible();
+    await expect(lengthSlider(page)).toHaveValue("15");
+    await expect(girthSlider(page)).toHaveValue(String(MEDIAN_GIRTH));
+    await expectMatchesReport(page, "erect", 15, MEDIAN_GIRTH);
+    await lengthSlider(page).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(lengthSlider(page)).toHaveValue("15.1");
+    await expect(s.getByText("Valeurs de votre simulation")).toBeVisible();
+    await s.getByRole("button", { name: "Revenir aux valeurs de départ" }).click();
+    await expect(lengthSlider(page)).toHaveValue("15");
+    await expectMatchesReport(page, "erect", 15, MEDIAN_GIRTH);
   });
 
   test("les curseurs ont un libellé, la valeur lue (aria-valuetext) et les bornes du questionnaire", async ({ page }) => {
@@ -72,7 +98,7 @@ test.describe("Essayez : contenu et mention", () => {
 });
 
 test.describe("Essayez : mise à jour en direct", () => {
-  test("au clavier, le curseur de longueur met à jour percentiles, courbe et repères comme le rapport réel", async ({ page }) => {
+  test("au clavier, le curseur de longueur met à jour percentiles et courbes comme le rapport réel", async ({ page }) => {
     await openTryIt(page);
     const before = real("erect", 13.8, 11.9);
     await lengthSlider(page).focus();
@@ -133,9 +159,6 @@ test.describe("Essayez : mise à jour en direct", () => {
 test.describe("Essayez : aucune donnée ne sort, rien n'est stocké", () => {
   test("aucune requête, aucun WebSocket, aucun cookie ni stockage pendant l'interaction", async ({ page, context }) => {
     await openTryIt(page);
-    // Le moteur du bandeau 3D se charge après la page, au premier moment d'inactivité : attendre qu'il soit là, pour que seules les
-    // requêtes dues à la simulation soient observées.
-    await expect(page.locator('[data-scanner="live"]')).toHaveCount(1);
     await page.waitForLoadState("networkidle");
     const storageBefore = await page.evaluate(() => JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage), document.cookie]));
     const cookiesBefore = (await context.cookies()).map((c) => `${c.name}=${c.value}`).sort();
@@ -161,14 +184,14 @@ test.describe("Essayez : aucune donnée ne sort, rien n'est stocké", () => {
 test.describe("Essayez : chargement différé", () => {
   test.use({ viewport: { width: 390, height: 844 } });
   test("la simulation n'est pas chargée au premier affichage ; elle l'est à l'approche de la section", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(GENERIC);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(500);
     await expect(section(page).getByRole("slider")).toHaveCount(0);
     expect((await section(page).boundingBox())!.y).toBeGreaterThan(700);
-    // Le bouton principal du premier écran n'est pas touché.
-    const cta = page.locator("main").getByRole("button", { name: "Démarrer mon analyse" }).first();
-    await expect(cta).toBeVisible();
+    // Le bouton de l'appel en tête de page (après la réponse courte) n'est pas touché.
+    const cta = page.locator("main").getByRole("button", { name: "Découvrir mon percentile" }).first();
+    await expect(cta).toBeAttached();
     // Le code de la simulation (reconnu à son contenu) n'a pas été demandé ; il l'est après défilement.
     const chunks: string[] = [];
     page.on("response", async (res) => {
@@ -205,20 +228,12 @@ test.describe("Essayez : mouvement réduit", () => {
 for (const [width, height] of [[320, 700], [375, 700], [390, 844]] as const) {
   test.describe(`Essayez : ${width} px`, () => {
     test.use({ viewport: { width, height } });
-    test("le bouton principal reste dans le premier écran ; ni débordement, ni recouvrement, ni texte coupé ; axe sans violation", async ({ page }) => {
-      await page.goto("/");
-      const cta = page.locator("main").getByRole("button", { name: "Démarrer mon analyse" }).first();
-      await expect(cta).toBeVisible();
-      if (width >= 375) {
-        const b = (await cta.boundingBox())!;
-        expect(b.y + b.height, "le bouton principal est dans le premier écran").toBeLessThanOrEqual(height);
-      }
-      await section(page).scrollIntoViewIfNeeded();
-      await expect(lengthSlider(page)).toBeVisible();
+    test("ni débordement, ni recouvrement, ni texte coupé ; axe sans violation (section, puis page)", async ({ page }) => {
+      await openTryIt(page, SIZE_PAGE);
       const report: string[] = [];
       const check = async (label: string) => {
         for (const p of await layoutProblems(page)) report.push(`${label} : ${p}`);
-        const res = await new AxeBuilder({ page }).include("#essayez").withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"]).analyze();
+        const res = await new AxeBuilder({ page }).include(SECTION).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"]).analyze();
         for (const v of res.violations) report.push(`${label} axe : ${v.id} ${v.help}`);
       };
       await check("exemple");
@@ -235,13 +250,32 @@ for (const [width, height] of [[320, 700], [375, 700], [390, 844]] as const) {
   });
 }
 
-test.describe("Essayez : accessibilité de l'accueil entière", () => {
-  test("axe-core sur l'accueil avec la simulation chargée (ordinateur)", async ({ page }) => {
-    await openTryIt(page);
+test.describe("Essayez : accessibilité de la page entière", () => {
+  test("axe-core sur une page de contenu avec la simulation chargée (ordinateur)", async ({ page }) => {
+    await openTryIt(page, SIZE_PAGE);
     const res = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"]).analyze();
     expect(res.violations.map((v) => `${v.id} : ${v.help} (${v.nodes[0]?.target.join(" ")})`)).toEqual([]);
     // Pas de saut de niveau de titre dans la section.
     const levels = await section(page).evaluate((r) => Array.from(r.querySelectorAll("h1,h2,h3,h4")).map((h) => Number(h.tagName[1])));
     for (let i = 1; i < levels.length; i++) expect(levels[i] - levels[i - 1], `titres ${levels.join(",")}`).toBeLessThanOrEqual(1);
+  });
+});
+
+test.describe("Pages de contenu : barre d'action collante (mobile)", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+  test("cachée et inerte en haut de page, visible après un peu de lecture, effacée devant l'appel de fin", async ({ page }) => {
+    await page.goto(SIZE_PAGE);
+    await page.waitForLoadState("networkidle");
+    const bar = page.locator("[data-sticky-cta]");
+    await expect(bar).toHaveAttribute("aria-hidden", "true");
+    await expect(bar).toHaveAttribute("inert", "");
+    await page.evaluate(() => window.scrollTo(0, 1200));
+    await expect(bar).not.toHaveAttribute("aria-hidden", "true");
+    await expect(bar.getByRole("button", { name: "Découvrir mon percentile" })).toBeVisible();
+    expect(await layoutProblems(page)).toEqual([]);
+    // Devant l'appel principal de fin de page, la barre s'efface : jamais deux boutons identiques à l'écran.
+    await page.locator("[data-content-cta]").scrollIntoViewIfNeeded();
+    await expect(bar).toHaveAttribute("aria-hidden", "true");
+    await expect(page.locator("[data-content-cta]").getByRole("button", { name: "Découvrir mon percentile" })).toBeVisible();
   });
 });

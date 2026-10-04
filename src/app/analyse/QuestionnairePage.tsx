@@ -19,6 +19,8 @@ export async function QuestionnairePage({ photo = false, photoPaid = false }: { 
     <div className="container-bm container-narrow py-6 md:py-12">
       <TrackView event="questionnaire_start" />
       <TrackOnView event="test_start" />
+      {/* Les titres d'écran du test sont des légendes de formulaire, pas des titres : sans celui-ci, la page n'a aucun titre de niveau 1. */}
+      <h1 className="sr-only">Test : à quel percentile êtes-vous&nbsp;?</h1>
       {challenged && (
         <p className="mb-5 flex items-center gap-2 rounded-[12px] bg-[var(--bm-navy-900)] px-4 py-3 text-white t-small font-semibold" data-challenge-banner>
           <Icon name="users" size={18} className="flex-none text-[#9fc2ff]" />
