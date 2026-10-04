@@ -173,7 +173,7 @@ export function PhotoFlow({ formula, captchaMode }: { formula: "B" | "C"; captch
 
   const stateBtn = (on: boolean) =>
     `flex-1 min-h-[48px] rounded-[10px] border px-3 text-[15px] font-semibold cursor-pointer transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)] ${
-      on ? "border-[var(--accent)] bg-[var(--bm-blue-100)] text-[var(--accent)]" : "border-border bg-[var(--surface)] text-foreground"
+      on ? "border-[var(--accent)] bg-[var(--bm-blue-100)] text-[#0f55d1] dark:text-[var(--foreground)]" : "border-border bg-[var(--surface)] text-foreground"
     }`;
 
   return (

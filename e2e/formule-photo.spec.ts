@@ -26,9 +26,7 @@ async function photoReport(page: Page): Promise<string> {
 /** Depuis l'écran d'envoi (âge déjà vérifié dans ce contexte) : image neutre, cases, captcha simulé, envoi, rapport. */
 async function submitFromPhotoPage(page: Page): Promise<void> {
   await page.locator('input[type="file"]').setInputFiles({ name: "neutre.jpg", mimeType: "image/jpeg", buffer: await neutralImage() });
-  await page.getByLabel("J'ai 18 ans ou plus.").check();
-  await page.getByLabel("Cette photo est de moi.").check();
-  await page.getByLabel(/Je consens au traitement de cette donnée sensible/).check();
+  await page.getByLabel(/J'ai 18 ans ou plus, cette photo est de moi/).check();
   await page.getByLabel(/Je ne suis pas un robot/).check();
   await page.getByRole("button", { name: "Lancer l'analyse" }).click();
   await expect(page.getByRole("heading", { name: /Rapport d'analyse morphométrique/ })).toBeVisible({ timeout: 60_000 });
