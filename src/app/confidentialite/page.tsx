@@ -3,8 +3,24 @@ import { REPORT_ACCESS } from "@/config/site";
 import { COMPANY, HOST } from "@/config/company";
 import { BETA, isFreeBeta, isPhotoBeta } from "@/lib/mode";
 import { photoPaidByPlisio } from "@/lib/payments/policy";
+import { umamiWebsiteId } from "@/lib/umami";
 
 export const metadata = { title: "Politique de confidentialité", alternates: { canonical: "/confidentialite" } };
+
+// Mesure d'audience Umami (src/lib/umami.ts), décision du propriétaire du 04/10/2026 : paragraphe factuel, à montrer au juriste.
+const umami = umamiWebsiteId() !== null;
+
+function UmamiParagraph() {
+  return (
+    <p>
+      Nous utilisons aussi Umami (umami.is, données hébergées dans sa région Europe), sans cookie. Pour chaque page vue, il reçoit
+      l&apos;adresse de la page (les liens privés de rapport, de carte, de défi et de paiement sont masqués avant l&apos;envoi), le site
+      d&apos;origine, la langue, le type de navigateur, de système et d&apos;appareil. Votre adresse IP lui sert à déduire le pays et un
+      identifiant de visite anonyme ; selon Umami, elle n&apos;est pas conservée. Les mêmes signaux Do Not Track et Global Privacy Control
+      sont respectés.
+    </p>
+  );
+}
 
 export default function Page() {
   if (isFreeBeta()) return <BetaPolicy />;
@@ -74,8 +90,9 @@ export default function Page() {
 
       <h2>Mesure d&apos;audience</h2>
       <p>
-        Sans cookie, hébergée dans l&apos;Union européenne. Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé, aperçu verrouillé et paiement. Chaque événement n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control. Aucun pixel publicitaire, aucun outil tiers de suivi.
+        Sans cookie, hébergée dans l&apos;Union européenne. Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé, aperçu verrouillé et paiement. Chaque événement {umami ? "de ce compteur interne " : ""}n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control.{umami ? " Aucun pixel publicitaire, aucun autre outil tiers de mesure." : " Aucun pixel publicitaire, aucun outil tiers de suivi."}
       </p>
+      {umami && <UmamiParagraph />}
 
       <h2>Vos droits</h2>
       <p>
@@ -173,8 +190,9 @@ function BetaPolicy() {
 
       <h2>Mesure d&apos;audience</h2>
       <p>
-        Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé. Chaque événement n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control. Aucun pixel publicitaire, aucun outil tiers de suivi.
+        Nous comptons, de façon anonyme, quelques étapes du parcours : visite de l&apos;accueil, début du questionnaire, questionnaire terminé, rapport affiché, carte de partage créée, défi créé ou relevé. Chaque événement {umami ? "de ce compteur interne " : ""}n&apos;est qu&apos;une ligne « type d&apos;événement + date » : aucun cookie, aucune adresse IP, aucun identifiant, aucun lien avec un rapport ou un appareil. Ces comptages servent à améliorer le service ; ils ne permettent pas de vous reconnaître. Nous ne comptons pas les visiteurs dont le navigateur envoie le signal Do Not Track ou Global Privacy Control.{umami ? " Aucun pixel publicitaire, aucun autre outil tiers de mesure." : " Aucun pixel publicitaire, aucun outil tiers de suivi."}
       </p>
+      {umami && <UmamiParagraph />}
 
       <h2>Cookies</h2>
       <p>

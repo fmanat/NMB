@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { RENAMED_SLUGS } from "./src/lib/seoRenamed";
+import { UMAMI_ORIGINS, umamiWebsiteId } from "./src/lib/umami";
 
 const isDev = process.env.NODE_ENV === "development";
 // Mise à niveau automatique http → https : seulement si l'adresse publique du site (SITE_URL) est en https, pour ne pas
@@ -11,13 +12,15 @@ const httpsSite = (process.env.SITE_URL ?? "https://bitometre.com").startsWith("
 // autorisés car Next.js en injecte pour démarrer l'application ; un nonce obligerait à rendre toutes les pages dynamiques.
 // Si un prestataire de paiement ou de vérification d'âge charge un script ou un cadre, ajouter son domaine ici (script-src,
 // frame-src, connect-src), et nulle part ailleurs.
+// Mesure d'audience Umami (src/lib/umami.ts) : ses deux origines, seulement si UMAMI_WEBSITE_ID est renseignée.
+const umami = umamiWebsiteId() ? ` ${UMAMI_ORIGINS.join(" ")}` : "";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${umami}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data:",
   "font-src 'self'",
-  "connect-src 'self'",
+  `connect-src 'self'${umami}`,
   "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",

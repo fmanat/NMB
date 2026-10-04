@@ -7,6 +7,7 @@ import { isFreeBeta } from "@/lib/mode";
 import { Header } from "@/components/navigation/Header";
 import { Footer } from "@/components/navigation/Footer";
 import { RevealOnView } from "@/components/RevealOnView";
+import { Umami } from "@/components/Umami";
 import { siteGraph, toJsonLd } from "@/lib/structuredData";
 
 const sans = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
@@ -34,6 +35,7 @@ export default function RootLayout({ children, bandeau }: LayoutProps<"/">) {
         <main id="contenu" tabIndex={-1} className="flex-1">{children}</main>
         <Footer />
         <RevealOnView />
+        <Umami />
         {/* Données structurées du site (WebSite, Organization) : nom de marque seulement. */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(siteGraph()) }} />
       </body>
