@@ -8,6 +8,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  * Sans JavaScript, sans canvas 2D ou si le chargement échoue : le repli reste affiché, rien d'autre ne change.
  * Le canevas est décoratif (aria-hidden) ; les valeurs sont du texte réel fourni par le serveur (`labels`).
  */
+/** Délai après l'événement « load » avant d'attendre l'inactivité du navigateur et de charger le moteur. */
+const BOOT_DELAY_MS = 1500;
+
 export function ScannerShell({
   fallback,
   labels,
@@ -41,10 +44,13 @@ export function ScannerShell({
           // chargement impossible : le repli statique reste affiché
         });
     };
-    // Après l'événement « load » puis au repos : le bandeau ne gêne ni le premier affichage ni la mesure de performance.
+    // Après le chargement complet (événement « load »), un court délai, puis au premier moment où le navigateur est inactif : le
+    // bandeau ne gêne ni le premier affichage, ni l'hydratation, ni les premières interactions.
     const schedule = () => {
-      if ("requestIdleCallback" in window) idle = window.requestIdleCallback(boot, { timeout: 3000 });
-      else timer = setTimeout(boot, 1200);
+      timer = setTimeout(() => {
+        if ("requestIdleCallback" in window) idle = window.requestIdleCallback(boot, { timeout: 4000 });
+        else boot();
+      }, BOOT_DELAY_MS);
     };
     if (document.readyState === "complete") schedule();
     else window.addEventListener("load", schedule, { once: true });

@@ -58,10 +58,14 @@ type Options = {
 };
 
 const POINTS_SMALL = 460;
-const POINTS_NARROW = 560; // bandeau étroit (mobile) : l'objet est grand, donc un peu plus de points
 const POINTS_LARGE = 800;
-const TAU = Math.PI * 2;
+// Mobile (écran tactile ou bandeau étroit) : moins de points, résolution 1×, 20 images par seconde. Le dessin coûte alors environ
+// trois fois moins par seconde qu'en version ordinateur ; l'aspect reste le même à cette taille d'écran (décision du 04/10/2026).
+const POINTS_MOBILE = 300;
+const MOBILE_MAX_DPR = 1;
 const FRAME_MS = 33; // 30 images par seconde au plus : économise le processeur et la batterie
+const FRAME_MS_MOBILE = 50;
+const TAU = Math.PI * 2;
 const AUTO_SPEED = 0.00022; // rad/ms : un tour en environ 28 s
 const DRAG_GAIN = 0.0095; // rad par pixel
 
@@ -92,6 +96,8 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
   const [sr, sg, sb] = hexToRgb(cssColor("--bm-dark-text", "#f5f8fc")); // trait du plan de balayage
   const [lr, lg, lb] = [Math.round((br + sr) / 2), Math.round((bg + sg) / 2), Math.round((bb + sb) / 2)]; // points sur le plan : bleu éclairci
 
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  let mobile = coarse;
   let cssW = 0;
   let cssH = 0;
   let dpr = 1;
@@ -127,13 +133,14 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
     const rect = canvas.getBoundingClientRect();
     const w = Math.max(1, Math.round(rect.width));
     const h = Math.max(1, Math.round(rect.height));
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    mobile = coarse || w < 480;
+    dpr = Math.min(mobile ? MOBILE_MAX_DPR : 2, window.devicePixelRatio || 1);
     if (w === cssW && h === cssH && canvas.width === Math.round(w * dpr)) return;
     cssW = w;
     cssH = h;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    const want = cssW < 480 ? POINTS_NARROW : cssW * cssH < 70000 ? POINTS_SMALL : POINTS_LARGE;
+    const want = mobile ? POINTS_MOBILE : cssW * cssH < 70000 ? POINTS_SMALL : POINTS_LARGE;
     if (want !== pointCount) {
       const cloud = generateSilhouettePoints(spec, want);
       points = cloud.points;
@@ -266,7 +273,7 @@ export function startScanner(canvas: HTMLCanvasElement, options: Options = {}): 
   function frame(now: number) {
     raf = 0;
     if (destroyed || !running) return;
-    if (now - lastDraw < FRAME_MS - 2) {
+    if (now - lastDraw < (mobile ? FRAME_MS_MOBILE : FRAME_MS) - 2) {
       raf = requestAnimationFrame(frame);
       return;
     }

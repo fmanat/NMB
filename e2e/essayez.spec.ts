@@ -133,6 +133,9 @@ test.describe("Essayez : mise à jour en direct", () => {
 test.describe("Essayez : aucune donnée ne sort, rien n'est stocké", () => {
   test("aucune requête, aucun WebSocket, aucun cookie ni stockage pendant l'interaction", async ({ page, context }) => {
     await openTryIt(page);
+    // Le moteur du bandeau 3D se charge après la page, au premier moment d'inactivité : attendre qu'il soit là, pour que seules les
+    // requêtes dues à la simulation soient observées.
+    await expect(page.locator('[data-scanner="live"]')).toHaveCount(1);
     await page.waitForLoadState("networkidle");
     const storageBefore = await page.evaluate(() => JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage), document.cookie]));
     const cookiesBefore = (await context.cookies()).map((c) => `${c.name}=${c.value}`).sort();
