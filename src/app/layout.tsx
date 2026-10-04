@@ -1,3 +1,4 @@
+import { isPhotoPaidPublic } from "@/lib/payments/policy";
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
@@ -16,7 +17,7 @@ const beta = isFreeBeta();
 export const metadata: Metadata = {
   title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s — ${SITE.name}` },
   description:
-    "Analyse biométrique chiffrée : score, percentiles, courbure, symétrie. " + (beta ? "Bêta gratuite, aucun compte." : "Paiement unique, aucun compte."),
+    "Analyse biométrique chiffrée : score, percentiles, courbure, symétrie. " + (beta ? (isPhotoPaidPublic() ? "Questionnaire gratuit pendant la bêta, aucun compte." : "Bêta gratuite, aucun compte.") : "Paiement unique, aucun compte."),
   metadataBase: new URL(process.env.SITE_URL ?? `https://${SITE.domain}`),
   // Image de partage par défaut (pages légales) ; les pages publiques de contenu et l'accueil ont la leur (titre et chiffre clé).
   openGraph: { siteName: SITE.name, locale: "fr_FR", images: [{ url: "/og/neutre", width: 1200, height: 630 }] },

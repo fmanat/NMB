@@ -1,3 +1,4 @@
+import { isPhotoPaidPublic } from "@/lib/payments/policy";
 import Link from "next/link";
 import { FORMULAS, SITE, formatEur } from "@/config/site";
 import { isFreeBeta } from "@/lib/mode";
@@ -45,7 +46,9 @@ export function Footer() {
         <p>
           <span className="num border border-[var(--border)] rounded-md px-1.5 py-0.5 mr-2 font-semibold text-foreground">18+</span>
           Service réservé aux adultes.{" "}
-          {beta ? (
+          {beta && isPhotoPaidPublic() ? (
+            `Questionnaire gratuit pendant la bêta. Analyse de photo : ${formatEur(FORMULAS.B.priceEur)} TTC, paiement unique en cryptomonnaie, sans abonnement. Sans compte.`
+          ) : beta ? (
             "Bêta gratuite, sans compte."
           ) : (
             <>

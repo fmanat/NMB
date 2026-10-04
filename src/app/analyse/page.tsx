@@ -5,6 +5,7 @@ import { ProgressStepper } from "@/components/analysis/ProgressStepper";
 import { FORMULAS, formatEur } from "@/config/site";
 import { isFreeBeta } from "@/lib/mode";
 import { photoAccess } from "@/lib/photoAccess";
+import { photoPaidByPlisio } from "@/lib/payments/policy";
 import Link from "next/link";
 import { QuestionnairePage } from "./QuestionnairePage";
 
@@ -24,7 +25,7 @@ const BETA_NOTE = {
   B: "Rapport morphométrique établi à partir de votre photo par un modèle d'analyse (xAI, États-Unis) : estimation visuelle, ou mesure calibrée si une carte au format bancaire figure sur la photo. Vérification d'âge par un prestataire tiers avant l'envoi.",
 } as const;
 
-function BetaChoice({ preview }: { preview: boolean }) {
+function BetaChoice({ preview, photoPaid }: { preview: boolean; photoPaid: boolean }) {
   return (
     <div className="container-bm container-narrow py-8 md:py-14">
       {preview && (
@@ -36,7 +37,11 @@ function BetaChoice({ preview }: { preview: boolean }) {
       )}
       <ProgressStepper steps={["Méthode", "Mesures", "Rapport"]} current={0} />
       <h1 className="t-h1 mt-8 !text-[30px] !leading-[34px] md:!text-[40px] md:!leading-[44px]">Choisissez un protocole</h1>
-      <p className="t-lead text-muted mt-3">Les deux protocoles sont gratuits pendant la bêta : aucun paiement n&apos;est demandé.</p>
+      <p className="t-lead text-muted mt-3">
+        {photoPaid
+          ? `Le questionnaire est gratuit pendant la bêta. Le protocole photo coûte ${formatEur(FORMULAS.B.priceEur)} TTC, paiement unique en cryptomonnaie (Plisio), demandé une fois l'analyse terminée.`
+          : "Les deux protocoles sont gratuits pendant la bêta : aucun paiement n'est demandé."}
+      </p>
       <ul className="mt-8 space-y-4">
         {(["A", "B"] as const).map((id) => {
           const f = FORMULAS[id];
@@ -53,7 +58,7 @@ function BetaChoice({ preview }: { preview: boolean }) {
                     <span className="block font-semibold text-foreground">{f.label}</span>
                     <span className="block t-small text-muted">{BETA_NOTE[id]}</span>
                   </span>
-                  <span className="t-small font-semibold text-accent flex-none">Gratuit</span>
+                  <span className="t-small font-semibold text-accent flex-none">{id === "B" && photoPaid ? formatEur(f.priceEur) : "Gratuit"}</span>
                 </Card>
               </Link>
             </li>
@@ -72,7 +77,7 @@ export default async function Page() {
   // Bêta gratuite : un seul protocole, donc pas de choix : /analyse est le questionnaire ; bêta photo (ou aperçu administrateur) : choix A ou B.
   if (isFreeBeta()) {
     const { available, preview } = await photoAccess();
-    return available ? <BetaChoice preview={preview} /> : <QuestionnairePage />;
+    return available ? <BetaChoice preview={preview} photoPaid={photoPaidByPlisio()} /> : <QuestionnairePage />;
   }
   return (
     <div className="container-bm container-narrow py-8 md:py-14">

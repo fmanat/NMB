@@ -1,5 +1,5 @@
 import type { FormulaId } from "@/config/site";
-import { isFreeBeta } from "../mode";
+import { isFreeBeta, isPhotoBeta } from "../mode";
 import { plisioConfigured } from "./plisio";
 
 // Qui paie quoi, et avec quel prestataire (décision du propriétaire du 04/10/2026) :
@@ -24,3 +24,6 @@ export function paymentAllowed(formula: FormulaId, env: Env = process.env): bool
 
 /** Un rapport photo créé maintenant est-il gratuit (bêta, sans Plisio) ? */
 export const photoReportIsFree = (photoBeta: boolean, env: Env = process.env): boolean => photoBeta && !photoPaidByPlisio(env);
+
+/** Formule photo ouverte au public ET payante par Plisio : les libellés publics ne disent plus « gratuit » que du questionnaire. */
+export const isPhotoPaidPublic = (env: Env = process.env): boolean => isPhotoBeta(env) && photoPaidByPlisio(env);

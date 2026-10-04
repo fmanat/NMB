@@ -1,3 +1,4 @@
+import { isPhotoPaidPublic } from "@/lib/payments/policy";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FORMULAS, REPORT_ACCESS, SITE, formatEur } from "@/config/site";
@@ -38,7 +39,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: { absolute: `Calculateur taille pénis : percentile et moyenne | ${SITE.name}` },
   description: isFreeBeta()
-    ? "Calculez en une minute le percentile de votre longueur et de votre circonférence, comparées à l'étude de référence. Gratuit pendant la bêta, sans compte."
+    ? "Calculez en une minute le percentile de votre longueur et de votre circonférence, comparées à l'étude de référence. Questionnaire gratuit, sans compte."
     : "Calculez en une minute le percentile de votre longueur et de votre circonférence, comparées à l'étude de référence. Sans compte, rapport chiffré.",
   alternates: { canonical: "/" },
   openGraph: { type: "website", url: "/", siteName: SITE.name, locale: "fr_FR", images: [{ url: ogImagePath("accueil"), width: 1200, height: 630 }] },
@@ -47,7 +48,9 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const beta = isFreeBeta();
-  const photoBeta = isPhotoBeta(); // bêta photo : la formule photo (B) est proposée, gratuite ; les libellés disent ce qu'elle fait réellement
+  const photoBeta = isPhotoBeta(); // bêta photo : la formule photo (B) est proposée ; les libellés disent ce qu'elle fait réellement
+  const photoPaid = isPhotoPaidPublic(); // formule photo payante par Plisio : seul le questionnaire est gratuit
+  const photoPrice = formatEur(FORMULAS.B.priceEur);
   const ex = exampleReport();
 
   return (
@@ -68,7 +71,7 @@ export default async function Home() {
               Le laboratoire compare vos mesures à une étude de référence : en une minute, votre percentile, votre position sur la courbe et un rapport chiffré.
               <span className="hidden sm:inline">
                 {" "}
-                {beta ? (photoBeta ? "Par questionnaire ou à partir d'une photo : gratuit pendant la bêta, sans compte." : "Gratuit pendant la bêta, sans compte, en une minute.") : "Sans compte, paiement unique."}
+                {beta ? (photoPaid ? `Questionnaire gratuit pendant la bêta, ou analyse d'une photo à ${photoPrice}, sans compte.` : photoBeta ? "Par questionnaire ou à partir d'une photo : gratuit pendant la bêta, sans compte." : "Gratuit pendant la bêta, sans compte, en une minute.") : "Sans compte, paiement unique."}
               </span>
             </p>
           </div>
@@ -101,7 +104,9 @@ export default async function Home() {
           <TrustBadge icon="users" title="Aucun compte">Pas d&apos;e-mail demandé. Votre rapport s&apos;ouvre par un lien privé.</TrustBadge>
           <TrustBadge icon="lock" title="Connexion chiffrée">Les échanges avec le site sont chiffrés (HTTPS).</TrustBadge>
           <TrustBadge icon="barChart" title="Méthode publique">Formule, références et marges d&apos;erreur sont décrites sur la page Méthode.</TrustBadge>
-          {beta ? (
+          {beta && photoPaid ? (
+            <TrustBadge icon="checkCircle" title="Questionnaire gratuit">Pendant la bêta. Analyse de photo : {photoPrice}, paiement unique, sans abonnement.</TrustBadge>
+          ) : beta ? (
             <TrustBadge icon="checkCircle" title="Gratuit pendant la bêta">Aucun paiement demandé.</TrustBadge>
           ) : (
             <TrustBadge icon="checkCircle" title="Aucun abonnement">Paiement unique, sans engagement.</TrustBadge>
@@ -213,7 +218,9 @@ export default async function Home() {
               Non. C&apos;est une note de présentation volontairement indulgente : un profil médian obtient environ 72/100. Pour vous situer, lisez les percentiles, qui sont exacts.
             </Accordion>
             <Accordion question={beta ? "Combien ça coûte ?" : "Quels sont les tarifs ?"}>
-              {beta
+              {beta && photoPaid
+                ? `Le questionnaire est gratuit pendant la bêta. L'analyse d'une photo coûte ${photoPrice} TTC, en paiement unique, réglé en cryptomonnaie sur la page de Plisio, notre prestataire de paiement.`
+                : beta
                 ? "Le service est gratuit pendant la bêta : aucun paiement n'est demandé et aucune donnée de paiement n'est collectée."
                 : `Paiement unique, sans abonnement : ${Object.values(FORMULAS).map((f) => `${f.label} ${formatEur(f.priceEur)}`).join(", ")}, toutes taxes comprises.`}
             </Accordion>
@@ -242,7 +249,11 @@ export default async function Home() {
           <div className="rounded-[18px] bg-[var(--bm-navy-900)] text-white px-6 py-10 md:px-12 md:py-14 text-center">
             <h2 className="t-h2">Prêt à voir votre rapport ?</h2>
             <p className="mt-3 text-[#c9d6ea] max-w-[34rem] mx-auto">
-              {beta ? `Gratuit pendant la bêta. Une minute, aucun compte.` : `Une minute, aucun compte.`} Votre rapport s&apos;affiche tout de suite.
+              {beta && photoPaid
+                ? `Questionnaire gratuit pendant la bêta : une minute, aucun compte, rapport affiché tout de suite.`
+                : beta
+                  ? `Gratuit pendant la bêta. Une minute, aucun compte. Votre rapport s'affiche tout de suite.`
+                  : `Une minute, aucun compte. Votre rapport s'affiche tout de suite.`}
             </p>
             <div className="mt-7 flex justify-center">
               <ScanButton fullOnMobile label="Démarrer mon analyse" className="!bg-white !text-[var(--bm-navy-900)] hover:!bg-[var(--bm-blue-100)]" />

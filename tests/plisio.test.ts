@@ -339,3 +339,17 @@ describe("Plisio : parcours complet", () => {
     expect((await pool().query("SELECT count(*)::int AS n FROM payments")).rows[0].n).toBe(0);
   });
 });
+
+describe("libellés publics quand la formule photo est payante", () => {
+  it("le bandeau dit « Questionnaire gratuit » au lieu de « Bêta gratuite » ; la formule photo n'est « payante en public » qu'ouverte ET avec la clé", async () => {
+    const { buildTickerItems } = await import("@/lib/ticker");
+    const { exampleReport } = await import("@/lib/exampleReport");
+    const { isPhotoPaidPublic } = await import("@/lib/payments/policy");
+    const label = (photoPaid: boolean) => buildTickerItems({ freeBeta: true, photoPaid, live: null, report: exampleReport() }).find((i) => i.id === "beta")?.label;
+    expect(label(false)).toBe("Bêta gratuite");
+    expect(label(true)).toBe("Questionnaire gratuit");
+    expect(isPhotoPaidPublic({ FREE_BETA: "on", PHOTO_BETA: "admin", PLISIO_SECRET_KEY: KEY })).toBe(false);
+    expect(isPhotoPaidPublic({ FREE_BETA: "on", PHOTO_BETA: "on", PLISIO_SECRET_KEY: KEY, NODE_ENV: "test" })).toBe(true);
+    expect(isPhotoPaidPublic({ FREE_BETA: "on", PHOTO_BETA: "on", NODE_ENV: "test" })).toBe(false);
+  });
+});

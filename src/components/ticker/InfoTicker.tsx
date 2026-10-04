@@ -1,4 +1,5 @@
 import { exampleReport } from "@/lib/exampleReport";
+import { isPhotoPaidPublic } from "@/lib/payments/policy";
 import { isFreeBeta } from "@/lib/mode";
 import { buildTickerItems } from "@/lib/ticker";
 import { getLiveAnalysisStats } from "@/lib/tickerStats";
@@ -13,6 +14,7 @@ export async function InfoTicker() {
   const live = await getLiveAnalysisStats();
   const items = buildTickerItems({
     freeBeta: isFreeBeta(),
+    photoPaid: isPhotoPaidPublic(),
     // Remplacé à la construction par next.config.ts (`env`) ; en développement : date du démarrage du serveur.
     buildDate: process.env.BITOMETRE_BUILD_DATE,
     live,

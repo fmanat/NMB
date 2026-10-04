@@ -58,6 +58,8 @@ export function liveStatsQualify(live: LiveAnalysisStats | null | undefined): li
 export type TickerInput = {
   /** Résultat de `isFreeBeta()`. */
   freeBeta: boolean;
+  /** Formule photo ouverte et payante (Plisio) : l'élément « Bêta gratuite » devient « Questionnaire gratuit ». */
+  photoPaid?: boolean;
   /** Date de construction du site au format ISO (injectée par next.config.ts). */
   buildDate?: string;
   /** Agrégats de la base, `null` si la base n'a pas répondu. */
@@ -67,10 +69,10 @@ export type TickerInput = {
 };
 
 /** Liste ordonnée des éléments du bandeau ; chaque élément n'est présent que si sa condition est remplie. */
-export function buildTickerItems({ freeBeta, buildDate, live, report }: TickerInput): TickerItem[] {
+export function buildTickerItems({ freeBeta, photoPaid = false, buildDate, live, report }: TickerInput): TickerItem[] {
   const items: TickerItem[] = [];
 
-  if (freeBeta) items.push({ id: "beta", label: "Bêta gratuite" });
+  if (freeBeta) items.push({ id: "beta", label: photoPaid ? "Questionnaire gratuit" : "Bêta gratuite" });
 
   if (liveStatsQualify(live)) {
     items.push({ id: "analyses", label: "Analyses réalisées", value: frInt(live.count) });
