@@ -327,6 +327,12 @@ input[type="radio"] { width: 20px; height: 20px; flex: none; }
 .prose-lab code { font-family: var(--font-mono); font-size: 0.9em; color: var(--foreground); background: var(--bm-gray-100); padding: 1px 6px; border-radius: var(--radius-sm); }
 .prose-lab blockquote { border-left: 3px solid var(--border); padding-left: 1rem; color: var(--muted); }
 .prose-lab table { width: 100%; font-size: 0.9rem; border-collapse: collapse; margin-top: 0.75rem; }
+/* Petits écrans : un tableau trop large défile dans son propre cadre au lieu d'élargir la page. */
+@media (max-width: 639px) {
+  .prose-lab table { display: block; overflow-x: auto; }
+}
+/* Liens dans les en-têtes de tableau (fond gris) : bleu foncé pour atteindre le contraste AA. */
+.prose-lab th a { color: var(--bm-blue-700); }
 .prose-lab th,
 .prose-lab td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
 .prose-lab th { background: var(--bm-gray-100); }
